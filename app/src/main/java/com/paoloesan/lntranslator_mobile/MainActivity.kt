@@ -1,9 +1,11 @@
 package com.paoloesan.lntranslator_mobile
 
+import android.content.Context
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -27,10 +29,20 @@ import com.paoloesan.lntranslator_mobile.ui.home.HomeScreen
 import com.paoloesan.lntranslator_mobile.ui.settings.SettingsScreen
 import com.paoloesan.lntranslator_mobile.ui.theme.LNTranslatormobileTheme
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val prefs = getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
+        val tema = prefs.getString("tema_app", "Predeterminado del sistema")
+
+        val modo = when (tema) {
+            "Claro" -> AppCompatDelegate.MODE_NIGHT_NO
+            "Oscuro" -> AppCompatDelegate.MODE_NIGHT_YES
+            else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        }
+        AppCompatDelegate.setDefaultNightMode(modo)
         enableEdgeToEdge()
         setContent {
             LNTranslatormobileTheme {
