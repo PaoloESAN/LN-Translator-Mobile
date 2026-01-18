@@ -30,4 +30,18 @@ object Prompt {
         val type = object : TypeToken<List<PromptData>>() {}.type
         return gson.fromJson(json, type)
     }
+
+    fun eliminarPrompt(indice: Int, context: Context) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val listaExistente = obtenerPrompts(context).toMutableList()
+
+        if (indice in listaExistente.indices) {
+            listaExistente.removeAt(indice)
+            val json = gson.toJson(listaExistente)
+            prefs.edit { putString(KEY_PROMPTS, json) }
+            Toast.makeText(context, "Prompt eliminado", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(context, "Índice inválido", Toast.LENGTH_SHORT).show()
+        }
+    }
 }
