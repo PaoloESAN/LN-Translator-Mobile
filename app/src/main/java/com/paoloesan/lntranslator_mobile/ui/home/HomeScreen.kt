@@ -1,6 +1,5 @@
 package com.paoloesan.lntranslator_mobile.ui.home
 
-import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -34,13 +33,19 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
-import androidx.core.content.edit
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier, onNavigateToPrompts: () -> Unit) {
     val context = LocalContext.current
-    val prefs = context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
     var textPrompt by remember { mutableStateOf("") }
+    var showDialog by remember { mutableStateOf(false) }
+
+    PromptDialog(
+        descripcion = textPrompt,
+        abierto = showDialog,
+        contexto = context,
+        onDismissRequest = { showDialog = false }
+    )
 
     Column(
         modifier = modifier
@@ -102,7 +107,7 @@ fun HomeScreen(modifier: Modifier = Modifier, onNavigateToPrompts: () -> Unit) {
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         ),
                         onClick = {
-
+                            showDialog = true
                         }
                     ) {
                         Icon(
