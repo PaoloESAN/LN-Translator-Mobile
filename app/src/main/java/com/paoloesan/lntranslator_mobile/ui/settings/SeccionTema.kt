@@ -40,6 +40,9 @@ class SeccionTema(
 
     @Composable
     override fun ContenidoModal() {
+        androidx.compose.runtime.LaunchedEffect(Unit) {
+            seleccionActual = prefs.getString("tema_app", "")
+        }
         Column(
             modifier = Modifier
                 .fillMaxWidth()

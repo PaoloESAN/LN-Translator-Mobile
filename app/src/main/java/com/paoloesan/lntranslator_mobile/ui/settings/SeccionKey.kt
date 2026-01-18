@@ -9,10 +9,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.core.content.edit
 
 class SeccionKey(
     override val icono: ImageVector,
@@ -21,8 +25,20 @@ class SeccionKey(
     override val contexto: Context
 ) : Seccion {
 
+    private val prefs = contexto.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
+    private var apikey by mutableStateOf(
+        prefs.getString(
+            "apikey_app",
+            ""
+        )
+    )
+
     @Composable
     override fun ContenidoModal() {
+
+        androidx.compose.runtime.LaunchedEffect(Unit) {
+            apikey = prefs.getString("apikey_app", "")
+        }
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -35,8 +51,8 @@ class SeccionKey(
                 style = MaterialTheme.typography.bodyMedium
             )
             OutlinedTextField(
-                value = "",
-                onValueChange = {},
+                value = apikey ?: "",
+                onValueChange = { apikey = it },
                 modifier = Modifier.fillMaxWidth()
             )
             Text(
@@ -47,7 +63,7 @@ class SeccionKey(
     }
 
     override fun guardarCambios(cerrarModal: () -> Unit) {
-        // Lógica para guardar la clave API
+        prefs.edit { putString("apikey_app", apikey) }
         cerrarModal()
     }
 }
