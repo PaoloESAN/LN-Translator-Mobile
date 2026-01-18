@@ -180,7 +180,9 @@ class MainActivity : AppCompatActivity() {
                             )
                         ) {
                             composable("inicio") {
-                                HomeScreen(onNavigateToPrompts = { navController.navigate("prompts") })
+                                HomeScreen(
+                                    navController = navController,
+                                    onNavigateToPrompts = { navController.navigate("prompts") })
                             }
                             composable("ajustes") {
                                 SettingsScreen()
@@ -204,7 +206,13 @@ class MainActivity : AppCompatActivity() {
                             ) {
                                 PromptScreen(
                                     this@MainActivity
-                                )
+                                ) {
+                                    navController.previousBackStackEntry?.savedStateHandle?.set(
+                                        "prompt_seleccionado",
+                                        it
+                                    )
+                                    navController.popBackStack()
+                                }
                             }
                         }
                     }

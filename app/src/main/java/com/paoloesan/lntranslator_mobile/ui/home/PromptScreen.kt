@@ -1,6 +1,7 @@
 package com.paoloesan.lntranslator_mobile.ui.home
 
 import android.content.Context
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -33,7 +34,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun PromptScreen(context: Context) {
+fun PromptScreen(
+    context: Context,
+    onPromptSelected: (String) -> Unit
+) {
     val promptsList = remember {
         mutableStateListOf<PromptData>().apply {
             addAll(Prompt.obtenerPrompts(context))
@@ -106,6 +110,11 @@ fun PromptScreen(context: Context) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(8.dp)
+                    .clickable(
+                        onClick = {
+                            onPromptSelected(prompt.descripcion)
+                        }
+                    )
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
