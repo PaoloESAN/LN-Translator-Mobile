@@ -17,9 +17,13 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -33,10 +37,8 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val prompt = remember { mutableStateOf("") }
-    fun setPrompt(newPrompt: String) {
-        prompt.value = newPrompt
-    }
+    var textPrompt by remember { mutableStateOf("") }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -66,17 +68,22 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedTextField(
                     label = { Text(text = "Prompt de contexto") },
-                    value = prompt.value,
-                    onValueChange = { setPrompt(it) },
+                    value = textPrompt,
+                    onValueChange = { textPrompt = it },
                     minLines = 3,
                     modifier = Modifier.weight(1f)
                 )
                 Column {
                     IconButton(
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        ),
                         onClick = {
 
                         }
@@ -87,6 +94,10 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                         )
                     }
                     IconButton(
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        ),
                         onClick = {
 
                         }
