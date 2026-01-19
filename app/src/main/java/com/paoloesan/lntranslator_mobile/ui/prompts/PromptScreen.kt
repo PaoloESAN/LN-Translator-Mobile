@@ -1,4 +1,4 @@
-package com.paoloesan.lntranslator_mobile.ui.home
+package com.paoloesan.lntranslator_mobile.ui.prompts
 
 import android.content.Context
 import androidx.compose.foundation.clickable
@@ -22,6 +22,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -32,19 +33,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun PromptScreen(
     context: Context,
     onPromptSelected: (String) -> Unit
 ) {
-    val promptsList = remember {
-        mutableStateListOf<PromptData>().apply {
-            addAll(Prompt.obtenerPrompts(context))
-        }
-    }
+    val promptsList = remember { mutableStateListOf<PromptData>() }
     var borrarDialog by remember { mutableStateOf(false) }
     var indexSeleccionado by remember { mutableIntStateOf(-1) }
+
+    LaunchedEffect(Unit) {
+        val prompts = withContext(Dispatchers.IO) {
+            Prompt.obtenerPrompts(context)
+        }
+        promptsList.clear()
+        promptsList.addAll(prompts)
+    }
 
     if (borrarDialog) {
         AlertDialog(

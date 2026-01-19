@@ -5,13 +5,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.Home
@@ -28,22 +22,31 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.paoloesan.lntranslator_mobile.ui.home.HomeScreen
-import com.paoloesan.lntranslator_mobile.ui.home.PromptScreen
-import com.paoloesan.lntranslator_mobile.ui.settings.SettingsScreen
+import com.paoloesan.lntranslator_mobile.ui.navigation.AppNavHost
 import com.paoloesan.lntranslator_mobile.ui.theme.LNTranslatormobileTheme
 
 class MainActivity : AppCompatActivity() {
-    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        configurarTema()
+        enableEdgeToEdge()
+
+        setContent {
+            LNTranslatormobileTheme {
+                val navController = rememberNavController()
+                MainContent(navController, this@MainActivity)
+            }
+        }
+    }
+
+    private fun configurarTema() {
         val prefs = getSharedPreferences("settings_prefs", MODE_PRIVATE)
         val tema = prefs.getString("tema_app", "Predeterminado del sistema")
 
@@ -53,171 +56,111 @@ class MainActivity : AppCompatActivity() {
             else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
         }
         AppCompatDelegate.setDefaultNightMode(modo)
-        enableEdgeToEdge()
-        setContent {
-            LNTranslatormobileTheme {
-                val navController = rememberNavController()
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val rutaActual = navBackStackEntry?.destination?.route
-                val rutasPrincipales = listOf("inicio", "ajustes")
-                val mostrarBottombar = rutaActual in rutasPrincipales
-                val suiteType = if (mostrarBottombar) {
-                    NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(
-                        currentWindowAdaptiveInfo()
-                    )
-                } else {
-                    NavigationSuiteType.None
-                }
-                NavigationSuiteScaffold(
-                    layoutType = suiteType,
-                    navigationSuiteItems = {
-                        item(
-                            selected = rutaActual == "inicio",
-                            onClick = {
-                                if (rutaActual != "inicio") {
-                                    navController.navigate("inicio") {
-                                        popUpTo(navController.graph.startDestinationId) {
-                                            saveState = true
-                                        }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                }
-                            },
-                            icon = {
-                                if (rutaActual == "inicio") {
-                                    Icon(
-                                        Icons.Rounded.Home,
-                                        contentDescription = "Inicio"
-                                    )
-                                } else {
-                                    Icon(
-                                        Icons.Outlined.Home,
-                                        contentDescription = "Inicio"
-                                    )
-                                }
-                            },
-                            label = { Text("Inicio") }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainContent(navController: NavHostController, contexto: AppCompatActivity) {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val rutaActual = navBackStackEntry?.destination?.route
+    val rutasPrincipales = listOf("inicio", "ajustes")
+    val mostrarBottombar = rutaActual in rutasPrincipales
+    val suiteType = if (mostrarBottombar) {
+        NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(
+            currentWindowAdaptiveInfo()
+        )
+    } else {
+        NavigationSuiteType.None
+    }
+    NavigationSuiteScaffold(
+        layoutType = suiteType,
+        navigationSuiteItems = {
+            item(
+                selected = rutaActual == "inicio",
+                onClick = {
+                    if (rutaActual != "inicio") {
+                        navController.navigate("inicio") {
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                },
+                icon = {
+                    if (rutaActual == "inicio") {
+                        Icon(
+                            Icons.Rounded.Home,
+                            contentDescription = "Inicio"
                         )
-                        item(
-                            selected = rutaActual == "ajustes",
-                            onClick = {
-                                if (rutaActual != "ajustes") {
-                                    navController.navigate("ajustes") {
-                                        popUpTo(navController.graph.startDestinationId) {
-                                            saveState = true
-                                        }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                }
-                            },
-                            icon = {
-                                if (rutaActual == "ajustes") {
-                                    Icon(
-                                        Icons.Rounded.Settings,
-                                        contentDescription = null
-                                    )
-                                } else {
-                                    Icon(
-                                        Icons.Outlined.Settings,
-                                        contentDescription = null
-                                    )
-                                }
-                            },
-                            label = { Text("Ajustes") }
+                    } else {
+                        Icon(
+                            Icons.Outlined.Home,
+                            contentDescription = "Inicio"
                         )
                     }
-                ) {
-                    Scaffold(
-                        topBar = {
-                            TopAppBar(
-                                title = {
-                                    when (rutaActual) {
-                                        "inicio" -> Text("LN Translator")
-                                        "ajustes" -> Text("Ajustes")
-                                        "prompts" -> Text("Prompts")
-                                        else -> Text("LN Translator")
-                                    }
-                                },
-                                navigationIcon = {
-                                    if (rutaActual == "prompts") {
-                                        IconButton(onClick = { navController.popBackStack() }) {
-                                            Icon(
-                                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                                                contentDescription = "Volver"
-                                            )
-                                        }
-                                    }
-                                }
-                            )
-                        },
-                        modifier = Modifier.fillMaxSize()
-                    ) { innerPadding ->
-                        NavHost(
-                            navController = navController,
-                            startDestination = "inicio",
-                            enterTransition = {
-                                fadeIn(animationSpec = tween(300)) +
-                                        slideInVertically(
-                                            animationSpec = tween(300),
-                                            initialOffsetY = { 40 })
-                            },
-                            exitTransition = {
-                                fadeOut(animationSpec = tween(300))
-                            },
-                            popEnterTransition = {
-                                fadeIn(animationSpec = tween(300)) +
-                                        slideInVertically(
-                                            animationSpec = tween(300),
-                                            initialOffsetY = { 40 })
-                            },
-                            popExitTransition = {
-                                fadeOut(animationSpec = tween(300))
-                            },
-                            modifier = Modifier.padding(
-                                innerPadding
-                            )
-                        ) {
-                            composable("inicio") {
-                                HomeScreen(
-                                    navController = navController,
-                                    onNavigateToPrompts = { navController.navigate("prompts") })
+                },
+                label = { Text("Inicio") }
+            )
+            item(
+                selected = rutaActual == "ajustes",
+                onClick = {
+                    if (rutaActual != "ajustes") {
+                        navController.navigate("ajustes") {
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = true
                             }
-                            composable("ajustes") {
-                                SettingsScreen()
-                            }
-                            composable(
-                                route = "prompts",
-                                enterTransition = {
-                                    slideInVertically(
-                                        initialOffsetY = { it },
-                                        animationSpec = tween(500)
-                                    )
-                                },
-                                popExitTransition = {
-                                    fadeOut(animationSpec = tween(500)) +
-                                            slideOutVertically(
-                                                targetOffsetY = { it },
-                                                animationSpec = tween(500)
-                                            )
-                                },
-                                exitTransition = { fadeOut(animationSpec = tween(300)) }
-                            ) {
-                                PromptScreen(
-                                    this@MainActivity
-                                ) {
-                                    navController.previousBackStackEntry?.savedStateHandle?.set(
-                                        "prompt_seleccionado",
-                                        it
-                                    )
-                                    navController.popBackStack()
-                                }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                },
+                icon = {
+                    if (rutaActual == "ajustes") {
+                        Icon(
+                            Icons.Rounded.Settings,
+                            contentDescription = null
+                        )
+                    } else {
+                        Icon(
+                            Icons.Outlined.Settings,
+                            contentDescription = null
+                        )
+                    }
+                },
+                label = { Text("Ajustes") }
+            )
+        }
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        when (rutaActual) {
+                            "inicio" -> Text("LN Translator")
+                            "ajustes" -> Text("Ajustes")
+                            "prompts" -> Text("Prompts")
+                            else -> Text("LN Translator")
+                        }
+                    },
+                    navigationIcon = {
+                        if (rutaActual == "prompts") {
+                            IconButton(onClick = { navController.popBackStack() }) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                    contentDescription = "Volver"
+                                )
                             }
                         }
                     }
-                }
-            }
+                )
+            },
+            modifier = Modifier.fillMaxSize()
+        ) { innerPadding ->
+            AppNavHost(navController, contexto, innerPadding)
         }
     }
 }

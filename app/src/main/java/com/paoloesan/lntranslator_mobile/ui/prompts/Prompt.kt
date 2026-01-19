@@ -1,4 +1,4 @@
-package com.paoloesan.lntranslator_mobile.ui.home
+package com.paoloesan.lntranslator_mobile.ui.prompts
 
 import android.content.Context
 import android.widget.Toast
@@ -27,7 +27,7 @@ object Prompt {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val json = prefs.getString(KEY_PROMPTS, null) ?: return emptyList()
 
-        val type = object : TypeToken<List<PromptData>>() {}.type
+        val type = object : com.google.gson.reflect.TypeToken<List<PromptData>>() {}.type
         return gson.fromJson(json, type)
     }
 

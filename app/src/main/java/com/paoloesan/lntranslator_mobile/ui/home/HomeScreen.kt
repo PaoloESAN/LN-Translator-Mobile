@@ -37,6 +37,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.paoloesan.lntranslator_mobile.ui.prompts.PromptDialog
 
 @Composable
 fun HomeScreen(

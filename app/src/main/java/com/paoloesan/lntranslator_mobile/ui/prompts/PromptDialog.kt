@@ -1,4 +1,4 @@
-package com.paoloesan.lntranslator_mobile.ui.home
+package com.paoloesan.lntranslator_mobile.ui.prompts
 
 import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
