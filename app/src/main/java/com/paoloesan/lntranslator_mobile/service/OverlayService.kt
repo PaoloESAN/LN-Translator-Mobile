@@ -2,18 +2,23 @@ package com.paoloesan.lntranslator_mobile.service
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.PixelFormat
 import android.view.Gravity
 import android.view.WindowManager
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import com.paoloesan.lntranslator_mobile.api.GeminiClient
 import com.paoloesan.lntranslator_mobile.ui.theme.LNTranslatormobileTheme
 
 class OverlayService : LifecycleService(), SavedStateRegistryOwner {
@@ -71,7 +76,7 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
         )
     }
 
-
+    private val controller by lazy { TranslationController(GeminiClient(applicationContext)) }
     private fun showOverlay() {
         params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -93,9 +98,8 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
             })
 
             setContent {
-                val capturedBitmap = androidx.compose.runtime.remember {
-                    androidx.compose.runtime.mutableStateOf<android.graphics.Bitmap?>(null)
-                }
+
+                val respuestaTraducida by controller.uiState.collectAsState()
 
                 LNTranslatormobileTheme {
                     FloatingOverlayUI(
@@ -107,11 +111,9 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
                         },
                         onExpand = ::updateWindowSize,
                         onTranslate = {
-                            captureAndTranslate { bitmap ->
-                                capturedBitmap.value = bitmap
-                            }
+                            processTranslation()
                         },
-                        capturedBitmap = capturedBitmap.value
+                        textoSalida = respuestaTraducida
                     )
                 }
             }
@@ -120,12 +122,20 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
         windowManager?.addView(composeView, params)
     }
 
-    private fun captureAndTranslate(onCaptured: (android.graphics.Bitmap?) -> Unit) {
-        //composeView?.visibility = android.view.View.INVISIBLE
+    private fun processTranslation() {
+        // composeView?.visibility = View.GONE
+        captureScreen { bitmap ->
+            // composeView?.visibility = View.VISIBLE
+            bitmap?.let {
+                controller.traducirCaptura(it, lifecycleScope)
+            }
+        }
+    }
+
+    private fun captureScreen(onCaptured: (Bitmap?) -> Unit) {
 
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
             ScreenCaptureService.instance?.captureScreen { bitmap ->
-                //composeView?.visibility = android.view.View.VISIBLE
 
                 if (bitmap != null) {
                     android.util.Log.d(

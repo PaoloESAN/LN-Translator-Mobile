@@ -1,7 +1,5 @@
 package com.paoloesan.lntranslator_mobile.service
 
-import android.graphics.Bitmap
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -34,9 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -46,7 +42,7 @@ fun FloatingOverlayUI(
     onDrag: (Float, Float) -> Unit,
     onExpand: (Boolean) -> Unit,
     onTranslate: () -> Unit,
-    capturedBitmap: Bitmap? = null
+    textoSalida: String? = null
 ) {
     var menuOpen by remember { mutableStateOf(false) }
 
@@ -119,14 +115,11 @@ fun FloatingOverlayUI(
                         .padding(12.dp)
                         .verticalScroll(rememberScrollState())
                 ) {
-                    if (capturedBitmap != null) {
-                        Image(
-                            bitmap = capturedBitmap.asImageBitmap(),
-                            contentDescription = "Captura de pantalla",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp)),
-                            contentScale = ContentScale.FillWidth
+                    if (textoSalida != null) {
+                        Text(
+                            text = textoSalida,
+                            color = Color.LightGray,
+                            fontSize = 13.sp
                         )
                     } else {
                         Text(

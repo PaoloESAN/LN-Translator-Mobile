@@ -1,6 +1,7 @@
 package com.paoloesan.lntranslator_mobile.ui.home
 
 import android.app.Activity
+import android.content.Context
 import android.media.projection.MediaProjectionManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -40,6 +41,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
+import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.navigation.NavController
 import com.paoloesan.lntranslator_mobile.service.OverlayService
@@ -53,6 +55,7 @@ fun HomeScreen(
     onNavigateToPrompts: () -> Unit
 ) {
     val context = LocalContext.current
+    val prefs = context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
     var textPrompt by rememberSaveable { mutableStateOf("") }
     var showDialog by remember { mutableStateOf(false) }
 
@@ -164,6 +167,7 @@ fun HomeScreen(
             }
 
             Button(onClick = {
+                prefs.edit { putString("prompt_app", textPrompt) }
                 if (!android.provider.Settings.canDrawOverlays(context)) {
                     val intent = android.content.Intent(
                         android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
