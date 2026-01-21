@@ -1,5 +1,7 @@
 package com.paoloesan.lntranslator_mobile.service
 
+import android.graphics.Bitmap
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -9,8 +11,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.CloseFullscreen
@@ -30,7 +34,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -38,7 +44,9 @@ import androidx.compose.ui.unit.sp
 fun FloatingOverlayUI(
     onClose: () -> Unit,
     onDrag: (Float, Float) -> Unit,
-    onExpand: (Boolean) -> Unit
+    onExpand: (Boolean) -> Unit,
+    onTranslate: () -> Unit,
+    capturedBitmap: Bitmap? = null
 ) {
     var menuOpen by remember { mutableStateOf(false) }
 
@@ -80,6 +88,13 @@ fun FloatingOverlayUI(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(text = "Traductor", color = Color.White, fontSize = 14.sp)
+                    IconButton(onClick = onTranslate, modifier = Modifier.size(24.dp)) {
+                        Icon(
+                            Icons.Rounded.Translate,
+                            contentDescription = "Traducir",
+                            tint = Color.White
+                        )
+                    }
                     IconButton(onClick = onClose, modifier = Modifier.size(24.dp)) {
                         Icon(
                             Icons.Rounded.Cancel,
@@ -99,14 +114,30 @@ fun FloatingOverlayUI(
                     }
                 }
 
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(
-                        text = "El texto aparecerá aquí...",
-                        color = Color.LightGray,
-                        fontSize = 13.sp
-                    )
+                Column(
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    if (capturedBitmap != null) {
+                        Image(
+                            bitmap = capturedBitmap.asImageBitmap(),
+                            contentDescription = "Captura de pantalla",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.FillWidth
+                        )
+                    } else {
+                        Text(
+                            text = "Presiona el botón de traducir para capturar la pantalla...",
+                            color = Color.LightGray,
+                            fontSize = 13.sp
+                        )
+                    }
                 }
             }
         }
     }
 }
+

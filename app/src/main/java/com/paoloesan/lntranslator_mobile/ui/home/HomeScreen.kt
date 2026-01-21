@@ -1,5 +1,10 @@
 package com.paoloesan.lntranslator_mobile.ui.home
 
+import android.app.Activity
+import android.media.projection.MediaProjectionManager
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -38,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.navigation.NavController
 import com.paoloesan.lntranslator_mobile.service.OverlayService
+import com.paoloesan.lntranslator_mobile.service.ScreenCaptureService
 import com.paoloesan.lntranslator_mobile.ui.prompts.PromptDialog
 
 @Composable
@@ -49,6 +55,23 @@ fun HomeScreen(
     val context = LocalContext.current
     var textPrompt by rememberSaveable { mutableStateOf("") }
     var showDialog by remember { mutableStateOf(false) }
+
+    val mediaProjectionManager = remember {
+        context.getSystemService(Activity.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+    }
+
+    val screenCaptureLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+            ScreenCaptureService.start(context, result.resultCode, result.data!!)
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                OverlayService.start(context)
+            }, 500)
+        } else {
+            Toast.makeText(context, "Permiso de captura denegado", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     val result by navController.currentBackStackEntry
         ?.savedStateHandle
@@ -141,14 +164,15 @@ fun HomeScreen(
             }
 
             Button(onClick = {
-                if (android.provider.Settings.canDrawOverlays(context)) {
-                    OverlayService.start(context)
-                } else {
+                if (!android.provider.Settings.canDrawOverlays(context)) {
                     val intent = android.content.Intent(
                         android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                         "package:${context.packageName}".toUri()
                     )
                     context.startActivity(intent)
+                } else {
+                    val captureIntent = mediaProjectionManager.createScreenCaptureIntent()
+                    screenCaptureLauncher.launch(captureIntent)
                 }
             }) {
                 Text("Iniciar Traductor")

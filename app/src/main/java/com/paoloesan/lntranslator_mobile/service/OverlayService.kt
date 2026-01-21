@@ -93,6 +93,10 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
             })
 
             setContent {
+                val capturedBitmap = androidx.compose.runtime.remember {
+                    androidx.compose.runtime.mutableStateOf<android.graphics.Bitmap?>(null)
+                }
+
                 LNTranslatormobileTheme {
                     FloatingOverlayUI(
                         onClose = { stopSelf() },
@@ -101,13 +105,40 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
                             params.y += dy.toInt()
                             windowManager?.updateViewLayout(this, params)
                         },
-                        onExpand = ::updateWindowSize
+                        onExpand = ::updateWindowSize,
+                        onTranslate = {
+                            captureAndTranslate { bitmap ->
+                                capturedBitmap.value = bitmap
+                            }
+                        },
+                        capturedBitmap = capturedBitmap.value
                     )
                 }
             }
         }
 
         windowManager?.addView(composeView, params)
+    }
+
+    private fun captureAndTranslate(onCaptured: (android.graphics.Bitmap?) -> Unit) {
+        //composeView?.visibility = android.view.View.INVISIBLE
+
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            ScreenCaptureService.instance?.captureScreen { bitmap ->
+                //composeView?.visibility = android.view.View.VISIBLE
+
+                if (bitmap != null) {
+                    android.util.Log.d(
+                        "Overlay",
+                        "Captura realizada: ${bitmap.width}x${bitmap.height}"
+                    )
+                    onCaptured(bitmap)
+                } else {
+                    android.util.Log.e("Overlay", "No se pudo capturar la pantalla")
+                    onCaptured(null)
+                }
+            }
+        }, 100)
     }
 
     private fun updateWindowSize(isExpanded: Boolean) {
@@ -131,5 +162,6 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
         composeView?.let {
             windowManager?.removeView(it)
         }
+        ScreenCaptureService.stop(this)
     }
 }
