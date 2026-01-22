@@ -14,6 +14,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.CloseFullscreen
 import androidx.compose.material.icons.rounded.Translate
@@ -42,7 +44,9 @@ fun FloatingOverlayUI(
     onDrag: (Float, Float) -> Unit,
     onExpand: (Boolean) -> Unit,
     onTranslate: () -> Unit,
-    textoSalida: String? = null
+    uiState: TranslationUiState = TranslationUiState(),
+    onAnterior: () -> Unit = {},
+    onSiguiente: () -> Unit = {}
 ) {
     var menuOpen by remember { mutableStateOf(false) }
 
@@ -63,7 +67,11 @@ fun FloatingOverlayUI(
                     }
                 },
         ) {
-            Icon(Icons.Rounded.Translate, contentDescription = "Abrir Traductor")
+            Icon(
+                Icons.Rounded.Translate,
+                contentDescription = "Abrir Traductor",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
         }
     } else {
         Card(
@@ -83,12 +91,53 @@ fun FloatingOverlayUI(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(text = "Traductor", color = Color.White, fontSize = 14.sp)
-                    IconButton(onClick = onTranslate, modifier = Modifier.size(24.dp)) {
+                    Text(
+                        text = if (uiState.total > 0) "${uiState.indiceActual + 1}/${uiState.total}" else "Traductor",
+                        color = Color.White,
+                        fontSize = 14.sp
+                    )
+                    IconButton(
+                        onClick = onAnterior,
+                        modifier = Modifier.size(24.dp),
+                        enabled = uiState.puedeIrAnterior
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
+                            contentDescription = "Anterior",
+                            tint = if (uiState.puedeIrAnterior) Color.White else Color.Gray
+                        )
+                    }
+                    IconButton(
+                        onClick = onTranslate,
+                        modifier = Modifier.size(24.dp),
+                        enabled = !uiState.isLoading
+                    ) {
                         Icon(
                             Icons.Rounded.Translate,
                             contentDescription = "Traducir",
-                            tint = Color.White
+                            tint = if (!uiState.isLoading) Color.White else Color.Gray
+                        )
+                    }/*
+                    IconButton(
+                        onClick = {},
+                        modifier = Modifier.size(24.dp),
+                        enabled = !uiState.isLoading
+                    ) {
+                        Icon(
+                            Icons.Rounded.SkipNext,
+                            contentDescription = "Precargar",
+                            tint = if (!uiState.isLoading) Color.White else Color.Gray
+                        )
+                    }*/
+                    IconButton(
+                        onClick = onSiguiente,
+                        modifier = Modifier.size(24.dp),
+                        enabled = uiState.puedeIrSiguiente
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                            contentDescription = "Siguiente",
+                            tint = if (uiState.puedeIrSiguiente) Color.White else Color.Gray
                         )
                     }
                     IconButton(onClick = onClose, modifier = Modifier.size(24.dp)) {
@@ -115,18 +164,38 @@ fun FloatingOverlayUI(
                         .padding(12.dp)
                         .verticalScroll(rememberScrollState())
                 ) {
-                    if (textoSalida != null) {
-                        Text(
-                            text = textoSalida,
-                            color = Color.LightGray,
-                            fontSize = 13.sp
-                        )
-                    } else {
-                        Text(
-                            text = "Presiona el botón de traducir para capturar la pantalla...",
-                            color = Color.LightGray,
-                            fontSize = 13.sp
-                        )
+                    when {
+                        uiState.isLoading -> {
+                            Text(
+                                text = "Traduciendo...",
+                                color = Color.Cyan,
+                                fontSize = 13.sp
+                            )
+                        }
+
+                        uiState.error != null -> {
+                            Text(
+                                text = uiState.error,
+                                color = Color(0xFFFF6B6B),
+                                fontSize = 13.sp
+                            )
+                        }
+
+                        uiState.textoActual != null -> {
+                            Text(
+                                text = uiState.textoActual!!,
+                                color = Color.LightGray,
+                                fontSize = 13.sp
+                            )
+                        }
+
+                        else -> {
+                            Text(
+                                text = "Presiona el botón de traducir para capturar la pantalla...",
+                                color = Color.LightGray,
+                                fontSize = 13.sp
+                            )
+                        }
                     }
                 }
             }

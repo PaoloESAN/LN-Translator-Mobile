@@ -99,7 +99,7 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
 
             setContent {
 
-                val respuestaTraducida by controller.uiState.collectAsState()
+                val uiState by controller.uiState.collectAsState()
 
                 LNTranslatormobileTheme {
                     FloatingOverlayUI(
@@ -113,7 +113,9 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
                         onTranslate = {
                             processTranslation()
                         },
-                        textoSalida = respuestaTraducida
+                        uiState = uiState,
+                        onAnterior = { controller.irAnterior() },
+                        onSiguiente = { controller.irSiguiente() }
                     )
                 }
             }
