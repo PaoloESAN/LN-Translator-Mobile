@@ -113,6 +113,9 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
                         onTranslate = {
                             processTranslation()
                         },
+                        onPreload = {
+                            processPreload()
+                        },
                         uiState = uiState,
                         onAnterior = { controller.irAnterior() },
                         onSiguiente = { controller.irSiguiente() }
@@ -132,6 +135,37 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
                 controller.traducirCaptura(it, lifecycleScope)
             }
         }
+    }
+
+    private fun processPreload() {
+        val accessibilityService = TapAccessibilityService.instance
+
+        if (accessibilityService == null) {
+            android.widget.Toast.makeText(
+                this,
+                "Activa el servicio de accesibilidad para usar esta función",
+                android.widget.Toast.LENGTH_LONG
+            ).show()
+            TapAccessibilityService.openAccessibilitySettings(this)
+            return
+        }
+
+        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+
+        composeView?.visibility = android.view.View.GONE
+
+        handler.postDelayed({
+            val displayMetrics = resources.displayMetrics
+            val x = 5f
+            val y = displayMetrics.heightPixels * 0.5f
+
+            accessibilityService.performTap(x, y) {
+                handler.postDelayed({
+                    composeView?.visibility = android.view.View.VISIBLE
+                    processTranslation()
+                }, 300)
+            }
+        }, 100)
     }
 
     private fun captureScreen(onCaptured: (Bitmap?) -> Unit) {

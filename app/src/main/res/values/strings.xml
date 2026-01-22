@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">LNTranslator-mobile</string>
+    <string name="accessibility_service_description">Permite al traductor simular toques en la pantalla para pasar páginas automáticamente en lectores de novelas.</string>
 </resources>

@@ -18,6 +18,7 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.CloseFullscreen
+import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -27,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -44,6 +46,7 @@ fun FloatingOverlayUI(
     onDrag: (Float, Float) -> Unit,
     onExpand: (Boolean) -> Unit,
     onTranslate: () -> Unit,
+    onPreload: () -> Unit = {},
     uiState: TranslationUiState = TranslationUiState(),
     onAnterior: () -> Unit = {},
     onSiguiente: () -> Unit = {}
@@ -92,8 +95,12 @@ fun FloatingOverlayUI(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = if (uiState.total > 0) "${uiState.indiceActual + 1}/${uiState.total}" else "Traductor",
-                        color = Color.White,
+                        text = when {
+                            uiState.isLoading && uiState.total > 0 -> "${uiState.indiceActual + 1}/${uiState.total} ..."
+                            uiState.total > 0 -> "${uiState.indiceActual + 1}/${uiState.total}"
+                            else -> "Traductor"
+                        },
+                        color = if (uiState.isLoading) Color.Cyan else Color.White,
                         fontSize = 14.sp
                     )
                     IconButton(
@@ -117,9 +124,9 @@ fun FloatingOverlayUI(
                             contentDescription = "Traducir",
                             tint = if (!uiState.isLoading) Color.White else Color.Gray
                         )
-                    }/*
+                    }
                     IconButton(
-                        onClick = {},
+                        onClick = onPreload,
                         modifier = Modifier.size(24.dp),
                         enabled = !uiState.isLoading
                     ) {
@@ -128,7 +135,7 @@ fun FloatingOverlayUI(
                             contentDescription = "Precargar",
                             tint = if (!uiState.isLoading) Color.White else Color.Gray
                         )
-                    }*/
+                    }
                     IconButton(
                         onClick = onSiguiente,
                         modifier = Modifier.size(24.dp),
@@ -159,13 +166,15 @@ fun FloatingOverlayUI(
                     }
                 }
 
+                val scrollState = key(uiState.indiceActual) { rememberScrollState() }
+
                 Column(
                     modifier = Modifier
                         .padding(12.dp)
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(scrollState)
                 ) {
                     when {
-                        uiState.isLoading -> {
+                        uiState.isLoading && uiState.total == 0 -> {
                             Text(
                                 text = "Traduciendo...",
                                 color = Color.Cyan,
