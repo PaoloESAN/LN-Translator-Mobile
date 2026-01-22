@@ -18,7 +18,6 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.CloseFullscreen
-import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -124,7 +123,7 @@ fun FloatingOverlayUI(
                             contentDescription = "Traducir",
                             tint = if (!uiState.isLoading) Color.White else Color.Gray
                         )
-                    }
+                    }/*
                     IconButton(
                         onClick = onPreload,
                         modifier = Modifier.size(24.dp),
@@ -135,7 +134,7 @@ fun FloatingOverlayUI(
                             contentDescription = "Precargar",
                             tint = if (!uiState.isLoading) Color.White else Color.Gray
                         )
-                    }
+                    }*/
                     IconButton(
                         onClick = onSiguiente,
                         modifier = Modifier.size(24.dp),

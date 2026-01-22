@@ -138,6 +138,9 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
     }
 
     private fun processPreload() {
+        // COMENTADO: Servicio de accesibilidad para precargar la siguiente traduccion deshabilitado temporalmente por politicas de android
+        
+        /*
         val accessibilityService = TapAccessibilityService.instance
 
         if (accessibilityService == null) {
@@ -166,6 +169,7 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
                 }, 300)
             }
         }, 100)
+        */
     }
 
     private fun captureScreen(onCaptured: (Bitmap?) -> Unit) {

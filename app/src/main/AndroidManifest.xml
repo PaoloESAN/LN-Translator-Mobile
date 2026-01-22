@@ -43,6 +43,7 @@
             android:exported="false"
             android:foregroundServiceType="mediaProjection" />
 
+        <!-- COMENTADO: Servicio de accesibilidad deshabilitado temporalmente para permitir instalación por politicas de android
         <service
             android:name=".service.TapAccessibilityService"
             android:exported="false"
@@ -54,6 +55,7 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
         </service>
+        -->
 
     </application>
 
