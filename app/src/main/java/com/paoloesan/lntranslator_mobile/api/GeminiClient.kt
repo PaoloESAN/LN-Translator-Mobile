@@ -47,6 +47,7 @@ class GeminiClient(context: Context) {
         - NO incluyas el texto original en japonés.
         - NO agregues notas, comentarios ni explicaciones.
         - Ignora los encabezados de página que contienen el número de página y el título
+        - Si es una ilustración sin texto, responde "ILUSTRACIÓN SIN TEXTO".
         
         Traduce el texto japonés de esta imagen al español latino.
         """.trimIndent()
@@ -61,29 +62,125 @@ class GeminiClient(context: Context) {
     suspend fun generateFromImage(bitmap: Bitmap): String {
         if (apiKey.isEmpty()) return "Error: Configura tu API Key en ajustes"
 
-        return try {
-            val base64Image = bitmapToBase64(bitmap)
-            val request = GeminiRequest(
-                contents = listOf(
-                    Content(
-                        parts = listOf(
-                            Part(inline_data = InlineData("image/jpeg", base64Image)),
-                            Part(text = systemPrompt(prompt))
-                        )
+        val base64Image = bitmapToBase64(bitmap)
+        android.util.Log.d(
+            "GeminiClient",
+            "Imagen convertida a base64, longitud: ${base64Image.length}"
+        )
+
+        val request = GeminiRequest(
+            contents = listOf(
+                Content(
+                    parts = listOf(
+                        Part(inline_data = InlineData("image/jpeg", base64Image)),
+                        Part(text = systemPrompt(prompt))
                     )
                 )
             )
+        )
 
-            val response = apiService.generateContent(
-                model = "gemini-3-flash-preview",
-                apiKey = apiKey,
-                request = request
-            )
-            response.candidates.firstOrNull()?.content?.parts?.firstOrNull()?.text
-                ?: "Error: Respuesta vacía del modelo"
-        } catch (e: Exception) {
-            e.printStackTrace()
-            "Error: ${e.localizedMessage}"
+        val maxRetries = 3
+        var lastError = "Error desconocido"
+
+        for (attempt in 1..maxRetries) {
+            try {
+                android.util.Log.d(
+                    "GeminiClient",
+                    "Enviando petición a Gemini (intento $attempt/$maxRetries)..."
+                )
+
+                val response = apiService.generateContent(
+                    model = "gemini-3-flash-preview",
+                    apiKey = apiKey,
+                    request = request
+                )
+
+                android.util.Log.d("GeminiClient", "=== RESPUESTA RECIBIDA ===")
+                android.util.Log.d(
+                    "GeminiClient",
+                    "Candidates count: ${response.candidates?.size ?: 0}"
+                )
+
+                val candidate = response.candidates?.firstOrNull()
+                if (candidate == null) {
+                    android.util.Log.e(
+                        "GeminiClient",
+                        "No hay candidates. Feedback: ${response.promptFeedback}"
+                    )
+                    return "Error: Sin candidates. Feedback: ${response.promptFeedback}"
+                }
+
+                android.util.Log.d("GeminiClient", "FinishReason: ${candidate.finishReason}")
+
+                val content = candidate.content
+                if (content == null) {
+                    android.util.Log.e(
+                        "GeminiClient",
+                        "Content null. Razón: ${candidate.finishReason}"
+                    )
+                    return "Error: Content null. Razón: ${candidate.finishReason}"
+                }
+
+                android.util.Log.d("GeminiClient", "Parts count: ${content.parts?.size ?: 0}")
+                content.parts?.forEachIndexed { index, part ->
+                    android.util.Log.d(
+                        "GeminiClient",
+                        "Part[$index] text null?: ${part.text == null}"
+                    )
+                    android.util.Log.d(
+                        "GeminiClient",
+                        "Part[$index] text empty?: ${part.text?.isEmpty()}"
+                    )
+                    android.util.Log.d(
+                        "GeminiClient",
+                        "Part[$index] text length: ${part.text?.length ?: 0}"
+                    )
+                    if (!part.text.isNullOrEmpty()) {
+                        android.util.Log.d(
+                            "GeminiClient",
+                            "Part[$index] preview: ${part.text.take(50)}"
+                        )
+                    }
+                }
+
+                val text = content.parts?.firstOrNull()?.text
+                if (text.isNullOrEmpty()) {
+                    android.util.Log.e("GeminiClient", "Texto vacío en respuesta")
+                    android.util.Log.e("GeminiClient", "Content completo: $content")
+                    return "Error: Texto vacío en respuesta"
+                }
+
+                android.util.Log.d("GeminiClient", "Texto recibido: ${text.take(100)}...")
+                return text
+
+            } catch (e: retrofit2.HttpException) {
+                val code = e.code()
+                val errorBody = e.response()?.errorBody()?.string()
+                android.util.Log.e("GeminiClient", "HTTP Error $code: $errorBody")
+
+                if (code == 503 && attempt < maxRetries) {
+                    val delayMs = attempt * 1500L
+                    android.util.Log.w(
+                        "GeminiClient",
+                        "Modelo sobrecargado, reintentando en ${delayMs}ms..."
+                    )
+                    kotlinx.coroutines.delay(delayMs)
+                    continue
+                }
+
+                lastError = when (code) {
+                    503 -> "Modelo sobrecargado. Intenta de nuevo."
+                    429 -> "Límite de peticiones. Espera un momento."
+                    else -> "Error HTTP $code"
+                }
+
+            } catch (e: Exception) {
+                android.util.Log.e("GeminiClient", "Exception: ${e.localizedMessage}")
+                e.printStackTrace()
+                lastError = "Error: ${e.localizedMessage}"
+            }
         }
+
+        return lastError
     }
 }
