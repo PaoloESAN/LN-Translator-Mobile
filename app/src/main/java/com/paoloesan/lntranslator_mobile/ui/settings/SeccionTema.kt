@@ -41,7 +41,7 @@ class SeccionTema(
     @Composable
     override fun ContenidoModal() {
         androidx.compose.runtime.LaunchedEffect(Unit) {
-            seleccionActual = prefs.getString("tema_app", "")
+            seleccionActual = prefs.getString("tema_app", "Predeterminado del sistema")
         }
         Column(
             modifier = Modifier

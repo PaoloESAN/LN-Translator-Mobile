@@ -40,7 +40,7 @@ class SeccionIdioma(
     @Composable
     override fun ContenidoModal() {
         androidx.compose.runtime.LaunchedEffect(Unit) {
-            seleccionActual = prefs.getString("idioma_app", "")
+            seleccionActual = prefs.getString("idioma_app", "Español")
         }
         Column(
             modifier = Modifier
