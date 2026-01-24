@@ -33,8 +33,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+        }
     }
     buildFeatures {
         compose = true
@@ -58,6 +60,7 @@ dependencies {
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
+    implementation(libs.okhttp.logging.interceptor)
     implementation(libs.androidx.lifecycle.service)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

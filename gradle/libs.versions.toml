@@ -1,13 +1,13 @@
 [versions]
 agp = "8.13.2"
-kotlin = "2.0.21"
+kotlin = "2.3.0"
 coreKtx = "1.17.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.12.1"
-composeBom = "2024.09.00"
+composeBom = "2026.01.00"
 material3 = "1.5.0-alpha11"
 appcompat = "1.7.1"
 navigationCompose = "2.9.6"
@@ -15,6 +15,7 @@ material3AdaptiveNavigationSuite = "1.4.0"
 gson = "2.13.2"
 runtimeLivedata = "1.10.1"
 retrofit = "3.0.0"
+okhttp = "5.3.2"
 lifecycleService = "2.10.0"
 
 [libraries]
@@ -40,6 +41,7 @@ google-gson = { group = "com.google.code.gson", name = "gson", version.ref = "gs
 androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
+okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
 androidx-lifecycle-service = { group = "androidx.lifecycle", name = "lifecycle-service", version.ref = "lifecycleService" }
 
 [plugins]
