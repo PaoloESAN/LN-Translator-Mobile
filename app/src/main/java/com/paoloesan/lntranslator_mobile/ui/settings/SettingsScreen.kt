@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Api
 import androidx.compose.material.icons.outlined.BrightnessMedium
 import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.Translate
@@ -41,6 +42,12 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
 
     val secciones = remember {
         listOf(
+            SeccionProveedor(
+                Icons.Outlined.Api,
+                "Proveedor de Traducción",
+                "Selecciona el proveedor de traducción a usar.",
+                context
+            ),
             SeccionKey(
                 Icons.Outlined.Key,
                 "API Key",

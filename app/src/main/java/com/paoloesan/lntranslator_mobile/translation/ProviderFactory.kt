@@ -3,6 +3,7 @@ package com.paoloesan.lntranslator_mobile.translation
 import android.content.Context
 import android.util.Log
 import com.paoloesan.lntranslator_mobile.translation.gemini.GeminiProvider
+import com.paoloesan.lntranslator_mobile.translation.local.LocalOcrGeminiProvider
 
 class ProviderFactory(private val context: Context) {
 
@@ -17,9 +18,8 @@ class ProviderFactory(private val context: Context) {
     }
 
     private fun registerProviders() {
-
         register(GeminiProvider(context))
-
+        register(LocalOcrGeminiProvider(context))
     }
 
     private fun register(provider: TranslationProvider) {
