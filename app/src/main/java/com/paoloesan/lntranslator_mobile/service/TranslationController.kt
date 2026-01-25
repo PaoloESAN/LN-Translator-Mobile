@@ -2,7 +2,8 @@ package com.paoloesan.lntranslator_mobile.service
 
 import android.graphics.Bitmap
 import androidx.lifecycle.LifecycleCoroutineScope
-import com.paoloesan.lntranslator_mobile.api.GeminiClient
+import com.paoloesan.lntranslator_mobile.translation.TranslationResult
+import com.paoloesan.lntranslator_mobile.translation.TranslationService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -24,7 +25,7 @@ data class TranslationUiState(
     val puedeIrSiguiente: Boolean get() = indiceActual < traducciones.size - 1
 }
 
-class TranslationController(private val geminiClient: GeminiClient) {
+class TranslationController(private val translationService: TranslationService) {
     private val _uiState = MutableStateFlow(TranslationUiState())
     val uiState = _uiState.asStateFlow()
 
@@ -34,18 +35,30 @@ class TranslationController(private val geminiClient: GeminiClient) {
         scope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
-                val resultado = geminiClient.generateFromImage(bitmap)
-                val nuevaLista = _uiState.value.traducciones + resultado
-                val nuevoIndice = if (_uiState.value.indiceActual == -1) {
-                    0
-                } else {
-                    _uiState.value.indiceActual
+                val resultado = translationService.translate(bitmap)
+
+                when (resultado) {
+                    is TranslationResult.Success -> {
+                        val nuevaLista = _uiState.value.traducciones + resultado.translatedText
+                        val nuevoIndice = if (_uiState.value.indiceActual == -1) {
+                            0
+                        } else {
+                            _uiState.value.indiceActual
+                        }
+                        _uiState.value = _uiState.value.copy(
+                            traducciones = nuevaLista,
+                            indiceActual = nuevoIndice,
+                            isLoading = false
+                        )
+                    }
+
+                    is TranslationResult.Error -> {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            error = resultado.message
+                        )
+                    }
                 }
-                _uiState.value = _uiState.value.copy(
-                    traducciones = nuevaLista,
-                    indiceActual = nuevoIndice,
-                    isLoading = false
-                )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,

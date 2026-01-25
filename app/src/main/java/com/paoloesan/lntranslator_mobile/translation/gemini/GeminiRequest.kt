@@ -1,4 +1,4 @@
-package com.paoloesan.lntranslator_mobile.api
+package com.paoloesan.lntranslator_mobile.translation.gemini
 
 data class GeminiRequest(val contents: List<Content>)
 data class Content(val parts: List<Part>)

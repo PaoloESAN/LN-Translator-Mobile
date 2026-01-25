@@ -1,4 +1,4 @@
-package com.paoloesan.lntranslator_mobile.api
+package com.paoloesan.lntranslator_mobile.translation.gemini
 
 import retrofit2.http.Body
 import retrofit2.http.POST

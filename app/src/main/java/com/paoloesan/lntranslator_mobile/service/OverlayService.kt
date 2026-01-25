@@ -18,7 +18,7 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
-import com.paoloesan.lntranslator_mobile.api.GeminiClient
+import com.paoloesan.lntranslator_mobile.translation.TranslationService
 import com.paoloesan.lntranslator_mobile.ui.theme.LNTranslatormobileTheme
 
 class OverlayService : LifecycleService(), SavedStateRegistryOwner {
@@ -76,7 +76,7 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
         )
     }
 
-    private val controller by lazy { TranslationController(GeminiClient(applicationContext)) }
+    private val controller by lazy { TranslationController(TranslationService(applicationContext)) }
     private fun showOverlay() {
         params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
