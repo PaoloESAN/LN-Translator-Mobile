@@ -10,6 +10,7 @@ import com.google.gson.reflect.TypeToken
 import com.paoloesan.lntranslator_mobile.translation.ImageTranslationRequest
 import com.paoloesan.lntranslator_mobile.translation.TranslationProvider
 import com.paoloesan.lntranslator_mobile.translation.TranslationResult
+import com.paoloesan.lntranslator_mobile.translation.prompts.TranslationPrompts
 import kotlinx.coroutines.delay
 import okhttp3.ConnectionPool
 import okhttp3.Interceptor
@@ -106,7 +107,7 @@ class GeminiProvider(context: Context) : TranslationProvider {
             )
         }
 
-        val prompt = buildSystemPrompt(request.prompt)
+        val prompt = TranslationPrompts.getImageTranslationPrompt(appContext, request.prompt)
         val geminiRequest = GeminiRequest(
             contents = listOf(
                 Content(
@@ -281,27 +282,6 @@ class GeminiProvider(context: Context) : TranslationProvider {
         )
     }
 
-    private fun buildSystemPrompt(userContextPrompt: String): String {
-        return """
-        Eres un traductor experto de japonés a español latino especializado en novelas ligeras.
-
-        CONTEXTO DE LA OBRA:
-        $userContextPrompt
-
-        INSTRUCCIONES:
-        - El texto en la imagen está en japonés vertical, se lee de derecha a izquierda.
-        - Traduce TODO el texto visible al español latino.
-        - Mantén el tono y estilo narrativo apropiado para novelas ligeras.
-        - Usa los nombres de personajes y términos como se especifican en el contexto.
-        - Responde ÚNICAMENTE con la traducción en español.
-        - NO incluyas el texto original en japonés.
-        - NO agregues notas, comentarios ni explicaciones.
-        - Ignora los encabezados de página que contienen el número de página y el título
-        - Si es una ilustración sin texto, responde "ILUSTRACIÓN SIN TEXTO".
-        
-        Traduce el texto japonés de esta imagen al español latino.
-        """.trimIndent()
-    }
 
     private fun bitmapToBase64(bitmap: Bitmap): String {
         val outputStream = ByteArrayOutputStream()

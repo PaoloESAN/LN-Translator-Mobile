@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.paoloesan.lntranslator_mobile.translation.prompts.TranslationPrompts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -17,7 +18,8 @@ class GeminiTextModel(context: Context) : TextTranslationModel {
     override val modelId: String = "gemini"
     override val displayName: String = "Gemini"
 
-    private val prefs = context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
+    private val appContext = context.applicationContext
+    private val prefs = appContext.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
 
     private val httpClient = OkHttpClient.Builder()
         .connectTimeout(60, TimeUnit.SECONDS)
@@ -46,7 +48,7 @@ class GeminiTextModel(context: Context) : TextTranslationModel {
             return TextTranslationResult.Error("Configura tu API Key de Gemini en ajustes")
         }
 
-        val prompt = buildTranslationPrompt(japaneseText, contextPrompt)
+        val prompt = TranslationPrompts.getTextTranslationPrompt(appContext, japaneseText, contextPrompt)
 
         val requestBody = """
         {
@@ -128,26 +130,6 @@ class GeminiTextModel(context: Context) : TextTranslationModel {
             Log.e(TAG, "Error parseando respuesta: ${e.localizedMessage}")
             null
         }
-    }
-
-    private fun buildTranslationPrompt(japaneseText: String, userContext: String): String {
-        return """
-Eres un traductor experto de japonés a español latino especializado en novelas ligeras.
-
-CONTEXTO DE LA OBRA:
-$userContext
-
-TEXTO JAPONÉS A TRADUCIR:
-$japaneseText
-
-INSTRUCCIONES:
-- Traduce el texto al español latino.
-- Mantén el tono y estilo narrativo apropiado para novelas ligeras.
-- Usa los nombres de personajes y términos como se especifican en el contexto.
-- Responde ÚNICAMENTE con la traducción en español.
-- NO incluyas el texto original en japonés.
-- NO agregues notas, comentarios ni explicaciones.
-        """.trim()
     }
 
     private fun loadApiKeys(): List<String> {

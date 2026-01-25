@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
+import com.paoloesan.lntranslator_mobile.translation.prompts.TranslationPrompts
 
 class SeccionIdioma(
     override val icono: ImageVector,
@@ -48,10 +49,7 @@ class SeccionIdioma(
                 .padding(8.dp),
             horizontalAlignment = Alignment.Start,
         ) {
-            val opciones = listOf(
-                "Español",
-                //"Inglés"
-            )
+            val opciones = TranslationPrompts.getAvailableLanguages()
             opciones.forEach { opcion ->
                 Row(
                     modifier = Modifier
