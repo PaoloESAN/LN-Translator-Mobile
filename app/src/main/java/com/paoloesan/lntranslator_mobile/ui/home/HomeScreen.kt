@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.navigation.NavController
+import com.paoloesan.lntranslator_mobile.LocalStrings
 import com.paoloesan.lntranslator_mobile.service.OverlayService
 import com.paoloesan.lntranslator_mobile.service.ScreenCaptureService
 import com.paoloesan.lntranslator_mobile.ui.prompts.PromptDialog
@@ -55,6 +56,7 @@ fun HomeScreen(
     onNavigateToPrompts: () -> Unit
 ) {
     val context = LocalContext.current
+    val strings = LocalStrings.current
     val prefs = context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
     var textPrompt by rememberSaveable { mutableStateOf("") }
     var showDialog by remember { mutableStateOf(false) }
@@ -72,7 +74,7 @@ fun HomeScreen(
                 OverlayService.start(context)
             }, 500)
         } else {
-            Toast.makeText(context, "Permiso de captura denegado", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, strings.homePermissionDenied, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -118,7 +120,7 @@ fun HomeScreen(
             )
 
             Text(
-                text = "\"Ingresa un prompt y empieza a traducir.\"",
+                text = "\"${strings.homeWelcome}\"",
                 fontStyle = FontStyle.Italic
             )
 
@@ -128,7 +130,7 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedTextField(
-                    label = { Text(text = "Prompt de contexto") },
+                    label = { Text(text = strings.homePromptLabel) },
                     value = textPrompt,
                     onValueChange = { textPrompt = it },
                     minLines = 3,
@@ -146,7 +148,7 @@ fun HomeScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.ChatBubbleOutline,
-                            contentDescription = "Ver prompts guardados"
+                            contentDescription = strings.homeViewPrompts
                         )
                     }
                     IconButton(
@@ -160,7 +162,7 @@ fun HomeScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Save,
-                            contentDescription = "Guardar prompt actual"
+                            contentDescription = strings.homeSavePrompt
                         )
                     }
                 }
@@ -179,7 +181,7 @@ fun HomeScreen(
                     screenCaptureLauncher.launch(captureIntent)
                 }
             }) {
-                Text("Iniciar Traductor")
+                Text(strings.homeStartButton)
             }
         }
     }

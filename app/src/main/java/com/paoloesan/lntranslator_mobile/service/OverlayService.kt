@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.PixelFormat
 import android.view.Gravity
 import android.view.WindowManager
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
@@ -18,7 +19,9 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import com.paoloesan.lntranslator_mobile.LocalStrings
 import com.paoloesan.lntranslator_mobile.translation.TranslationService
+import com.paoloesan.lntranslator_mobile.ui.strings.StringsProvider
 import com.paoloesan.lntranslator_mobile.ui.theme.LNTranslatormobileTheme
 
 class OverlayService : LifecycleService(), SavedStateRegistryOwner {
@@ -58,9 +61,13 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
     }
 
     private fun createNotification(): android.app.Notification {
+        val prefs = getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
+        val idiomaActual = prefs.getString("idioma_app", null)
+        val strings = StringsProvider.getStrings(idiomaActual)
+
         return androidx.core.app.NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Overlay Activo")
-            .setContentText("El traductor está funcionando sobre otras apps")
+            .setContentTitle(strings.notifTitle)
+            .setContentText(strings.notifDesc)
             .setSmallIcon(android.R.drawable.ic_menu_view)
             .setOngoing(true)
             .build()
@@ -98,28 +105,33 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
             })
 
             setContent {
-
+                val prefs = getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
+                val idiomaActual = prefs.getString("idioma_app", null)
+                val strings = StringsProvider.getStrings(idiomaActual)
+                
                 val uiState by controller.uiState.collectAsState()
 
-                LNTranslatormobileTheme {
-                    FloatingOverlayUI(
-                        onClose = { stopSelf() },
-                        onDrag = { dx, dy ->
-                            params.x += dx.toInt()
-                            params.y += dy.toInt()
-                            windowManager?.updateViewLayout(this, params)
-                        },
-                        onExpand = ::updateWindowSize,
-                        onTranslate = {
-                            processTranslation()
-                        },
-                        onPreload = {
-                            processPreload()
-                        },
-                        uiState = uiState,
-                        onAnterior = { controller.irAnterior() },
-                        onSiguiente = { controller.irSiguiente() }
-                    )
+                CompositionLocalProvider(LocalStrings provides strings) {
+                    LNTranslatormobileTheme {
+                        FloatingOverlayUI(
+                            onClose = { stopSelf() },
+                            onDrag = { dx, dy ->
+                                params.x += dx.toInt()
+                                params.y += dy.toInt()
+                                windowManager?.updateViewLayout(this, params)
+                            },
+                            onExpand = ::updateWindowSize,
+                            onTranslate = {
+                                processTranslation()
+                            },
+                            onPreload = {
+                                processPreload()
+                            },
+                            uiState = uiState,
+                            onAnterior = { controller.irAnterior() },
+                            onSiguiente = { controller.irSiguiente() }
+                        )
+                    }
                 }
             }
         }
@@ -128,9 +140,7 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
     }
 
     private fun processTranslation() {
-        // composeView?.visibility = View.GONE
         captureScreen { bitmap ->
-            // composeView?.visibility = View.VISIBLE
             bitmap?.let {
                 controller.traducirCaptura(it, lifecycleScope)
             }
@@ -139,44 +149,11 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
 
     private fun processPreload() {
         // COMENTADO: Servicio de accesibilidad para precargar la siguiente traduccion deshabilitado temporalmente por politicas de android
-        
-        /*
-        val accessibilityService = TapAccessibilityService.instance
-
-        if (accessibilityService == null) {
-            android.widget.Toast.makeText(
-                this,
-                "Activa el servicio de accesibilidad para usar esta función",
-                android.widget.Toast.LENGTH_LONG
-            ).show()
-            TapAccessibilityService.openAccessibilitySettings(this)
-            return
-        }
-
-        val handler = android.os.Handler(android.os.Looper.getMainLooper())
-
-        composeView?.visibility = android.view.View.GONE
-
-        handler.postDelayed({
-            val displayMetrics = resources.displayMetrics
-            val x = 5f
-            val y = displayMetrics.heightPixels * 0.5f
-
-            accessibilityService.performTap(x, y) {
-                handler.postDelayed({
-                    composeView?.visibility = android.view.View.VISIBLE
-                    processTranslation()
-                }, 300)
-            }
-        }, 100)
-        */
     }
 
     private fun captureScreen(onCaptured: (Bitmap?) -> Unit) {
-
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
             ScreenCaptureService.instance?.captureScreen { bitmap ->
-
                 if (bitmap != null) {
                     android.util.Log.d(
                         "Overlay",

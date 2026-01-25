@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.core.content.edit
+import com.paoloesan.lntranslator_mobile.ui.strings.StringsProvider
+import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
 
 class TranslationService(private val context: Context) {
 
@@ -15,6 +17,9 @@ class TranslationService(private val context: Context) {
         private const val PREF_ACTIVE_PROVIDER = "active_translation_provider"
         private const val DEFAULT_PROVIDER = "gemini"
     }
+
+    private val strings: UiStrings
+        get() = StringsProvider.getStrings(prefs.getString("idioma_app", null))
 
     fun getActiveProvider(): TranslationProvider? {
         val providerId = prefs.getString(PREF_ACTIVE_PROVIDER, DEFAULT_PROVIDER) ?: DEFAULT_PROVIDER
@@ -47,14 +52,14 @@ class TranslationService(private val context: Context) {
         val provider = getActiveProvider()
         if (provider == null) {
             return TranslationResult.Error(
-                message = "No hay proveedor de traducción configurado",
+                message = strings.errorNoProvider,
                 errorType = TranslationResult.ErrorType.UNKNOWN
             )
         }
 
         if (!provider.isConfigured()) {
             return TranslationResult.Error(
-                message = "Configura tu API Key en ajustes para ${provider.displayName}",
+                message = strings.errorNoApiKey(provider.displayName),
                 errorType = TranslationResult.ErrorType.NO_API_KEY
             )
         }
@@ -82,27 +87,21 @@ class TranslationService(private val context: Context) {
         } catch (e: Exception) {
             Log.e(TAG, "Excepción durante traducción: ${e.localizedMessage}")
             TranslationResult.Error(
-                message = "Error inesperado: ${e.localizedMessage}",
+                message = "${strings.errorUnknown}: ${e.localizedMessage}",
                 errorType = TranslationResult.ErrorType.UNKNOWN
             )
         }
     }
 
     private fun validateBitmap(bitmap: Bitmap): TranslationResult.Error? {
-        Log.d(TAG, "=== VALIDANDO BITMAP ===")
-        Log.d(TAG, "Bitmap width: ${bitmap.width}, height: ${bitmap.height}")
-        Log.d(TAG, "Bitmap config: ${bitmap.config}")
-        Log.d(TAG, "Bitmap byteCount: ${bitmap.byteCount}")
-        Log.d(TAG, "Bitmap isRecycled: ${bitmap.isRecycled}")
-
         return when {
             bitmap.isRecycled -> TranslationResult.Error(
-                message = "Error: Bitmap fue reciclado antes de procesar",
+                message = strings.errorImageCorrupt,
                 errorType = TranslationResult.ErrorType.INVALID_IMAGE
             )
 
             bitmap.width == 0 || bitmap.height == 0 -> TranslationResult.Error(
-                message = "Error: Imagen capturada está vacía",
+                message = strings.errorImageCorrupt,
                 errorType = TranslationResult.ErrorType.INVALID_IMAGE
             )
 

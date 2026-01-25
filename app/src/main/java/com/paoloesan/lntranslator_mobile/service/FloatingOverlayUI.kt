@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.paoloesan.lntranslator_mobile.LocalStrings
 
 @Composable
 fun FloatingOverlayUI(
@@ -50,6 +51,7 @@ fun FloatingOverlayUI(
     onAnterior: () -> Unit = {},
     onSiguiente: () -> Unit = {}
 ) {
+    val strings = LocalStrings.current
     var menuOpen by remember { mutableStateOf(false) }
 
     if (!menuOpen) {
@@ -71,7 +73,7 @@ fun FloatingOverlayUI(
         ) {
             Icon(
                 Icons.Rounded.Translate,
-                contentDescription = "Abrir Traductor",
+                contentDescription = strings.overlayOpen,
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
@@ -97,7 +99,7 @@ fun FloatingOverlayUI(
                         text = when {
                             uiState.isLoading && uiState.total > 0 -> "${uiState.indiceActual + 1}/${uiState.total} ..."
                             uiState.total > 0 -> "${uiState.indiceActual + 1}/${uiState.total}"
-                            else -> "Traductor"
+                            else -> strings.overlayTitle
                         },
                         color = if (uiState.isLoading) Color.Cyan else Color.White,
                         fontSize = 14.sp
@@ -109,7 +111,7 @@ fun FloatingOverlayUI(
                     ) {
                         Icon(
                             Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
-                            contentDescription = "Anterior",
+                            contentDescription = strings.overlayPrevious,
                             tint = if (uiState.puedeIrAnterior) Color.White else Color.Gray
                         )
                     }
@@ -120,21 +122,10 @@ fun FloatingOverlayUI(
                     ) {
                         Icon(
                             Icons.Rounded.Translate,
-                            contentDescription = "Traducir",
+                            contentDescription = strings.overlayTranslate,
                             tint = if (!uiState.isLoading) Color.White else Color.Gray
                         )
-                    }/*
-                    IconButton(
-                        onClick = onPreload,
-                        modifier = Modifier.size(24.dp),
-                        enabled = !uiState.isLoading
-                    ) {
-                        Icon(
-                            Icons.Rounded.SkipNext,
-                            contentDescription = "Precargar",
-                            tint = if (!uiState.isLoading) Color.White else Color.Gray
-                        )
-                    }*/
+                    }
                     IconButton(
                         onClick = onSiguiente,
                         modifier = Modifier.size(24.dp),
@@ -142,14 +133,14 @@ fun FloatingOverlayUI(
                     ) {
                         Icon(
                             Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                            contentDescription = "Siguiente",
+                            contentDescription = strings.overlayNext,
                             tint = if (uiState.puedeIrSiguiente) Color.White else Color.Gray
                         )
                     }
                     IconButton(onClick = onClose, modifier = Modifier.size(24.dp)) {
                         Icon(
                             Icons.Rounded.Cancel,
-                            contentDescription = "Cerrar",
+                            contentDescription = strings.overlayClose,
                             tint = Color.White
                         )
                     }
@@ -159,7 +150,7 @@ fun FloatingOverlayUI(
                     }, modifier = Modifier.size(24.dp)) {
                         Icon(
                             Icons.Rounded.CloseFullscreen,
-                            contentDescription = "Cerrar",
+                            contentDescription = strings.overlayClose,
                             tint = Color.White
                         )
                     }
@@ -175,7 +166,7 @@ fun FloatingOverlayUI(
                     when {
                         uiState.isLoading && uiState.total == 0 -> {
                             Text(
-                                text = "Traduciendo...",
+                                text = strings.overlayLoading,
                                 color = Color.Cyan,
                                 fontSize = 13.sp
                             )
@@ -199,7 +190,7 @@ fun FloatingOverlayUI(
 
                         else -> {
                             Text(
-                                text = "Presiona el botón de traducir para capturar la pantalla...",
+                                text = strings.overlayHelp,
                                 color = Color.LightGray,
                                 fontSize = 13.sp
                             )
@@ -210,4 +201,3 @@ fun FloatingOverlayUI(
         }
     }
 }
-

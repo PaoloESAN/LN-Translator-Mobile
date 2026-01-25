@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.paoloesan.lntranslator_mobile.LocalStrings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -41,6 +42,7 @@ fun PromptScreen(
     context: Context,
     onPromptSelected: (String) -> Unit
 ) {
+    val strings = LocalStrings.current
     val promptsList = remember { mutableStateListOf<PromptData>() }
     var borrarDialog by remember { mutableStateOf(false) }
     var indexSeleccionado by remember { mutableIntStateOf(-1) }
@@ -69,7 +71,7 @@ fun PromptScreen(
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     ) {
-                        Text("Cancelar")
+                        Text(strings.buttonCancel)
                     }
                     Button(
                         onClick = {
@@ -83,7 +85,7 @@ fun PromptScreen(
                             contentColor = MaterialTheme.colorScheme.onPrimary
                         )
                     ) {
-                        Text("Borrar")
+                        Text(strings.buttonDelete)
                     }
                 }
             },
@@ -96,7 +98,7 @@ fun PromptScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        "¿Estas seguro de borrar el prompt?",
+                        strings.deletePromptTitle,
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
@@ -152,7 +154,7 @@ fun PromptScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Delete,
-                                contentDescription = "Eliminar Prompt"
+                                contentDescription = strings.deletePromptContentDescription
                             )
                         }
                     }

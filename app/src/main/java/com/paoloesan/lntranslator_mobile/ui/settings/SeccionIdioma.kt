@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import com.paoloesan.lntranslator_mobile.translation.prompts.TranslationPrompts
+import java.util.Locale
 
 class SeccionIdioma(
     override val icono: ImageVector,
@@ -32,17 +33,21 @@ class SeccionIdioma(
     private val prefs = contexto.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
 
     private var seleccionActual by mutableStateOf(
-        prefs.getString(
-            "idioma_app",
-            "Español"
-        )
+        prefs.getString("idioma_app", null) ?: getSystemLanguage()
     )
+
+    private fun getSystemLanguage(): String {
+        val systemLang = Locale.getDefault().language
+        return if (systemLang.startsWith("es", ignoreCase = true)) "Español" else "English"
+    }
 
     @Composable
     override fun ContenidoModal() {
         androidx.compose.runtime.LaunchedEffect(Unit) {
-            seleccionActual = prefs.getString("idioma_app", "Español")
+            val saved = prefs.getString("idioma_app", null)
+            seleccionActual = saved ?: getSystemLanguage()
         }
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -61,7 +66,6 @@ class SeccionIdioma(
                         {
                             seleccionActual = opcion
                         },
-
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     RadioButton(
@@ -73,7 +77,6 @@ class SeccionIdioma(
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(start = 4.dp)
                     )
-
                 }
             }
         }

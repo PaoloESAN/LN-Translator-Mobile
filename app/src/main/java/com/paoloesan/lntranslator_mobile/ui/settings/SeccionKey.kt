@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.paoloesan.lntranslator_mobile.LocalStrings
 
 class SeccionKey(
     override val icono: ImageVector,
@@ -74,6 +75,7 @@ class SeccionKey(
 
     @Composable
     override fun ContenidoModal() {
+        val strings = LocalStrings.current
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -83,7 +85,7 @@ class SeccionKey(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Puedes agregar hasta $MAX_API_KEYS claves API para rotar automáticamente:",
+                text = strings.keySectionDescription(MAX_API_KEYS),
                 style = MaterialTheme.typography.bodyMedium
             )
 
@@ -97,7 +99,7 @@ class SeccionKey(
                         value = key,
                         onValueChange = { newValue -> apiKeys[index] = newValue },
                         modifier = Modifier.weight(1f),
-                        label = { Text("API Key ${index + 1}") },
+                        label = { Text(strings.keyLabel(index + 1)) },
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         singleLine = true
@@ -110,7 +112,7 @@ class SeccionKey(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
-                                contentDescription = "Eliminar API Key",
+                                contentDescription = strings.keyDeleteContentDescription,
                                 tint = MaterialTheme.colorScheme.error
                             )
                         }
@@ -129,7 +131,7 @@ class SeccionKey(
                         modifier = Modifier.size(18.dp)
                     )
                     Text(
-                        text = " Agregar otra API Key",
+                        text = " ${strings.keyAddButton}",
                         modifier = Modifier.padding(start = 4.dp)
                     )
                 }
@@ -137,7 +139,7 @@ class SeccionKey(
 
             val linkColor = MaterialTheme.colorScheme.primary
             val annotatedText = buildAnnotatedString {
-                append("Consigue tu clave aquí: ")
+                append(strings.keyGetHere)
                 withLink(
                     LinkAnnotation.Url(
                         url = "https://aistudio.google.com/app/apikey",
@@ -160,7 +162,7 @@ class SeccionKey(
             )
 
             Text(
-                text = "Las claves rotarán automáticamente si una falla o alcanza su límite.",
+                text = strings.keyRotationInfo,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

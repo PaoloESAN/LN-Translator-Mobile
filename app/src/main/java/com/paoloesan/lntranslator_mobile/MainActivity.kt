@@ -1,5 +1,6 @@
 package com.paoloesan.lntranslator_mobile
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -23,13 +24,25 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.paoloesan.lntranslator_mobile.ui.navigation.AppNavHost
+import com.paoloesan.lntranslator_mobile.ui.strings.SpanishUiStrings
+import com.paoloesan.lntranslator_mobile.ui.strings.StringsProvider
+import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
 import com.paoloesan.lntranslator_mobile.ui.theme.LNTranslatormobileTheme
+
+// CompositionLocal para acceder a los strings en cualquier parte de la app
+val LocalStrings = staticCompositionLocalOf<UiStrings> { SpanishUiStrings }
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,9 +52,29 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
 
         setContent {
-            LNTranslatormobileTheme {
-                val navController = rememberNavController()
-                MainContent(navController, this@MainActivity)
+            val prefs = remember { getSharedPreferences("settings_prefs", Context.MODE_PRIVATE) }
+
+            var idiomaActual by remember {
+                mutableStateOf(prefs.getString("idioma_app", null))
+            }
+
+            LaunchedEffect(Unit) {
+                val listener =
+                    android.content.SharedPreferences.OnSharedPreferenceChangeListener { p, key ->
+                        if (key == "idioma_app") {
+                            idiomaActual = p.getString(key, null)
+                        }
+                    }
+                prefs.registerOnSharedPreferenceChangeListener(listener)
+            }
+
+            val strings = StringsProvider.getStrings(idiomaActual)
+
+            CompositionLocalProvider(LocalStrings provides strings) {
+                LNTranslatormobileTheme {
+                    val navController = rememberNavController()
+                    MainContent(navController, this@MainActivity)
+                }
             }
         }
     }
@@ -63,6 +96,7 @@ class MainActivity : AppCompatActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainContent(navController: NavHostController, contexto: AppCompatActivity) {
+    val strings = LocalStrings.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val rutaActual = navBackStackEntry?.destination?.route
     val rutasPrincipales = listOf("inicio", "ajustes")
@@ -94,16 +128,16 @@ fun MainContent(navController: NavHostController, contexto: AppCompatActivity) {
                     if (rutaActual == "inicio") {
                         Icon(
                             Icons.Rounded.Home,
-                            contentDescription = "Inicio"
+                            contentDescription = strings.navHome
                         )
                     } else {
                         Icon(
                             Icons.Outlined.Home,
-                            contentDescription = "Inicio"
+                            contentDescription = strings.navHome
                         )
                     }
                 },
-                label = { Text("Inicio") }
+                label = { Text(strings.navHome) }
             )
             item(
                 selected = rutaActual == "ajustes",
@@ -122,16 +156,16 @@ fun MainContent(navController: NavHostController, contexto: AppCompatActivity) {
                     if (rutaActual == "ajustes") {
                         Icon(
                             Icons.Rounded.Settings,
-                            contentDescription = null
+                            contentDescription = strings.navSettings
                         )
                     } else {
                         Icon(
                             Icons.Outlined.Settings,
-                            contentDescription = null
+                            contentDescription = strings.navSettings
                         )
                     }
                 },
-                label = { Text("Ajustes") }
+                label = { Text(strings.navSettings) }
             )
         }
     ) {
@@ -140,10 +174,10 @@ fun MainContent(navController: NavHostController, contexto: AppCompatActivity) {
                 TopAppBar(
                     title = {
                         when (rutaActual) {
-                            "inicio" -> Text("LN Translator")
-                            "ajustes" -> Text("Ajustes")
-                            "prompts" -> Text("Prompts")
-                            else -> Text("LN Translator")
+                            "inicio" -> Text(strings.appName)
+                            "ajustes" -> Text(strings.navSettings)
+                            "prompts" -> Text(strings.topbarPrompts)
+                            else -> Text(strings.appName)
                         }
                     },
                     navigationIcon = {
@@ -151,7 +185,7 @@ fun MainContent(navController: NavHostController, contexto: AppCompatActivity) {
                             IconButton(onClick = { navController.popBackStack() }) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                                    contentDescription = "Volver"
+                                    contentDescription = strings.navBack
                                 )
                             }
                         }

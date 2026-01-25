@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
+import com.paoloesan.lntranslator_mobile.LocalStrings
 
 class SeccionTema(
     override val icono: ImageVector,
@@ -35,22 +36,31 @@ class SeccionTema(
         prefs.getString(
             "tema_app",
             "Predeterminado del sistema"
-        )
+        ) ?: "Predeterminado del sistema"
     )
 
     @Composable
     override fun ContenidoModal() {
+        val strings = LocalStrings.current
+
+        val opciones = listOf(
+            "Predeterminado del sistema" to strings.themeSystem,
+            "Claro" to strings.themeLight,
+            "Oscuro" to strings.themeDark
+        )
+
         androidx.compose.runtime.LaunchedEffect(Unit) {
             seleccionActual = prefs.getString("tema_app", "Predeterminado del sistema")
+                ?: "Predeterminado del sistema"
         }
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(8.dp),
             horizontalAlignment = Alignment.Start,
         ) {
-            val opciones = listOf("Predeterminado del sistema", "Claro", "Oscuro")
-            opciones.forEach { opcion ->
+            opciones.forEach { (valorInterno, etiqueta) ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -59,21 +69,19 @@ class SeccionTema(
                             indication = null
                         )
                         {
-                            seleccionActual = opcion
+                            seleccionActual = valorInterno
                         },
-
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     RadioButton(
-                        selected = (opcion == seleccionActual),
-                        onClick = { seleccionActual = opcion }
+                        selected = (valorInterno == seleccionActual),
+                        onClick = { seleccionActual = valorInterno }
                     )
                     Text(
-                        text = opcion,
+                        text = etiqueta,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(start = 4.dp)
                     )
-
                 }
             }
         }

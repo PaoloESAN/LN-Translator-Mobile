@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.paoloesan.lntranslator_mobile.LocalStrings
 
 @Composable
 fun PromptDialog(
@@ -29,6 +30,7 @@ fun PromptDialog(
     abierto: Boolean,
     onDismissRequest: () -> Unit,
 ) {
+    val strings = LocalStrings.current
     var tituloPrompt by remember { mutableStateOf("") }
 
     LaunchedEffect(abierto) {
@@ -40,7 +42,7 @@ fun PromptDialog(
     if (abierto) {
         AlertDialog(
             title = {
-                Text("Guardar", style = MaterialTheme.typography.headlineSmall)
+                Text(strings.savePromptTitle, style = MaterialTheme.typography.headlineSmall)
             },
             onDismissRequest = onDismissRequest,
             confirmButton = {
@@ -56,7 +58,7 @@ fun PromptDialog(
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     ) {
-                        Text("Cerrar")
+                        Text(strings.buttonClose)
                     }
                     Button(
                         onClick = {
@@ -69,7 +71,7 @@ fun PromptDialog(
                             contentColor = MaterialTheme.colorScheme.onPrimary
                         )
                     ) {
-                        Text("Guardar")
+                        Text(strings.buttonSave)
                     }
                 }
             },
@@ -82,7 +84,7 @@ fun PromptDialog(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     OutlinedTextField(
-                        label = { Text("Titulo del prompt") },
+                        label = { Text(strings.promptTitleLabel) },
                         value = tituloPrompt,
                         onValueChange = { tituloPrompt = it },
                         modifier = Modifier.fillMaxWidth()

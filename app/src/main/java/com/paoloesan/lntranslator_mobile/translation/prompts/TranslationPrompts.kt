@@ -3,17 +3,16 @@ package com.paoloesan.lntranslator_mobile.translation.prompts
 import android.content.Context
 import com.paoloesan.lntranslator_mobile.translation.prompts.languages.EnglishPrompt
 import com.paoloesan.lntranslator_mobile.translation.prompts.languages.SpanishPrompt
+import java.util.Locale
 
 object TranslationPrompts {
 
     private const val PREF_NAME = "settings_prefs"
     private const val PREF_LANGUAGE = "idioma_app"
-    private const val DEFAULT_LANGUAGE = "Español"
 
     val availableLanguages: Map<String, LanguagePrompt> = mapOf(
         "Español" to SpanishPrompt,
         "English" to EnglishPrompt
-        // more languages
     )
 
     fun getAvailableLanguages(): List<String> = availableLanguages.keys.toList()
@@ -45,6 +44,11 @@ object TranslationPrompts {
 
     private fun getSelectedLanguage(context: Context): String {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        return prefs.getString(PREF_LANGUAGE, DEFAULT_LANGUAGE) ?: DEFAULT_LANGUAGE
+        val saved = prefs.getString(PREF_LANGUAGE, null)
+
+        if (saved != null) return saved
+
+        val systemLang = Locale.getDefault().language
+        return if (systemLang.startsWith("es", ignoreCase = true)) "Español" else "English"
     }
 }

@@ -34,40 +34,41 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.paoloesan.lntranslator_mobile.LocalStrings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val strings = LocalStrings.current
 
-    val secciones = remember {
-        listOf(
-            SeccionProveedor(
-                Icons.Outlined.Api,
-                "Proveedor de Traducción",
-                "Selecciona el proveedor de traducción a usar.",
-                context
-            ),
-            SeccionKey(
-                Icons.Outlined.Key,
-                "API Key",
-                "El API Key que usará gemini.",
-                context
-            ),
-            SeccionTema(
-                Icons.Outlined.BrightnessMedium,
-                "Tema",
-                "Predeterminado del sistema/claro/oscuro.",
-                context
-            ),
-            SeccionIdioma(
-                Icons.Outlined.Translate,
-                "Idioma",
-                "Idiomas: Español, Inglés.",
-                context
-            ),
-        )
-    }
+    val secciones = listOf(
+        SeccionProveedor(
+            Icons.Outlined.Api,
+            strings.settingsProviderTitle,
+            strings.settingsProviderDescription,
+            context
+        ),
+        SeccionKey(
+            Icons.Outlined.Key,
+            strings.settingsApikeyTitle,
+            strings.settingsApikeyDescription,
+            context
+        ),
+        SeccionTema(
+            Icons.Outlined.BrightnessMedium,
+            strings.settingsThemeTitle,
+            strings.settingsThemeDescription,
+            context
+        ),
+        SeccionIdioma(
+            Icons.Outlined.Translate,
+            strings.settingsLanguageTitle,
+            strings.settingsLanguageDescription,
+            context
+        ),
+    )
+
     var seccionSeleccionada by remember { mutableStateOf<Seccion?>(null) }
     Column(
         modifier = modifier
@@ -103,7 +104,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     ) {
-                        Text("Cerrar")
+                        Text(strings.buttonClose)
                     }
                     Button(
                         onClick = {
@@ -117,7 +118,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                             contentColor = MaterialTheme.colorScheme.onPrimary
                         )
                     ) {
-                        Text("Guardar")
+                        Text(strings.buttonSave)
                     }
                 }
             },

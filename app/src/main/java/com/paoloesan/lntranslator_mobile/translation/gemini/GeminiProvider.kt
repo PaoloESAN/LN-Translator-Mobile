@@ -11,6 +11,8 @@ import com.paoloesan.lntranslator_mobile.translation.ImageTranslationRequest
 import com.paoloesan.lntranslator_mobile.translation.TranslationProvider
 import com.paoloesan.lntranslator_mobile.translation.TranslationResult
 import com.paoloesan.lntranslator_mobile.translation.prompts.TranslationPrompts
+import com.paoloesan.lntranslator_mobile.ui.strings.StringsProvider
+import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
 import kotlinx.coroutines.delay
 import okhttp3.ConnectionPool
 import okhttp3.Interceptor
@@ -39,6 +41,9 @@ class GeminiProvider(context: Context) : TranslationProvider {
         private const val MAX_RETRIES = 3
     }
 
+    private val strings: UiStrings
+        get() = StringsProvider.getStrings(prefs.getString("idioma_app", null))
+
     init {
         apiKeys = loadApiKeys()
         currentKeyIndex = prefs.getInt("api_key_index", 0)
@@ -50,19 +55,7 @@ class GeminiProvider(context: Context) : TranslationProvider {
     private fun createApiService(): GeminiApiService {
         val responseLoggingInterceptor = Interceptor { chain ->
             val request = chain.request()
-            Log.d("GeminiHTTP", ">>> Enviando request a: ${request.url}")
-
             val response = chain.proceed(request)
-
-            val responseBody = response.body
-            val source = responseBody.source()
-            source.request(Long.MAX_VALUE)
-            val buffer = source.buffer.clone()
-            val responseString = buffer.readUtf8()
-
-            Log.d("GeminiHTTP", "<<< Response Code: ${response.code}")
-            Log.d("GeminiHTTP", "<<< Response Body RAW: $responseString")
-
             response
         }
 
@@ -91,18 +84,16 @@ class GeminiProvider(context: Context) : TranslationProvider {
     override suspend fun translateImage(request: ImageTranslationRequest): TranslationResult {
         if (!isConfigured()) {
             return TranslationResult.Error(
-                message = "Configura tu API Key en ajustes",
+                message = strings.errorNoApiKey(displayName),
                 errorType = TranslationResult.ErrorType.NO_API_KEY
             )
         }
 
         val base64Image = bitmapToBase64(request.bitmap)
-        Log.d(TAG, "Imagen convertida a base64, longitud: ${base64Image.length}")
 
         if (base64Image.length < 1000) {
-            Log.e(TAG, "Base64 muy corto, imagen posiblemente corrupta")
             return TranslationResult.Error(
-                message = "Error: Imagen corrupta o muy pequeña",
+                message = strings.errorImageCorrupt,
                 errorType = TranslationResult.ErrorType.INVALID_IMAGE
             )
         }
@@ -125,14 +116,13 @@ class GeminiProvider(context: Context) : TranslationProvider {
     private suspend fun executeWithRetryAndRotation(request: GeminiRequest): TranslationResult {
         val totalKeysToTry = apiKeys.size.coerceAtMost(3)
         var lastError: TranslationResult.Error = TranslationResult.Error(
-            message = "Error desconocido",
+            message = strings.errorUnknown,
             errorType = TranslationResult.ErrorType.UNKNOWN
         )
         var keysTriedCount = 0
 
         while (keysTriedCount < totalKeysToTry) {
             val currentApiKey = getCurrentApiKey()
-            Log.d(TAG, "Usando API Key ${currentKeyIndex + 1}/${apiKeys.size}")
 
             when (val result = attemptTranslation(request, currentApiKey)) {
                 is TranslationResult.Success -> {
@@ -147,7 +137,6 @@ class GeminiProvider(context: Context) : TranslationProvider {
                         result.errorType == TranslationResult.ErrorType.INVALID_API_KEY
                     ) {
                         if (apiKeys.size > 1) {
-                            Log.w(TAG, "Error ${result.errorType}, rotando a siguiente key...")
                             getNextApiKey()
                             keysTriedCount++
                             continue
@@ -172,36 +161,28 @@ class GeminiProvider(context: Context) : TranslationProvider {
     ): TranslationResult {
         for (attempt in 1..MAX_RETRIES) {
             try {
-                Log.d(TAG, "Enviando petición a Gemini (intento $attempt/$MAX_RETRIES)...")
-
                 val response = apiService.generateContent(
                     model = MODEL_NAME,
                     apiKey = apiKey,
                     request = request
                 )
 
-                Log.d(TAG, "=== RESPUESTA RECIBIDA ===")
-                Log.d(TAG, "Candidates count: ${response.candidates?.size ?: 0}")
-
                 val candidate = response.candidates?.firstOrNull()
                 if (candidate == null) {
-                    Log.e(TAG, "No hay candidates. Feedback: ${response.promptFeedback}")
                     return TranslationResult.Error(
-                        message = "Error: Sin candidates. Feedback: ${response.promptFeedback}",
+                        message = strings.errorEmptyResponse,
                         errorType = TranslationResult.ErrorType.EMPTY_RESPONSE
                     )
                 }
 
                 val content = candidate.content
                 if (content == null) {
-                    Log.e(TAG, "Content null. Razón: ${candidate.finishReason}")
                     if (attempt < MAX_RETRIES) {
-                        Log.w(TAG, "Reintentando por content null...")
                         delay(500L)
                         continue
                     }
                     return TranslationResult.Error(
-                        message = "Error: Content null. Razón: ${candidate.finishReason}",
+                        message = strings.errorEmptyResponse,
                         errorType = TranslationResult.ErrorType.EMPTY_RESPONSE,
                         isRetryable = true
                     )
@@ -209,38 +190,30 @@ class GeminiProvider(context: Context) : TranslationProvider {
 
                 val text = content.parts?.firstOrNull()?.text
                 if (text.isNullOrEmpty()) {
-                    Log.e(TAG, "=== TEXTO VACÍO ===")
-                    Log.e(TAG, "Response JSON: ${Gson().toJson(response)}")
-
                     if (attempt < MAX_RETRIES) {
-                        Log.w(TAG, "Reintentando por texto vacío...")
                         delay(500L)
                         continue
                     }
                     return TranslationResult.Error(
-                        message = "Error: Texto vacío en respuesta",
+                        message = strings.errorEmptyResponse,
                         errorType = TranslationResult.ErrorType.EMPTY_RESPONSE,
                         isRetryable = true
                     )
                 }
 
-                Log.d(TAG, "Texto recibido: ${text.take(100)}...")
                 return TranslationResult.Success(text)
 
             } catch (e: HttpException) {
                 val code = e.code()
-                val errorBody = e.response()?.errorBody()?.string()
-                Log.e(TAG, "HTTP Error $code: $errorBody")
-
                 return when (code) {
                     429 -> TranslationResult.Error(
-                        message = "Límite de peticiones alcanzado",
+                        message = strings.errorRateLimited,
                         errorType = TranslationResult.ErrorType.RATE_LIMITED,
                         isRetryable = true
                     )
 
                     403 -> TranslationResult.Error(
-                        message = "API Key inválida",
+                        message = strings.errorInvalidApiKey,
                         errorType = TranslationResult.ErrorType.INVALID_API_KEY,
                         isRetryable = true
                     )
@@ -248,40 +221,35 @@ class GeminiProvider(context: Context) : TranslationProvider {
                     503 -> {
                         if (attempt < MAX_RETRIES) {
                             val delayMs = attempt * 1500L
-                            Log.w(TAG, "Modelo sobrecargado, reintentando en ${delayMs}ms...")
                             delay(delayMs)
                             continue
                         }
                         TranslationResult.Error(
-                            message = "Modelo sobrecargado. Intenta de nuevo.",
+                            message = strings.errorModelOverloaded,
                             errorType = TranslationResult.ErrorType.MODEL_OVERLOADED,
                             isRetryable = true
                         )
                     }
 
                     else -> TranslationResult.Error(
-                        message = "Error HTTP $code",
+                        message = "HTTP $code",
                         errorType = TranslationResult.ErrorType.NETWORK_ERROR
                     )
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Exception: ${e.localizedMessage}")
-                e.printStackTrace()
-
                 return TranslationResult.Error(
-                    message = "Error: ${e.localizedMessage}",
+                    message = "${strings.errorUnknown}: ${e.localizedMessage}",
                     errorType = TranslationResult.ErrorType.NETWORK_ERROR
                 )
             }
         }
 
         return TranslationResult.Error(
-            message = "Error después de $MAX_RETRIES intentos",
+            message = strings.errorUnknown,
             errorType = TranslationResult.ErrorType.UNKNOWN,
             isRetryable = false
         )
     }
-
 
     private fun bitmapToBase64(bitmap: Bitmap): String {
         val outputStream = ByteArrayOutputStream()
@@ -307,7 +275,6 @@ class GeminiProvider(context: Context) : TranslationProvider {
         if (apiKeys.isEmpty()) return ""
         currentKeyIndex = (currentKeyIndex + 1) % apiKeys.size
         prefs.edit { putInt("api_key_index", currentKeyIndex) }
-        Log.d(TAG, "Round robin: cambiando a API Key ${currentKeyIndex + 1}/${apiKeys.size}")
         return apiKeys[currentKeyIndex]
     }
 
