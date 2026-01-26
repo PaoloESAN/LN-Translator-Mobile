@@ -8,9 +8,7 @@ Translate Japanese Light Novels directly from official websites to your preferre
 
 ## Demo
 
-<p align="center">
-  <video src="screenshots/demo.mp4" width="300" controls muted autoplay loop></video>
-</p>
+https://github.com/user-attachments/assets/8ef0d227-eac6-4fd6-b907-974a7469fa7d
 
 ## Get Started
 
