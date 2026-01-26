@@ -6,6 +6,12 @@
 
 Translate Japanese Light Novels directly from official websites to your preferred language with ease. This tool is designed to provide a seamless reading experience for LN fans, removing the language barrier directly on your screen.
 
+<p align="center">
+  <a href="https://github.com/PaoloESAN/LN-Translator-Mobile/releases/download/v1.0.0/LNTranslation.apk">
+    <img src="https://img.shields.io/badge/Download-APK-green?style=for-the-badge&logo=android" alt="Download APK">
+  </a>
+</p>
+
 ## Demo
 
 https://github.com/user-attachments/assets/8ef0d227-eac6-4fd6-b907-974a7469fa7d
