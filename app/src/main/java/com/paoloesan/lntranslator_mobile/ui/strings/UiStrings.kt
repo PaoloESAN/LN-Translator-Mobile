@@ -57,6 +57,8 @@ interface UiStrings {
     val overlayClose: String
     val overlayLoading: String
     val overlayHelp: String
+    val overlayIncreaseFont: String
+    val overlayDecreaseFont: String
 
     // Notifications
     val notifTitle: String

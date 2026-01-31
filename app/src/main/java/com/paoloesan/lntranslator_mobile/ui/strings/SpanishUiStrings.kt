@@ -55,6 +55,8 @@ object SpanishUiStrings : UiStrings {
     override val overlayClose = "Cerrar"
     override val overlayLoading = "Traduciendo..."
     override val overlayHelp = "Presiona el botón de traducir para capturar la pantalla..."
+    override val overlayIncreaseFont = "Aumentar tamaño de letra"
+    override val overlayDecreaseFont = "Disminuir tamaño de letra"
 
     // Notifications
     override val notifTitle = "Traductor Activo"

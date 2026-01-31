@@ -1,5 +1,6 @@
 package com.paoloesan.lntranslator_mobile.service
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -16,8 +17,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.CloseFullscreen
+import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -28,16 +31,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.edit
 import com.paoloesan.lntranslator_mobile.LocalStrings
 
 @Composable
@@ -52,6 +57,14 @@ fun FloatingOverlayUI(
     onSiguiente: () -> Unit = {}
 ) {
     val strings = LocalStrings.current
+    val context = LocalContext.current
+    val prefs = remember {
+        context.getSharedPreferences(
+            "settings_prefs",
+            Context.MODE_PRIVATE
+        )
+    }
+    var currentFontSize by remember { mutableIntStateOf(prefs.getInt("overlay_font_size", 13)) }
     var menuOpen by remember { mutableStateOf(false) }
 
     if (!menuOpen) {
@@ -83,7 +96,11 @@ fun FloatingOverlayUI(
                 .fillMaxSize()
                 .padding(8.dp),
             shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface.copy(
+                    alpha = 0.95f
+                )
+            ),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
             Column {
@@ -112,7 +129,27 @@ fun FloatingOverlayUI(
                         Icon(
                             Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
                             contentDescription = strings.overlayPrevious,
-                            tint = if (uiState.puedeIrAnterior) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            tint = if (uiState.puedeIrAnterior) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
+                                alpha = 0.38f
+                            )
+                        )
+                    }
+                    IconButton(
+                        onClick = {
+                            if (currentFontSize > 10) {
+                                currentFontSize -= 1
+                                prefs.edit { putInt("overlay_font_size", currentFontSize) }
+                            }
+                        },
+                        modifier = Modifier.size(24.dp),
+                        enabled = currentFontSize > 10
+                    ) {
+                        Icon(
+                            Icons.Rounded.Remove,
+                            contentDescription = strings.overlayDecreaseFont,
+                            tint = if (currentFontSize > 10) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
+                                alpha = 0.38f
+                            )
                         )
                     }
                     IconButton(
@@ -123,7 +160,27 @@ fun FloatingOverlayUI(
                         Icon(
                             Icons.Rounded.Translate,
                             contentDescription = strings.overlayTranslate,
-                            tint = if (!uiState.isLoading) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            tint = if (!uiState.isLoading) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
+                                alpha = 0.38f
+                            )
+                        )
+                    }
+                    IconButton(
+                        onClick = {
+                            if (currentFontSize < 30) {
+                                currentFontSize += 1
+                                prefs.edit { putInt("overlay_font_size", currentFontSize) }
+                            }
+                        },
+                        modifier = Modifier.size(24.dp),
+                        enabled = currentFontSize < 30
+                    ) {
+                        Icon(
+                            Icons.Rounded.Add,
+                            contentDescription = strings.overlayIncreaseFont,
+                            tint = if (currentFontSize < 30) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
+                                alpha = 0.38f
+                            )
                         )
                     }
                     IconButton(
@@ -134,7 +191,9 @@ fun FloatingOverlayUI(
                         Icon(
                             Icons.AutoMirrored.Rounded.KeyboardArrowRight,
                             contentDescription = strings.overlayNext,
-                            tint = if (uiState.puedeIrSiguiente) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            tint = if (uiState.puedeIrSiguiente) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
+                                alpha = 0.38f
+                            )
                         )
                     }
                     IconButton(onClick = onClose, modifier = Modifier.size(24.dp)) {
@@ -168,7 +227,7 @@ fun FloatingOverlayUI(
                             Text(
                                 text = strings.overlayLoading,
                                 color = MaterialTheme.colorScheme.primary,
-                                fontSize = 13.sp
+                                fontSize = currentFontSize.sp
                             )
                         }
 
@@ -176,7 +235,7 @@ fun FloatingOverlayUI(
                             Text(
                                 text = uiState.error,
                                 color = MaterialTheme.colorScheme.error,
-                                fontSize = 13.sp
+                                fontSize = currentFontSize.sp
                             )
                         }
 
@@ -184,7 +243,7 @@ fun FloatingOverlayUI(
                             Text(
                                 text = uiState.textoActual!!,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 13.sp
+                                fontSize = currentFontSize.sp
                             )
                         }
 
@@ -192,7 +251,7 @@ fun FloatingOverlayUI(
                             Text(
                                 text = strings.overlayHelp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 13.sp
+                                fontSize = currentFontSize.sp
                             )
                         }
                     }
