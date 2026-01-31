@@ -83,14 +83,14 @@ fun FloatingOverlayUI(
                 .fillMaxSize()
                 .padding(8.dp),
             shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xE8151528)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
             Column {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0x33FFFFFF))
+                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
                         .padding(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -101,7 +101,7 @@ fun FloatingOverlayUI(
                             uiState.total > 0 -> "${uiState.indiceActual + 1}/${uiState.total}"
                             else -> strings.overlayTitle
                         },
-                        color = if (uiState.isLoading) Color.Cyan else Color.White,
+                        color = if (uiState.isLoading) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                         fontSize = 14.sp
                     )
                     IconButton(
@@ -112,7 +112,7 @@ fun FloatingOverlayUI(
                         Icon(
                             Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
                             contentDescription = strings.overlayPrevious,
-                            tint = if (uiState.puedeIrAnterior) Color.White else Color.Gray
+                            tint = if (uiState.puedeIrAnterior) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                         )
                     }
                     IconButton(
@@ -123,7 +123,7 @@ fun FloatingOverlayUI(
                         Icon(
                             Icons.Rounded.Translate,
                             contentDescription = strings.overlayTranslate,
-                            tint = if (!uiState.isLoading) Color.White else Color.Gray
+                            tint = if (!uiState.isLoading) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                         )
                     }
                     IconButton(
@@ -134,14 +134,14 @@ fun FloatingOverlayUI(
                         Icon(
                             Icons.AutoMirrored.Rounded.KeyboardArrowRight,
                             contentDescription = strings.overlayNext,
-                            tint = if (uiState.puedeIrSiguiente) Color.White else Color.Gray
+                            tint = if (uiState.puedeIrSiguiente) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                         )
                     }
                     IconButton(onClick = onClose, modifier = Modifier.size(24.dp)) {
                         Icon(
                             Icons.Rounded.Cancel,
                             contentDescription = strings.overlayClose,
-                            tint = Color.White
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     IconButton(onClick = {
@@ -151,7 +151,7 @@ fun FloatingOverlayUI(
                         Icon(
                             Icons.Rounded.CloseFullscreen,
                             contentDescription = strings.overlayClose,
-                            tint = Color.White
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
@@ -167,7 +167,7 @@ fun FloatingOverlayUI(
                         uiState.isLoading && uiState.total == 0 -> {
                             Text(
                                 text = strings.overlayLoading,
-                                color = Color.Cyan,
+                                color = MaterialTheme.colorScheme.primary,
                                 fontSize = 13.sp
                             )
                         }
@@ -175,7 +175,7 @@ fun FloatingOverlayUI(
                         uiState.error != null -> {
                             Text(
                                 text = uiState.error,
-                                color = Color(0xFFFF6B6B),
+                                color = MaterialTheme.colorScheme.error,
                                 fontSize = 13.sp
                             )
                         }
@@ -183,7 +183,7 @@ fun FloatingOverlayUI(
                         uiState.textoActual != null -> {
                             Text(
                                 text = uiState.textoActual!!,
-                                color = Color.LightGray,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 13.sp
                             )
                         }
@@ -191,7 +191,7 @@ fun FloatingOverlayUI(
                         else -> {
                             Text(
                                 text = strings.overlayHelp,
-                                color = Color.LightGray,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 13.sp
                             )
                         }

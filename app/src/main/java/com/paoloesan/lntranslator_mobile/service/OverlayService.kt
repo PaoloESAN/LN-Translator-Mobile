@@ -2,13 +2,18 @@ package com.paoloesan.lntranslator_mobile.service
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.PixelFormat
 import android.view.Gravity
 import android.view.WindowManager
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.ViewModelStore
@@ -105,14 +110,39 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
             })
 
             setContent {
-                val prefs = getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
-                val idiomaActual = prefs.getString("idioma_app", null)
+                val prefs = remember { getSharedPreferences("settings_prefs", MODE_PRIVATE) }
+                var idiomaActual by remember { mutableStateOf(prefs.getString("idioma_app", null)) }
+                var temaActual by remember {
+                    mutableStateOf(
+                        prefs.getString(
+                            "tema_app",
+                            "Predeterminado del sistema"
+                        )
+                    )
+                }
+
+                LaunchedEffect(Unit) {
+                    val listener = SharedPreferences.OnSharedPreferenceChangeListener { p, key ->
+                        when (key) {
+                            "idioma_app" -> idiomaActual = p.getString(key, null)
+                            "tema_app" -> temaActual =
+                                p.getString(key, "Predeterminado del sistema")
+                        }
+                    }
+                    prefs.registerOnSharedPreferenceChangeListener(listener)
+                }
+
                 val strings = StringsProvider.getStrings(idiomaActual)
-                
+                val isDarkTheme = when (temaActual) {
+                    "Oscuro" -> true
+                    "Claro" -> false
+                    else -> androidx.compose.foundation.isSystemInDarkTheme()
+                }
+
                 val uiState by controller.uiState.collectAsState()
 
                 CompositionLocalProvider(LocalStrings provides strings) {
-                    LNTranslatormobileTheme {
+                    LNTranslatormobileTheme(darkTheme = isDarkTheme) {
                         FloatingOverlayUI(
                             onClose = { stopSelf() },
                             onDrag = { dx, dy ->
