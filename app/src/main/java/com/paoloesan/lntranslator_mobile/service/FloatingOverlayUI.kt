@@ -40,10 +40,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
 import com.paoloesan.lntranslator_mobile.LocalStrings
+import dev.jeziellago.compose.markdowntext.MarkdownText
+
 
 @Composable
 fun FloatingOverlayUI(
@@ -240,10 +243,12 @@ fun FloatingOverlayUI(
                         }
 
                         uiState.textoActual != null -> {
-                            Text(
-                                text = uiState.textoActual!!,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = currentFontSize.sp
+                            MarkdownText(
+                                markdown = uiState.textoActual!!,
+                                style = TextStyle(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = currentFontSize.sp,
+                                )
                             )
                         }
 
