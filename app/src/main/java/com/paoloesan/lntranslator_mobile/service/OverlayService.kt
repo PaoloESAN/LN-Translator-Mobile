@@ -26,6 +26,7 @@ import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.paoloesan.lntranslator_mobile.LocalStrings
 import com.paoloesan.lntranslator_mobile.translation.TranslationService
+import com.paoloesan.lntranslator_mobile.ui.overlay.FloatingOverlayUI
 import com.paoloesan.lntranslator_mobile.ui.strings.StringsProvider
 import com.paoloesan.lntranslator_mobile.ui.theme.LNTranslatormobileTheme
 

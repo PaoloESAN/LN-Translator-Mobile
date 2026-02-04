@@ -1,4 +1,4 @@
-package com.paoloesan.lntranslator_mobile.service
+package com.paoloesan.lntranslator_mobile.ui.overlay
 
 import android.content.Context
 import androidx.compose.foundation.background
@@ -45,6 +45,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
 import com.paoloesan.lntranslator_mobile.LocalStrings
+import com.paoloesan.lntranslator_mobile.R
+import com.paoloesan.lntranslator_mobile.service.TranslationUiState
+import com.paoloesan.lntranslator_mobile.ui.utils.applyExtraBoldToMarkdown
 import dev.jeziellago.compose.markdowntext.MarkdownText
 
 
@@ -245,6 +248,13 @@ fun FloatingOverlayUI(
                         uiState.textoActual != null -> {
                             MarkdownText(
                                 markdown = uiState.textoActual!!,
+                                fontResource = R.font.roboto_regular,
+                                afterSetMarkdown = { textView ->
+                                    applyExtraBoldToMarkdown(
+                                        textView,
+                                        context
+                                    )
+                                },
                                 style = TextStyle(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontSize = currentFontSize.sp,
