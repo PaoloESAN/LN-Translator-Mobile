@@ -3,6 +3,7 @@ package com.paoloesan.lntranslator_mobile.ui.overlay
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -219,10 +221,29 @@ fun FloatingOverlayUI(
                         onBack = { configOpen = false }
                     )
                 } else {
+                    var swipeAccumulator by remember { mutableFloatStateOf(0f) }
+                    val swipeThreshold = 100f
+
                     Column(
                         modifier = Modifier
                             .padding(12.dp)
                             .verticalScroll(scrollState)
+                            .pointerInput(uiState.puedeIrAnterior, uiState.puedeIrSiguiente) {
+                                detectHorizontalDragGestures(
+                                    onDragStart = { swipeAccumulator = 0f },
+                                    onDragEnd = {
+                                        when {
+                                            swipeAccumulator < -swipeThreshold && uiState.puedeIrSiguiente -> onSiguiente()
+                                            swipeAccumulator > swipeThreshold && uiState.puedeIrAnterior -> onAnterior()
+                                        }
+                                        swipeAccumulator = 0f
+                                    },
+                                    onDragCancel = { swipeAccumulator = 0f },
+                                    onHorizontalDrag = { _, dragAmount ->
+                                        swipeAccumulator += dragAmount
+                                    }
+                                )
+                            }
                     ) {
                         when {
                             uiState.isLoading && uiState.total == 0 -> {
