@@ -86,6 +86,7 @@ fun FloatingOverlayUI(
     }
     var menuOpen by remember { mutableStateOf(false) }
     var configOpen by remember { mutableStateOf(false) }
+    val scrollState = key(uiState.indiceActual) { rememberScrollState() }
 
     if (!menuOpen) {
         IconButton(
@@ -218,8 +219,6 @@ fun FloatingOverlayUI(
                         onBack = { configOpen = false }
                     )
                 } else {
-                    val scrollState = key(uiState.indiceActual) { rememberScrollState() }
-
                     Column(
                         modifier = Modifier
                             .padding(12.dp)
