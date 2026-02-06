@@ -57,6 +57,14 @@ object SpanishUiStrings : UiStrings {
     override val overlayHelp = "Presiona el botón de traducir para capturar la pantalla..."
     override val overlayIncreaseFont = "Aumentar tamaño de letra"
     override val overlayDecreaseFont = "Disminuir tamaño de letra"
+    override val overlayConfig = "Configuración"
+
+    // Config Overlay
+    override val configFontSizeLabel = "Tamaño de letra"
+    override val configLineSpacingLabel = "Espacio entre líneas"
+    override val configPreviewText = "El veloz murciélago hindú comía feliz cardillo y kiwi. Este es un texto de muestra para ver el tamaño de la fuente."
+    override val configBack = "Volver"
+    override val configClose = "Cerrar Overlay"
 
     // Notifications
     override val notifTitle = "Traductor Activo"

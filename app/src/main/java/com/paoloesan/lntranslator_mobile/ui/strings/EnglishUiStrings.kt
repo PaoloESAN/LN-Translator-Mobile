@@ -57,6 +57,14 @@ object EnglishUiStrings : UiStrings {
     override val overlayHelp = "Press the translate button to capture the screen..."
     override val overlayIncreaseFont = "Increase font size"
     override val overlayDecreaseFont = "Decrease font size"
+    override val overlayConfig = "Settings"
+
+    // Config Overlay
+    override val configFontSizeLabel = "Font Size"
+    override val configLineSpacingLabel = "Line Spacing"
+    override val configPreviewText = "The quick brown fox jumps over the lazy dog. This is a sample text to preview the font size."
+    override val configBack = "Back"
+    override val configClose = "Close Overlay"
 
     // Notifications
     override val notifTitle = "Translator Active"

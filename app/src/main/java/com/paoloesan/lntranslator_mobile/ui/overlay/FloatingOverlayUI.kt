@@ -17,10 +17,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.CloseFullscreen
-import androidx.compose.material.icons.rounded.Remove
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -70,8 +68,24 @@ fun FloatingOverlayUI(
             Context.MODE_PRIVATE
         )
     }
-    var currentFontSize by remember { mutableIntStateOf(prefs.getInt("overlay_font_size", 13)) }
+    var currentFontSize by remember {
+        mutableIntStateOf(
+            prefs.getInt(
+                "overlay_font_size",
+                18
+            )
+        )
+    }
+    var currentLineSpacing by remember {
+        mutableIntStateOf(
+            prefs.getInt(
+                "overlay_line_spacing",
+                5
+            )
+        )
+    }
     var menuOpen by remember { mutableStateOf(false) }
+    var configOpen by remember { mutableStateOf(false) }
 
     if (!menuOpen) {
         IconButton(
@@ -141,24 +155,6 @@ fun FloatingOverlayUI(
                         )
                     }
                     IconButton(
-                        onClick = {
-                            if (currentFontSize > 10) {
-                                currentFontSize -= 1
-                                prefs.edit { putInt("overlay_font_size", currentFontSize) }
-                            }
-                        },
-                        modifier = Modifier.size(24.dp),
-                        enabled = currentFontSize > 10
-                    ) {
-                        Icon(
-                            Icons.Rounded.Remove,
-                            contentDescription = strings.overlayDecreaseFont,
-                            tint = if (currentFontSize > 10) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
-                                alpha = 0.38f
-                            )
-                        )
-                    }
-                    IconButton(
                         onClick = onTranslate,
                         modifier = Modifier.size(24.dp),
                         enabled = !uiState.isLoading
@@ -167,24 +163,6 @@ fun FloatingOverlayUI(
                             Icons.Rounded.Translate,
                             contentDescription = strings.overlayTranslate,
                             tint = if (!uiState.isLoading) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
-                                alpha = 0.38f
-                            )
-                        )
-                    }
-                    IconButton(
-                        onClick = {
-                            if (currentFontSize < 30) {
-                                currentFontSize += 1
-                                prefs.edit { putInt("overlay_font_size", currentFontSize) }
-                            }
-                        },
-                        modifier = Modifier.size(24.dp),
-                        enabled = currentFontSize < 30
-                    ) {
-                        Icon(
-                            Icons.Rounded.Add,
-                            contentDescription = strings.overlayIncreaseFont,
-                            tint = if (currentFontSize < 30) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
                                 alpha = 0.38f
                             )
                         )
@@ -202,10 +180,13 @@ fun FloatingOverlayUI(
                             )
                         )
                     }
-                    IconButton(onClick = onClose, modifier = Modifier.size(24.dp)) {
+                    IconButton(
+                        onClick = { configOpen = !configOpen },
+                        modifier = Modifier.size(24.dp)
+                    ) {
                         Icon(
-                            Icons.Rounded.Cancel,
-                            contentDescription = strings.overlayClose,
+                            Icons.Rounded.Settings,
+                            contentDescription = strings.overlayConfig,
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -221,53 +202,74 @@ fun FloatingOverlayUI(
                     }
                 }
 
-                val scrollState = key(uiState.indiceActual) { rememberScrollState() }
+                if (configOpen) {
+                    ConfigOverlayContent(
+                        currentFontSize = currentFontSize,
+                        currentLineSpacing = currentLineSpacing,
+                        onFontSizeChange = { newSize ->
+                            currentFontSize = newSize
+                            prefs.edit { putInt("overlay_font_size", newSize) }
+                        },
+                        onLineSpacingChange = { newSpacing ->
+                            currentLineSpacing = newSpacing
+                            prefs.edit { putInt("overlay_line_spacing", newSpacing) }
+                        },
+                        onClose = onClose,
+                        onBack = { configOpen = false }
+                    )
+                } else {
+                    val scrollState = key(uiState.indiceActual) { rememberScrollState() }
 
-                Column(
-                    modifier = Modifier
-                        .padding(12.dp)
-                        .verticalScroll(scrollState)
-                ) {
-                    when {
-                        uiState.isLoading && uiState.total == 0 -> {
-                            Text(
-                                text = strings.overlayLoading,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontSize = currentFontSize.sp
-                            )
-                        }
+                    Column(
+                        modifier = Modifier
+                            .padding(12.dp)
+                            .verticalScroll(scrollState)
+                    ) {
+                        when {
+                            uiState.isLoading && uiState.total == 0 -> {
+                                Text(
+                                    text = strings.overlayLoading,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontSize = currentFontSize.sp,
+                                    lineHeight = (currentFontSize + currentLineSpacing).sp
+                                )
+                            }
 
-                        uiState.error != null -> {
-                            Text(
-                                text = uiState.error,
-                                color = MaterialTheme.colorScheme.error,
-                                fontSize = currentFontSize.sp
-                            )
-                        }
+                            uiState.error != null -> {
+                                Text(
+                                    text = uiState.error,
+                                    color = MaterialTheme.colorScheme.error,
+                                    fontSize = currentFontSize.sp,
+                                    lineHeight = (currentFontSize + currentLineSpacing).sp
+                                )
+                            }
 
-                        uiState.textoActual != null -> {
-                            MarkdownText(
-                                markdown = uiState.textoActual!!,
-                                fontResource = R.font.roboto_regular,
-                                afterSetMarkdown = { textView ->
-                                    applyExtraBoldToMarkdown(
-                                        textView,
-                                        context
+                            uiState.textoActual != null -> {
+                                MarkdownText(
+                                    markdown = uiState.textoActual!!,
+                                    fontResource = R.font.roboto_regular,
+                                    afterSetMarkdown = { textView ->
+                                        applyExtraBoldToMarkdown(
+                                            textView,
+                                            context
+                                        )
+                                    },
+                                    style = TextStyle(
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontSize = currentFontSize.sp,
+                                        lineHeight = (currentFontSize + currentLineSpacing).sp
                                     )
-                                },
-                                style = TextStyle(
+                                )
+                            }
+
+                            else -> {
+                                Text(
+                                    text = strings.overlayHelp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontSize = currentFontSize.sp,
+                                    lineHeight = (currentFontSize + currentLineSpacing).sp
                                 )
-                            )
-                        }
-
-                        else -> {
-                            Text(
-                                text = strings.overlayHelp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = currentFontSize.sp
-                            )
+                            }
                         }
                     }
                 }

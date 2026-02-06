@@ -59,6 +59,14 @@ interface UiStrings {
     val overlayHelp: String
     val overlayIncreaseFont: String
     val overlayDecreaseFont: String
+    val overlayConfig: String
+
+    // Config Overlay
+    val configFontSizeLabel: String
+    val configLineSpacingLabel: String
+    val configPreviewText: String
+    val configBack: String
+    val configClose: String
 
     // Notifications
     val notifTitle: String
