@@ -25,7 +25,7 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,7 +58,7 @@ class MainActivity : AppCompatActivity() {
                 mutableStateOf(prefs.getString("idioma_app", null))
             }
 
-            LaunchedEffect(Unit) {
+            DisposableEffect(prefs) {
                 val listener =
                     android.content.SharedPreferences.OnSharedPreferenceChangeListener { p, key ->
                         if (key == "idioma_app") {
@@ -66,6 +66,10 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 prefs.registerOnSharedPreferenceChangeListener(listener)
+                
+                onDispose {
+                    prefs.unregisterOnSharedPreferenceChangeListener(listener)
+                }
             }
 
             val strings = StringsProvider.getStrings(idiomaActual)

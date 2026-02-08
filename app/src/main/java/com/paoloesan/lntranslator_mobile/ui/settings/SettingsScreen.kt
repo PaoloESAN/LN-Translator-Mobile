@@ -26,6 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -86,46 +87,48 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     }
 
     if (seccionSeleccionada != null) {
-        AlertDialog(
-            title = {
-                Text(seccionSeleccionada!!.titulo, style = MaterialTheme.typography.headlineSmall)
-            },
-            onDismissRequest = { seccionSeleccionada = null },
-            confirmButton = {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = { seccionSeleccionada = null },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
+        key(seccionSeleccionada) {
+            AlertDialog(
+                title = {
+                    Text(seccionSeleccionada!!.titulo, style = MaterialTheme.typography.headlineSmall)
+                },
+                onDismissRequest = { seccionSeleccionada = null },
+                confirmButton = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(strings.buttonClose)
+                        Button(
+                            onClick = { seccionSeleccionada = null },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        ) {
+                            Text(strings.buttonClose)
+                        }
+                        Button(
+                            onClick = {
+                                seccionSeleccionada?.guardarCambios({
+                                    seccionSeleccionada = null
+                                })
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        ) {
+                            Text(strings.buttonSave)
+                        }
                     }
-                    Button(
-                        onClick = {
-                            seccionSeleccionada?.guardarCambios({
-                                seccionSeleccionada = null
-                            })
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        )
-                    ) {
-                        Text(strings.buttonSave)
-                    }
+                },
+                text = {
+                    seccionSeleccionada?.ContenidoModal()
                 }
-            },
-            text = {
-                seccionSeleccionada?.ContenidoModal()
-            }
-        )
+            )
+        }
     }
 }
 

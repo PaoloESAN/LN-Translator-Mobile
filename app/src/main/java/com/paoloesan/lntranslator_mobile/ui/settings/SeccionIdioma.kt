@@ -44,8 +44,7 @@ class SeccionIdioma(
     @Composable
     override fun ContenidoModal() {
         androidx.compose.runtime.LaunchedEffect(Unit) {
-            val saved = prefs.getString("idioma_app", null)
-            seleccionActual = saved ?: getSystemLanguage()
+            seleccionActual = prefs.getString("idioma_app", null) ?: getSystemLanguage()
         }
 
         Column(
