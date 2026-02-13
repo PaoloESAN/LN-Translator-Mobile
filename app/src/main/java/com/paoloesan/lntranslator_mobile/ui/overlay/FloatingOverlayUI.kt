@@ -126,7 +126,7 @@ fun FloatingOverlayUI(
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
-            Column {
+            Column(modifier = Modifier.fillMaxSize()) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -226,7 +226,8 @@ fun FloatingOverlayUI(
 
                     Column(
                         modifier = Modifier
-                            .padding(12.dp)
+                            .weight(1f)
+                            .fillMaxWidth()
                             .verticalScroll(scrollState)
                             .pointerInput(uiState.puedeIrAnterior, uiState.puedeIrSiguiente) {
                                 detectHorizontalDragGestures(
@@ -244,6 +245,7 @@ fun FloatingOverlayUI(
                                     }
                                 )
                             }
+                            .padding(12.dp)
                     ) {
                         when {
                             uiState.isLoading && uiState.total == 0 -> {
