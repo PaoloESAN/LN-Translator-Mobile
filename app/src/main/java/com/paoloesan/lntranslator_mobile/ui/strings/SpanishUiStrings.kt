@@ -6,7 +6,7 @@ object SpanishUiStrings : UiStrings {
     override val navSettings = "Ajustes"
     override val navBack = "Volver"
     override val topbarPrompts = "Prompts"
-    
+
     override val settingsProviderTitle = "Proveedor de Traducción"
     override val settingsProviderDescription = "Selecciona el proveedor de traducción a usar."
     override val settingsApikeyTitle = "API Key"
@@ -15,19 +15,21 @@ object SpanishUiStrings : UiStrings {
     override val settingsThemeDescription = "Predeterminado del sistema/claro/oscuro."
     override val settingsLanguageTitle = "Idioma"
     override val settingsLanguageDescription = "Idiomas: Español, Inglés."
-    
+
     override val buttonClose = "Cerrar"
     override val buttonSave = "Guardar"
     override val buttonCancel = "Cancelar"
     override val buttonDelete = "Borrar"
-    
-    override val keySectionDescription: (Int) -> String = { max -> "Puedes agregar hasta $max claves API para rotar automáticamente:" }
+
+    override val keySectionDescription: (Int) -> String =
+        { max -> "Puedes agregar hasta $max claves API para rotar automáticamente:" }
     override val keyLabel: (Int) -> String = { index -> "API Key $index" }
     override val keyDeleteContentDescription = "Eliminar API Key"
     override val keyAddButton = "Agregar otra API Key"
     override val keyGetHere = "Consigue tu clave aquí: "
-    override val keyRotationInfo = "Las claves rotarán automáticamente si una falla o alcanza su límite."
-    
+    override val keyRotationInfo =
+        "Las claves rotarán automáticamente si una falla o alcanza su límite."
+
     override val themeSystem = "Predeterminado del sistema"
     override val themeLight = "Claro"
     override val themeDark = "Oscuro"
@@ -54,7 +56,11 @@ object SpanishUiStrings : UiStrings {
     override val overlayNext = "Siguiente"
     override val overlayClose = "Cerrar"
     override val overlayLoading = "Traduciendo..."
-    override val overlayHelp = "Presiona el botón de traducir para capturar la pantalla..."
+    override val overlayHelp = """
+        Presiona el botón de traducir para capturar la pantalla...
+        
+        Puedes hacer gestos a la derecha o izquierda para ir a una traducción siguiente o anterior.
+    """.trimIndent()
     override val overlayIncreaseFont = "Aumentar tamaño de letra"
     override val overlayDecreaseFont = "Disminuir tamaño de letra"
     override val overlayConfig = "Configuración"
@@ -62,7 +68,8 @@ object SpanishUiStrings : UiStrings {
     // Config Overlay
     override val configFontSizeLabel = "Tamaño de letra"
     override val configLineSpacingLabel = "Espacio entre líneas"
-    override val configPreviewText = "El veloz murciélago hindú comía feliz cardillo y kiwi. Este es un texto de muestra para ver el tamaño de la fuente."
+    override val configPreviewText =
+        "El veloz murciélago hindú comía feliz cardillo y kiwi. Este es un texto de muestra para ver el tamaño de la fuente."
     override val configBack = "Volver"
     override val configClose = "Cerrar Overlay"
 
@@ -72,7 +79,8 @@ object SpanishUiStrings : UiStrings {
 
     // Errors
     override val errorNoProvider = "No hay proveedor de traducción configurado"
-    override val errorNoApiKey: (String) -> String = { provider -> "Configura tu API Key en ajustes para $provider" }
+    override val errorNoApiKey: (String) -> String =
+        { provider -> "Configura tu API Key en ajustes para $provider" }
     override val errorImageCorrupt = "Error: Imagen corrupta o muy pequeña"
     override val errorEmptyResponse = "Error: Respuesta vacía de la IA"
     override val errorRateLimited = "Límite de peticiones alcanzado"
