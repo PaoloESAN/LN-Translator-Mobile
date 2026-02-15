@@ -48,6 +48,7 @@ import com.paoloesan.lntranslator_mobile.LocalStrings
 import com.paoloesan.lntranslator_mobile.R
 import com.paoloesan.lntranslator_mobile.service.TranslationUiState
 import com.paoloesan.lntranslator_mobile.ui.utils.applyExtraBoldToMarkdown
+import com.paoloesan.lntranslator_mobile.ui.utils.escapeAngleBrackets
 import dev.jeziellago.compose.markdowntext.MarkdownText
 
 
@@ -268,7 +269,7 @@ fun FloatingOverlayUI(
 
                             uiState.textoActual != null -> {
                                 MarkdownText(
-                                    markdown = uiState.textoActual!!,
+                                    markdown = escapeAngleBrackets(uiState.textoActual!!),
                                     fontResource = R.font.roboto_regular,
                                     afterSetMarkdown = { textView ->
                                         applyExtraBoldToMarkdown(

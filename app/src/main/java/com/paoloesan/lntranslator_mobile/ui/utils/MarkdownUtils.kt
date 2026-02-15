@@ -13,6 +13,18 @@ import com.paoloesan.lntranslator_mobile.R
 private var extraBoldTypeface: Typeface? = null
 
 /**
+ * Escapa los caracteres < y > en el texto para que no sean interpretados
+ * como etiquetas HTML por el renderizador de Markdown.
+ * Ejemplo: "<palabra>" se convierte en "&lt;palabra&gt;"
+ *
+ * @param text El texto original que puede contener angle brackets
+ * @return El texto con los angle brackets escapados
+ */
+fun escapeAngleBrackets(text: String): String {
+    return text.replace("<", "&lt;").replace(">", "&gt;")
+}
+
+/**
  * Aplica Roboto ExtraBold a los spans de negrita (StrongEmphasisSpan) en un TextView.
  * Esto reemplaza el bold estándar de Markdown con una fuente más gruesa.
  *
