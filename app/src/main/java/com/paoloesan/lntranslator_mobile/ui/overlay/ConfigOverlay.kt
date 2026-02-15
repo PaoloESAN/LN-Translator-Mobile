@@ -22,6 +22,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -36,8 +38,10 @@ import com.paoloesan.lntranslator_mobile.LocalStrings
 fun ConfigOverlayContent(
     currentFontSize: Int,
     currentLineSpacing: Int,
+    invertGestures: Boolean,
     onFontSizeChange: (Int) -> Unit,
     onLineSpacingChange: (Int) -> Unit,
+    onInvertGesturesChange: (Boolean) -> Unit,
     onClose: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -211,6 +215,31 @@ fun ConfigOverlayContent(
                     )
                 }
             }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // INVERTIR GESTOS
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = strings.configInvertGestures,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 14.sp,
+                modifier = Modifier.weight(1f)
+            )
+
+            Switch(
+                checked = invertGestures,
+                onCheckedChange = onInvertGesturesChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.primary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            )
         }
 
         Spacer(modifier = Modifier.weight(1f))

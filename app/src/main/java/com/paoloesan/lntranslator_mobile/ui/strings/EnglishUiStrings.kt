@@ -70,6 +70,7 @@ object EnglishUiStrings : UiStrings {
     override val configLineSpacingLabel = "Line Spacing"
     override val configPreviewText =
         "The quick brown fox jumps over the lazy dog. This is a sample text to preview the font size."
+    override val configInvertGestures = "Invert gestures"
     override val configBack = "Back"
     override val configClose = "Close Overlay"
 

@@ -65,6 +65,7 @@ interface UiStrings {
     val configFontSizeLabel: String
     val configLineSpacingLabel: String
     val configPreviewText: String
+    val configInvertGestures: String
     val configBack: String
     val configClose: String
 

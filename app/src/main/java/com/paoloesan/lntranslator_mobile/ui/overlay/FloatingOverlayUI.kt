@@ -89,6 +89,11 @@ fun FloatingOverlayUI(
     }
     var menuOpen by remember { mutableStateOf(false) }
     var configOpen by remember { mutableStateOf(false) }
+    var invertGestures by remember {
+        mutableStateOf(
+            prefs.getBoolean("overlay_invert_gestures", false)
+        )
+    }
     val scrollState = key(uiState.indiceActual) { rememberScrollState() }
 
     if (!menuOpen) {
@@ -210,6 +215,7 @@ fun FloatingOverlayUI(
                     ConfigOverlayContent(
                         currentFontSize = currentFontSize,
                         currentLineSpacing = currentLineSpacing,
+                        invertGestures = invertGestures,
                         onFontSizeChange = { newSize ->
                             currentFontSize = newSize
                             prefs.edit { putInt("overlay_font_size", newSize) }
@@ -217,6 +223,10 @@ fun FloatingOverlayUI(
                         onLineSpacingChange = { newSpacing ->
                             currentLineSpacing = newSpacing
                             prefs.edit { putInt("overlay_line_spacing", newSpacing) }
+                        },
+                        onInvertGesturesChange = { inverted ->
+                            invertGestures = inverted
+                            prefs.edit { putBoolean("overlay_invert_gestures", inverted) }
                         },
                         onClose = onClose,
                         onBack = { configOpen = false }
@@ -235,8 +245,16 @@ fun FloatingOverlayUI(
                                     onDragStart = { swipeAccumulator = 0f },
                                     onDragEnd = {
                                         when {
-                                            swipeAccumulator < -swipeThreshold && uiState.puedeIrSiguiente -> onSiguiente()
-                                            swipeAccumulator > swipeThreshold && uiState.puedeIrAnterior -> onAnterior()
+                                            swipeAccumulator < -swipeThreshold -> {
+                                                val action = if (invertGestures) onAnterior else onSiguiente
+                                                val canDo = if (invertGestures) uiState.puedeIrAnterior else uiState.puedeIrSiguiente
+                                                if (canDo) action()
+                                            }
+                                            swipeAccumulator > swipeThreshold -> {
+                                                val action = if (invertGestures) onSiguiente else onAnterior
+                                                val canDo = if (invertGestures) uiState.puedeIrSiguiente else uiState.puedeIrAnterior
+                                                if (canDo) action()
+                                            }
                                         }
                                         swipeAccumulator = 0f
                                     },
