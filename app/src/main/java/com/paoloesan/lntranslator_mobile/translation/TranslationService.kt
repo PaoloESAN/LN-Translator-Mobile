@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.core.content.edit
+import com.paoloesan.lntranslator_mobile.translation.providers.ProviderFactory
 import com.paoloesan.lntranslator_mobile.ui.strings.StringsProvider
 import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
 
@@ -49,13 +50,10 @@ class TranslationService(private val context: Context) {
             return validationError
         }
 
-        val provider = getActiveProvider()
-        if (provider == null) {
-            return TranslationResult.Error(
-                message = strings.errorNoProvider,
-                errorType = TranslationResult.ErrorType.UNKNOWN
-            )
-        }
+        val provider = getActiveProvider() ?: return TranslationResult.Error(
+            message = strings.errorNoProvider,
+            errorType = TranslationResult.ErrorType.UNKNOWN
+        )
 
         if (!provider.isConfigured()) {
             return TranslationResult.Error(

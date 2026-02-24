@@ -7,8 +7,7 @@ import android.util.Log
 import androidx.core.content.edit
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.paoloesan.lntranslator_mobile.translation.ImageTranslationRequest
-import com.paoloesan.lntranslator_mobile.translation.TranslationProvider
+import com.paoloesan.lntranslator_mobile.translation.ModelClient
 import com.paoloesan.lntranslator_mobile.translation.TranslationResult
 import com.paoloesan.lntranslator_mobile.translation.prompts.TranslationPrompts
 import com.paoloesan.lntranslator_mobile.ui.strings.StringsProvider
@@ -23,10 +22,14 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.TimeUnit
 
-class GeminiProvider(context: Context) : TranslationProvider {
+class GeminiClient(
+    context: Context,
+    private val modelVersion: String = "gemini-3-flash-preview"
+) : ModelClient {
 
-    override val providerId: String = "gemini"
-    override val displayName: String = "Google Gemini"
+    override val modelId: String = "gemini"
+    override val displayName: String = "Gemini"
+    override val supportsVision: Boolean = true
 
     private val appContext = context.applicationContext
     private val prefs = appContext.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
@@ -36,8 +39,7 @@ class GeminiProvider(context: Context) : TranslationProvider {
     private var currentKeyIndex: Int
 
     companion object {
-        private const val TAG = "GeminiProvider"
-        private const val MODEL_NAME = "gemini-3-flash-preview"
+        private const val TAG = "GeminiClient"
         private const val MAX_RETRIES = 3
     }
 
@@ -81,7 +83,7 @@ class GeminiProvider(context: Context) : TranslationProvider {
         return apiKeys.isNotEmpty()
     }
 
-    override suspend fun translateImage(request: ImageTranslationRequest): TranslationResult {
+    override suspend fun translateWithImage(bitmap: Bitmap, prompt: String): TranslationResult {
         if (!isConfigured()) {
             return TranslationResult.Error(
                 message = strings.errorNoApiKey(displayName),
@@ -89,7 +91,7 @@ class GeminiProvider(context: Context) : TranslationProvider {
             )
         }
 
-        val base64Image = bitmapToBase64(request.bitmap)
+        val base64Image = bitmapToBase64(bitmap)
 
         if (base64Image.length < 1000) {
             return TranslationResult.Error(
@@ -98,19 +100,42 @@ class GeminiProvider(context: Context) : TranslationProvider {
             )
         }
 
-        val prompt = TranslationPrompts.getImageTranslationPrompt(appContext, request.prompt)
-        val geminiRequest = GeminiRequest(
+        val fullPrompt = TranslationPrompts.getImageTranslationPrompt(appContext, prompt)
+        val request = GeminiRequest(
             contents = listOf(
                 Content(
                     parts = listOf(
                         Part(inline_data = InlineData("image/jpeg", base64Image)),
-                        Part(text = prompt)
+                        Part(text = fullPrompt)
                     )
                 )
             )
         )
 
-        return executeWithRetryAndRotation(geminiRequest)
+        return executeWithRetryAndRotation(request)
+    }
+
+    override suspend fun translateText(extractedText: String, prompt: String): TranslationResult {
+        if (!isConfigured()) {
+            return TranslationResult.Error(
+                message = strings.errorNoApiKey(displayName),
+                errorType = TranslationResult.ErrorType.NO_API_KEY
+            )
+        }
+
+        val fullPrompt =
+            TranslationPrompts.getTextTranslationPrompt(appContext, extractedText, prompt)
+        val request = GeminiRequest(
+            contents = listOf(
+                Content(
+                    parts = listOf(
+                        Part(text = fullPrompt)
+                    )
+                )
+            )
+        )
+
+        return executeWithRetryAndRotation(request)
     }
 
     private suspend fun executeWithRetryAndRotation(request: GeminiRequest): TranslationResult {
@@ -162,18 +187,16 @@ class GeminiProvider(context: Context) : TranslationProvider {
         for (attempt in 1..MAX_RETRIES) {
             try {
                 val response = apiService.generateContent(
-                    model = MODEL_NAME,
+                    model = modelVersion,
                     apiKey = apiKey,
                     request = request
                 )
 
-                val candidate = response.candidates?.firstOrNull()
-                if (candidate == null) {
-                    return TranslationResult.Error(
+                val candidate =
+                    response.candidates?.firstOrNull() ?: return TranslationResult.Error(
                         message = strings.errorEmptyResponse,
                         errorType = TranslationResult.ErrorType.EMPTY_RESPONSE
                     )
-                }
 
                 val content = candidate.content
                 if (content == null) {
@@ -204,8 +227,7 @@ class GeminiProvider(context: Context) : TranslationProvider {
                 return TranslationResult.Success(text)
 
             } catch (e: HttpException) {
-                val code = e.code()
-                return when (code) {
+                return when (val code = e.code()) {
                     429 -> TranslationResult.Error(
                         message = strings.errorRateLimited,
                         errorType = TranslationResult.ErrorType.RATE_LIMITED,

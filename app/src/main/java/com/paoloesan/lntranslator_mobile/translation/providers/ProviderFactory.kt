@@ -1,9 +1,9 @@
-package com.paoloesan.lntranslator_mobile.translation
+package com.paoloesan.lntranslator_mobile.translation.providers
 
 import android.content.Context
 import android.util.Log
-import com.paoloesan.lntranslator_mobile.translation.gemini.GeminiProvider
-import com.paoloesan.lntranslator_mobile.translation.local.LocalOcrGeminiProvider
+import com.paoloesan.lntranslator_mobile.translation.TranslationProvider
+import com.paoloesan.lntranslator_mobile.translation.gemini.GeminiClient
 
 class ProviderFactory(private val context: Context) {
 
@@ -18,8 +18,13 @@ class ProviderFactory(private val context: Context) {
     }
 
     private fun registerProviders() {
-        register(GeminiProvider(context))
-        register(LocalOcrGeminiProvider(context))
+        val geminiClient = GeminiClient(context, "gemini-3-flash-preview")
+
+        // Vision Register
+        register(VisionProvider(geminiClient))
+
+        // OCR + Model Register
+        register(OcrProvider(geminiClient))
     }
 
     private fun register(provider: TranslationProvider) {

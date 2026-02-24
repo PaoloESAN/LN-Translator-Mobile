@@ -21,7 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
-import com.paoloesan.lntranslator_mobile.translation.ProviderFactory
+import com.paoloesan.lntranslator_mobile.translation.providers.ProviderFactory
 
 class SeccionProveedor(
     override val icono: ImageVector,
