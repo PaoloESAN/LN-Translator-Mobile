@@ -64,6 +64,10 @@ interface UiStrings {
     // Config Overlay
     val configFontSizeLabel: String
     val configLineSpacingLabel: String
+    val configFontFamilyLabel: String
+    val configFontRoboto: String
+    val configFontTimesNewRoman: String
+    val configFontMonospace: String
     val configPreviewText: String
     val configInvertGestures: String
     val configBack: String

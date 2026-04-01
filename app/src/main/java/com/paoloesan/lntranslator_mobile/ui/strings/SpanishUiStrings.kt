@@ -68,6 +68,10 @@ object SpanishUiStrings : UiStrings {
     // Config Overlay
     override val configFontSizeLabel = "Tamaño de letra"
     override val configLineSpacingLabel = "Espacio entre líneas"
+    override val configFontFamilyLabel = "Fuente"
+    override val configFontRoboto = "Roboto"
+    override val configFontTimesNewRoman = "Times New Roman"
+    override val configFontMonospace = "Monoespaciada"
     override val configPreviewText =
         "El veloz murciélago hindú comía feliz cardillo y kiwi. Este es un texto de muestra para ver el tamaño de la fuente."
     override val configInvertGestures = "Invertir gestos"

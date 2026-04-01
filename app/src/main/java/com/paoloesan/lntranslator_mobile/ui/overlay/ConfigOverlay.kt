@@ -1,6 +1,7 @@
 package com.paoloesan.lntranslator_mobile.ui.overlay
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -39,9 +40,11 @@ fun ConfigOverlayContent(
     currentFontSize: Int,
     currentLineSpacing: Int,
     invertGestures: Boolean,
+    currentFontFamily: OverlayFontOption,
     onFontSizeChange: (Int) -> Unit,
     onLineSpacingChange: (Int) -> Unit,
     onInvertGesturesChange: (Boolean) -> Unit,
+    onFontFamilyChange: (OverlayFontOption) -> Unit,
     onClose: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -61,9 +64,53 @@ fun ConfigOverlayContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = currentFontSize.sp,
             lineHeight = (currentFontSize + currentLineSpacing).sp,
+            fontFamily = currentFontFamily.toComposeFontFamily(),
             textAlign = TextAlign.Start,
             modifier = Modifier.fillMaxWidth()
         )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // FAMILIA DE FUENTE
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = strings.configFontFamilyLabel,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 14.sp
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OverlayFontOption.entries.forEach { option ->
+                    val selected = option == currentFontFamily
+                    Button(
+                        onClick = { onFontFamilyChange(option) },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (selected) {
+                                MaterialTheme.colorScheme.primaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.surfaceVariant
+                            }
+                        )
+                    ) {
+                        Text(
+                            text = option.toLabel(),
+                            color = if (selected) {
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                        )
+                    }
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 

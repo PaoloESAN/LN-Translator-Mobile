@@ -68,6 +68,10 @@ object EnglishUiStrings : UiStrings {
     // Config Overlay
     override val configFontSizeLabel = "Font Size"
     override val configLineSpacingLabel = "Line Spacing"
+    override val configFontFamilyLabel = "Font"
+    override val configFontRoboto = "Roboto"
+    override val configFontTimesNewRoman = "Times New Roman"
+    override val configFontMonospace = "Monospace"
     override val configPreviewText =
         "The quick brown fox jumps over the lazy dog. This is a sample text to preview the font size."
     override val configInvertGestures = "Invert gestures"

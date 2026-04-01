@@ -87,6 +87,13 @@ fun FloatingOverlayUI(
             )
         )
     }
+    var currentFontFamily by remember {
+        mutableStateOf(
+            OverlayFontOption.fromPref(
+                prefs.getString("overlay_font_family", OverlayFontOption.ROBOTO.prefValue)
+            )
+        )
+    }
     var menuOpen by remember { mutableStateOf(false) }
     var configOpen by remember { mutableStateOf(false) }
     var invertGestures by remember {
@@ -216,6 +223,7 @@ fun FloatingOverlayUI(
                         currentFontSize = currentFontSize,
                         currentLineSpacing = currentLineSpacing,
                         invertGestures = invertGestures,
+                        currentFontFamily = currentFontFamily,
                         onFontSizeChange = { newSize ->
                             currentFontSize = newSize
                             prefs.edit { putInt("overlay_font_size", newSize) }
@@ -227,6 +235,10 @@ fun FloatingOverlayUI(
                         onInvertGesturesChange = { inverted ->
                             invertGestures = inverted
                             prefs.edit { putBoolean("overlay_invert_gestures", inverted) }
+                        },
+                        onFontFamilyChange = { newFontFamily ->
+                            currentFontFamily = newFontFamily
+                            prefs.edit { putString("overlay_font_family", newFontFamily.prefValue) }
                         },
                         onClose = onClose,
                         onBack = { configOpen = false }
@@ -272,7 +284,8 @@ fun FloatingOverlayUI(
                                     text = strings.overlayLoading,
                                     color = MaterialTheme.colorScheme.primary,
                                     fontSize = currentFontSize.sp,
-                                    lineHeight = (currentFontSize + currentLineSpacing).sp
+                                    lineHeight = (currentFontSize + currentLineSpacing).sp,
+                                    fontFamily = currentFontFamily.toComposeFontFamily()
                                 )
                             }
 
@@ -281,7 +294,8 @@ fun FloatingOverlayUI(
                                     text = uiState.error,
                                     color = MaterialTheme.colorScheme.error,
                                     fontSize = currentFontSize.sp,
-                                    lineHeight = (currentFontSize + currentLineSpacing).sp
+                                    lineHeight = (currentFontSize + currentLineSpacing).sp,
+                                    fontFamily = currentFontFamily.toComposeFontFamily()
                                 )
                             }
 
@@ -290,15 +304,19 @@ fun FloatingOverlayUI(
                                     markdown = escapeAngleBrackets(uiState.textoActual!!),
                                     fontResource = R.font.roboto_regular,
                                     afterSetMarkdown = { textView ->
-                                        applyExtraBoldToMarkdown(
-                                            textView,
-                                            context
-                                        )
+                                        textView.typeface = currentFontFamily.toAndroidTypeface(context)
+                                        if (currentFontFamily == OverlayFontOption.ROBOTO) {
+                                            applyExtraBoldToMarkdown(
+                                                textView,
+                                                context
+                                            )
+                                        }
                                     },
                                     style = TextStyle(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontSize = currentFontSize.sp,
-                                        lineHeight = (currentFontSize + currentLineSpacing).sp
+                                        lineHeight = (currentFontSize + currentLineSpacing).sp,
+                                        fontFamily = currentFontFamily.toComposeFontFamily()
                                     )
                                 )
                             }
@@ -308,7 +326,8 @@ fun FloatingOverlayUI(
                                     text = strings.overlayHelp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontSize = currentFontSize.sp,
-                                    lineHeight = (currentFontSize + currentLineSpacing).sp
+                                    lineHeight = (currentFontSize + currentLineSpacing).sp,
+                                    fontFamily = currentFontFamily.toComposeFontFamily()
                                 )
                             }
                         }
