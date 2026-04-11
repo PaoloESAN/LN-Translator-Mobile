@@ -16,6 +16,10 @@ Translate Japanese Light Novels directly from official websites to your preferre
 
 https://github.com/user-attachments/assets/8ef0d227-eac6-4fd6-b907-974a7469fa7d
 
+## Requirements
+
+- **Android Version**: Android 10 or higher
+
 ## Get Started
 
 1. **Get your API Key**: Obtain your free API keys from [Google AI Studio](https://aistudio.google.com/app/apikey).
