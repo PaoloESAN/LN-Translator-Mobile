@@ -15,6 +15,23 @@ object EnglishUiStrings : UiStrings {
     override val settingsThemeDescription = "System default/light/dark."
     override val settingsLanguageTitle = "Language"
     override val settingsLanguageDescription = "Languages: Spanish, English."
+    override val settingsUpdateTitle = "Updates"
+    override val settingsUpdateDescription = "Check whether a new version is available."
+    override val updateCurrentVersion: (String) -> String = { version -> "Current version: $version" }
+    override val updateUnknownVersion = "unknown"
+    override val updateChecking = "Checking for updates..."
+    override val updateNoPublishedVersion = "No published version was found."
+    override val updateNoPublishedReleasesYet = "This repository has no published releases yet."
+    override val updateHttpError: (Int) -> String = { code -> "Could not reach GitHub (HTTP $code)." }
+    override val updateConnectionError = "Could not reach GitHub. Check your connection."
+    override val updateUpToDate = "Your app is up to date."
+    override val updateNewVersionAvailable: (String) -> String = { version -> "New version available: $version" }
+    override val updateAt = "Update at:"
+    override val updateCheckButton = "Check for updates"
+    override val updateViewChangelogButton = "View changes"
+    override val updateLatestChangesTitle = "Latest release changes"
+    override val updateLatestChangesLoading = "Loading changes..."
+    override val updateLatestChangesEmpty = "This release does not include changelog notes."
 
     override val buttonClose = "Close"
     override val buttonSave = "Save"

@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Api
 import androidx.compose.material.icons.outlined.BrightnessMedium
+import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material3.AlertDialog
@@ -36,39 +37,48 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.paoloesan.lntranslator_mobile.LocalStrings
+import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val strings = LocalStrings.current
+    val strings: UiStrings = LocalStrings.current
 
-    val secciones = listOf(
-        SeccionProveedor(
-            Icons.Outlined.Api,
-            strings.settingsProviderTitle,
-            strings.settingsProviderDescription,
-            context
-        ),
-        SeccionKey(
-            Icons.Outlined.Key,
-            strings.settingsApikeyTitle,
-            strings.settingsApikeyDescription,
-            context
-        ),
-        SeccionTema(
-            Icons.Outlined.BrightnessMedium,
-            strings.settingsThemeTitle,
-            strings.settingsThemeDescription,
-            context
-        ),
-        SeccionIdioma(
-            Icons.Outlined.Translate,
-            strings.settingsLanguageTitle,
-            strings.settingsLanguageDescription,
-            context
-        ),
-    )
+    val secciones = remember(context, strings) {
+        listOf(
+            SeccionProveedor(
+                Icons.Outlined.Api,
+                strings.settingsProviderTitle,
+                strings.settingsProviderDescription,
+                context
+            ),
+            SeccionKey(
+                Icons.Outlined.Key,
+                strings.settingsApikeyTitle,
+                strings.settingsApikeyDescription,
+                context
+            ),
+            SeccionTema(
+                Icons.Outlined.BrightnessMedium,
+                strings.settingsThemeTitle,
+                strings.settingsThemeDescription,
+                context
+            ),
+            SeccionIdioma(
+                Icons.Outlined.Translate,
+                strings.settingsLanguageTitle,
+                strings.settingsLanguageDescription,
+                context
+            ),
+            SeccionActualizar(
+                Icons.Outlined.Download,
+                strings.settingsUpdateTitle,
+                strings.settingsUpdateDescription,
+                context
+            )
+        )
+    }
 
     var seccionSeleccionada by remember { mutableStateOf<Seccion?>(null) }
     Column(
@@ -80,9 +90,8 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             SeccionRow(
                 seccionData.icono,
                 seccionData.titulo,
-                seccionData.descripcion,
-                { seccionSeleccionada = seccionData }
-            )
+                seccionData.descripcion
+            ) { seccionSeleccionada = seccionData }
         }
     }
 
@@ -90,7 +99,10 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         key(seccionSeleccionada) {
             AlertDialog(
                 title = {
-                    Text(seccionSeleccionada!!.titulo, style = MaterialTheme.typography.headlineSmall)
+                    Text(
+                        seccionSeleccionada!!.titulo,
+                        style = MaterialTheme.typography.headlineMedium
+                    )
                 },
                 onDismissRequest = { seccionSeleccionada = null },
                 confirmButton = {
@@ -110,9 +122,9 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                         }
                         Button(
                             onClick = {
-                                seccionSeleccionada?.guardarCambios({
+                                seccionSeleccionada?.guardarCambios {
                                     seccionSeleccionada = null
-                                })
+                                }
                             },
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.buttonColors(
@@ -138,7 +150,7 @@ fun SeccionRow(icono: ImageVector, titulo: String, descripcion: String, onClick:
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .padding(16.dp),
+            .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {

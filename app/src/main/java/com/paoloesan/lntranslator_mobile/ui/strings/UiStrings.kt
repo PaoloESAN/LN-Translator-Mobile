@@ -17,6 +17,24 @@ interface UiStrings {
     val settingsThemeDescription: String
     val settingsLanguageTitle: String
     val settingsLanguageDescription: String
+    val settingsUpdateTitle: String
+    val settingsUpdateDescription: String
+
+    val updateCurrentVersion: (String) -> String
+    val updateUnknownVersion: String
+    val updateChecking: String
+    val updateNoPublishedVersion: String
+    val updateNoPublishedReleasesYet: String
+    val updateHttpError: (Int) -> String
+    val updateConnectionError: String
+    val updateUpToDate: String
+    val updateNewVersionAvailable: (String) -> String
+    val updateAt: String
+    val updateCheckButton: String
+    val updateViewChangelogButton: String
+    val updateLatestChangesTitle: String
+    val updateLatestChangesLoading: String
+    val updateLatestChangesEmpty: String
 
     val buttonClose: String
     val buttonSave: String
