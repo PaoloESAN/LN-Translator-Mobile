@@ -39,8 +39,25 @@ class SeccionTema(
         ) ?: "Predeterminado del sistema"
     )
 
+    private fun aplicarTemaSeleccionado(tema: String) {
+        val modo = when (tema) {
+            "Claro" -> AppCompatDelegate.MODE_NIGHT_NO
+            "Oscuro" -> AppCompatDelegate.MODE_NIGHT_YES
+            else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        }
+        AppCompatDelegate.setDefaultNightMode(modo)
+    }
+
+    private fun seleccionarTema(tema: String): Boolean {
+        if (seleccionActual == tema) return false
+        seleccionActual = tema
+        prefs.edit { putString("tema_app", tema) }
+        aplicarTemaSeleccionado(tema)
+        return true
+    }
+
     @Composable
-    override fun ContenidoModal() {
+    override fun ContenidoModal(solicitarCierre: (() -> Unit)?) {
         val strings = LocalStrings.current
 
         val opciones = listOf(
@@ -69,13 +86,17 @@ class SeccionTema(
                             indication = null
                         )
                         {
-                            seleccionActual = valorInterno
+                            seleccionarTema(valorInterno)
+                            solicitarCierre?.invoke()
                         },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     RadioButton(
                         selected = (valorInterno == seleccionActual),
-                        onClick = { seleccionActual = valorInterno }
+                        onClick = {
+                            seleccionarTema(valorInterno)
+                            solicitarCierre?.invoke()
+                        }
                     )
                     Text(
                         text = etiqueta,
@@ -88,14 +109,6 @@ class SeccionTema(
     }
 
     override fun guardarCambios(cerrarModal: () -> Unit) {
-        prefs.edit { putString("tema_app", seleccionActual) }
-
-        val modo = when (seleccionActual) {
-            "Claro" -> AppCompatDelegate.MODE_NIGHT_NO
-            "Oscuro" -> AppCompatDelegate.MODE_NIGHT_YES
-            else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
-        }
-        AppCompatDelegate.setDefaultNightMode(modo)
         cerrarModal()
     }
 }

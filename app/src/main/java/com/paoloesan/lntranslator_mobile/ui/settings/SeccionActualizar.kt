@@ -120,7 +120,7 @@ class SeccionActualizar(
     }
 
     @Composable
-    override fun ContenidoModal() {
+    override fun ContenidoModal(solicitarCierre: (() -> Unit)?) {
         val scope = rememberCoroutineScope()
         val strings = LocalStrings.current
 

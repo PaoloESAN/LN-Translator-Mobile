@@ -11,7 +11,7 @@ interface Seccion {
     val contexto: Context
 
     @Composable
-    fun ContenidoModal()
+    fun ContenidoModal(solicitarCierre: (() -> Unit)? = null)
 
     fun guardarCambios(cerrarModal: () -> Unit)
 }

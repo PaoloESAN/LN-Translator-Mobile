@@ -74,7 +74,7 @@ class SeccionKey(
     }
 
     @Composable
-    override fun ContenidoModal() {
+    override fun ContenidoModal(solicitarCierre: (() -> Unit)?) {
         val strings = LocalStrings.current
         Column(
             modifier = Modifier

@@ -3,10 +3,10 @@ package com.paoloesan.lntranslator_mobile.ui.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -19,12 +19,11 @@ import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -35,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.paoloesan.lntranslator_mobile.LocalStrings
 import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
@@ -97,6 +97,17 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
 
     if (seccionSeleccionada != null) {
         key(seccionSeleccionada) {
+            val cerrarModal: () -> Unit = {
+                val seccionActual = seccionSeleccionada
+                if (seccionActual is SeccionKey) {
+                    seccionActual.guardarCambios {
+                        seccionSeleccionada = null
+                    }
+                } else {
+                    seccionSeleccionada = null
+                }
+            }
+
             AlertDialog(
                 title = {
                     Text(
@@ -104,40 +115,18 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                         style = MaterialTheme.typography.headlineMedium
                     )
                 },
-                onDismissRequest = { seccionSeleccionada = null },
+                onDismissRequest = cerrarModal,
                 confirmButton = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Button(
-                            onClick = { seccionSeleccionada = null },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        ) {
-                            Text(strings.buttonClose)
-                        }
-                        Button(
-                            onClick = {
-                                seccionSeleccionada?.guardarCambios {
-                                    seccionSeleccionada = null
-                                }
-                            },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
-                            )
-                        ) {
-                            Text(strings.buttonSave)
-                        }
+                    TextButton(onClick = cerrarModal, modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = strings.buttonClose,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.End
+                        )
                     }
                 },
                 text = {
-                    seccionSeleccionada?.ContenidoModal()
+                    seccionSeleccionada?.ContenidoModal(cerrarModal)
                 }
             )
         }

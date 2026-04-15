@@ -51,8 +51,15 @@ class SeccionProveedor(
         ProviderOption(it.providerId, it.displayName)
     }
 
+    private fun seleccionarProveedor(providerId: String): Boolean {
+        if (seleccionActual == providerId) return false
+        seleccionActual = providerId
+        prefs.edit { putString(PREF_ACTIVE_PROVIDER, providerId) }
+        return true
+    }
+
     @Composable
-    override fun ContenidoModal() {
+    override fun ContenidoModal(solicitarCierre: (() -> Unit)?) {
         LaunchedEffect(Unit) {
             seleccionActual =
                 prefs.getString(PREF_ACTIVE_PROVIDER, DEFAULT_PROVIDER) ?: DEFAULT_PROVIDER
@@ -72,13 +79,17 @@ class SeccionProveedor(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
                         ) {
-                            seleccionActual = opcion.id
+                            seleccionarProveedor(opcion.id)
+                            solicitarCierre?.invoke()
                         },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     RadioButton(
                         selected = (opcion.id == seleccionActual),
-                        onClick = { seleccionActual = opcion.id }
+                        onClick = {
+                            seleccionarProveedor(opcion.id)
+                            solicitarCierre?.invoke()
+                        }
                     )
                     Text(
                         text = opcion.displayName,
@@ -91,7 +102,6 @@ class SeccionProveedor(
     }
 
     override fun guardarCambios(cerrarModal: () -> Unit) {
-        prefs.edit { putString(PREF_ACTIVE_PROVIDER, seleccionActual) }
         cerrarModal()
     }
 }

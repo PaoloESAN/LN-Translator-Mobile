@@ -41,8 +41,15 @@ class SeccionIdioma(
         return if (systemLang.startsWith("es", ignoreCase = true)) "Español" else "English"
     }
 
+    private fun seleccionarIdioma(idioma: String): Boolean {
+        if (seleccionActual == idioma) return false
+        seleccionActual = idioma
+        prefs.edit { putString("idioma_app", idioma) }
+        return true
+    }
+
     @Composable
-    override fun ContenidoModal() {
+    override fun ContenidoModal(solicitarCierre: (() -> Unit)?) {
         androidx.compose.runtime.LaunchedEffect(Unit) {
             seleccionActual = prefs.getString("idioma_app", null) ?: getSystemLanguage()
         }
@@ -63,13 +70,17 @@ class SeccionIdioma(
                             indication = null
                         )
                         {
-                            seleccionActual = opcion
+                            seleccionarIdioma(opcion)
+                            solicitarCierre?.invoke()
                         },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     RadioButton(
                         selected = (opcion == seleccionActual),
-                        onClick = { seleccionActual = opcion }
+                        onClick = {
+                            seleccionarIdioma(opcion)
+                            solicitarCierre?.invoke()
+                        }
                     )
                     Text(
                         text = opcion,
@@ -82,7 +93,6 @@ class SeccionIdioma(
     }
 
     override fun guardarCambios(cerrarModal: () -> Unit) {
-        prefs.edit { putString("idioma_app", seleccionActual) }
         cerrarModal()
     }
 }
