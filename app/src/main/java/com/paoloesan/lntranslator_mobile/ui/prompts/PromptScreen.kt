@@ -3,22 +3,29 @@ package com.paoloesan.lntranslator_mobile.ui.prompts
 import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.paoloesan.lntranslator_mobile.LocalStrings
@@ -46,6 +54,7 @@ fun PromptScreen(
     val promptsList = remember { mutableStateListOf<PromptData>() }
     var borrarDialog by remember { mutableStateOf(false) }
     var indexSeleccionado by remember { mutableIntStateOf(-1) }
+    var cargandoPrompts by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         val prompts = withContext(Dispatchers.IO) {
@@ -53,6 +62,7 @@ fun PromptScreen(
         }
         promptsList.clear()
         promptsList.addAll(prompts)
+        cargandoPrompts = false
     }
 
     if (borrarDialog) {
@@ -75,8 +85,10 @@ fun PromptScreen(
                     }
                     Button(
                         onClick = {
-                            Prompt.eliminarPrompt(indexSeleccionado, context)
-                            promptsList.removeAt(indexSeleccionado)
+                            if (indexSeleccionado in promptsList.indices) {
+                                Prompt.eliminarPrompt(indexSeleccionado, context)
+                                promptsList.removeAt(indexSeleccionado)
+                            }
                             borrarDialog = false
                         },
                         modifier = Modifier.weight(1f),
@@ -106,51 +118,98 @@ fun PromptScreen(
         )
     }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        itemsIndexed(promptsList) { index, prompt ->
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-                    .clickable(
-                        onClick = {
-                            onPromptSelected(prompt.descripcion)
-                        }
-                    )
+    if (!cargandoPrompts && promptsList.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Box(
+                    modifier = Modifier
+                        .size(52.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Column(
-                        modifier = Modifier.weight(1f)
+                    FilledTonalIconButton(
+                        onClick = {},
+                        enabled = false,
+                        shape = CircleShape,
+                        modifier = Modifier.fillMaxSize()
                     ) {
-                        Text(
-                            prompt.titulo,
-                            style = MaterialTheme.typography.titleMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            prompt.descripcion,
-                            style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
+                        Icon(
+                            imageVector = Icons.Rounded.Description,
+                            contentDescription = null,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
-                    Column {
-                        IconButton(
+                }
+                Text(
+                    text = strings.promptsEmptyTitle,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = strings.promptsEmptySubtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            itemsIndexed(promptsList) { index, prompt ->
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                        .clickable(
+                            onClick = {
+                                onPromptSelected(prompt.descripcion)
+                            }
+                        )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                prompt.titulo,
+                                style = MaterialTheme.typography.titleMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                prompt.descripcion,
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        FilledIconButton(
                             onClick = {
                                 indexSeleccionado = index
                                 borrarDialog = true
-                            }
+                            },
+                            modifier = Modifier.size(40.dp),
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Delete,

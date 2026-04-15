@@ -32,6 +32,11 @@ fun PromptDialog(
 ) {
     val strings = LocalStrings.current
     var tituloPrompt by remember { mutableStateOf("") }
+    val tituloNormalizado = tituloPrompt.trim()
+    val descripcionNormalizada = descripcion.trim()
+    val tituloValido = tituloNormalizado.isNotBlank()
+    val descripcionValida = descripcionNormalizada.isNotBlank()
+    val puedeGuardar = tituloValido && descripcionValida
 
     LaunchedEffect(abierto) {
         if (abierto) {
@@ -62,9 +67,13 @@ fun PromptDialog(
                     }
                     Button(
                         onClick = {
-                            Prompt.guardarPrompt(PromptData(tituloPrompt, descripcion), contexto)
+                            Prompt.guardarPrompt(
+                                PromptData(tituloNormalizado, descripcionNormalizada),
+                                contexto
+                            )
                             onDismissRequest()
                         },
+                        enabled = puedeGuardar,
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
@@ -87,8 +96,22 @@ fun PromptDialog(
                         label = { Text(strings.promptTitleLabel) },
                         value = tituloPrompt,
                         onValueChange = { tituloPrompt = it },
+                        isError = !tituloValido,
+                        supportingText = {
+                            if (!tituloValido) {
+                                Text(strings.promptTitleRequired)
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth()
                     )
+                    if (!descripcionValida) {
+                        Text(
+                            text = strings.promptContextRequired,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
         )

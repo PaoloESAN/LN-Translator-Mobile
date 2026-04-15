@@ -64,6 +64,10 @@ object EnglishUiStrings : UiStrings {
     override val deletePromptContentDescription = "Delete Prompt"
     override val savePromptTitle = "Save"
     override val promptTitleLabel = "Prompt title"
+    override val promptTitleRequired = "Title is required"
+    override val promptContextRequired = "Context prompt cannot be empty"
+    override val promptsEmptyTitle = "No prompts yet"
+    override val promptsEmptySubtitle = "Save your first prompt to see it here."
 
     // Overlay
     override val overlayOpen = "Open Translator"

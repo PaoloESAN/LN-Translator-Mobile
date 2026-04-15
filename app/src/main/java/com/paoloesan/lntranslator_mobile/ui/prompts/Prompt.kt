@@ -12,11 +12,17 @@ object Prompt {
     private val gson = Gson()
 
     fun guardarPrompt(nuevoPrompt: PromptData, context: Context) {
+        val titulo = nuevoPrompt.titulo.trim()
+        val descripcion = nuevoPrompt.descripcion.trim()
+        if (titulo.isBlank() || descripcion.isBlank()) {
+            return
+        }
+
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         val listaExistente = obtenerPrompts(context).toMutableList()
 
-        listaExistente.add(nuevoPrompt)
+        listaExistente.add(PromptData(titulo, descripcion))
 
         val json = gson.toJson(listaExistente)
         prefs.edit { putString(KEY_PROMPTS, json) }
@@ -27,7 +33,7 @@ object Prompt {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val json = prefs.getString(KEY_PROMPTS, null) ?: return emptyList()
 
-        val type = object : com.google.gson.reflect.TypeToken<List<PromptData>>() {}.type
+        val type = object : TypeToken<List<PromptData>>() {}.type
         return gson.fromJson(json, type)
     }
 

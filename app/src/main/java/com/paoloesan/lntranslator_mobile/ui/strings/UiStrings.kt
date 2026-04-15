@@ -65,6 +65,10 @@ interface UiStrings {
     val deletePromptContentDescription: String
     val savePromptTitle: String
     val promptTitleLabel: String
+    val promptTitleRequired: String
+    val promptContextRequired: String
+    val promptsEmptyTitle: String
+    val promptsEmptySubtitle: String
 
     // Overlay
     val overlayOpen: String

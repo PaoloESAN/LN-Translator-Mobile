@@ -60,6 +60,7 @@ fun HomeScreen(
     val prefs = context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
     var textPrompt by rememberSaveable { mutableStateOf("") }
     var showDialog by remember { mutableStateOf(false) }
+    val puedeGuardarPrompt = textPrompt.trim().isNotBlank()
 
     val mediaProjectionManager = remember {
         context.getSystemService(Activity.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
@@ -156,6 +157,7 @@ fun HomeScreen(
                             containerColor = MaterialTheme.colorScheme.primaryContainer,
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         ),
+                        enabled = puedeGuardarPrompt,
                         onClick = {
                             showDialog = true
                         }
