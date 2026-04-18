@@ -5,8 +5,12 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.PixelFormat
+import android.os.Build
+import android.util.Log
 import android.view.Gravity
+import android.view.WindowInsets
 import android.view.WindowManager
+import kotlin.math.max
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -36,13 +40,20 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
     private var composeView: ComposeView? = null
 
     private lateinit var params: WindowManager.LayoutParams
+    private var isExpanded = false
+    private var bottomPassThroughEnabled = false
+    private var compactX = 100
+    private var compactY = 100
 
     private val savedStateRegistryController = SavedStateRegistryController.create(this)
     override val savedStateRegistry: SavedStateRegistry get() = savedStateRegistryController.savedStateRegistry
 
     companion object {
+        private const val TAG = "OverlayDiag"
         private const val NOTIFICATION_ID = 1
         private const val CHANNEL_ID = "overlay_channel"
+        private const val PREF_BOTTOM_PASS_THROUGH = "overlay_bottom_pass_through"
+        private const val PASS_THROUGH_GAP_DP = 24
 
         fun start(context: Context) {
             val intent = Intent(context, OverlayService::class.java)
@@ -91,6 +102,10 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
 
     private val controller by lazy { TranslationController(TranslationService(applicationContext)) }
     private fun showOverlay() {
+        val prefs = getSharedPreferences("settings_prefs", MODE_PRIVATE)
+        bottomPassThroughEnabled = prefs.getBoolean(PREF_BOTTOM_PASS_THROUGH, false)
+        Log.d(TAG, "PREF init bottomPassThroughEnabled=$bottomPassThroughEnabled")
+
         params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -99,8 +114,8 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = 100
-            y = 100
+            x = compactX
+            y = compactY
         }
 
         composeView = ComposeView(this).apply {
@@ -149,9 +164,22 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
                             onDrag = { dx, dy ->
                                 params.x += dx.toInt()
                                 params.y += dy.toInt()
+                                compactX = params.x
+                                compactY = params.y
                                 windowManager?.updateViewLayout(this, params)
                             },
                             onExpand = ::updateWindowSize,
+                            onBottomPassThroughChange = { enabled ->
+                                Log.d(
+                                    TAG,
+                                    "TOGGLE onBottomPassThroughChange enabled=$enabled current=$bottomPassThroughEnabled isExpanded=$isExpanded"
+                                )
+                                bottomPassThroughEnabled = enabled
+                                if (isExpanded) {
+                                    Log.d(TAG, "TOGGLE reapplying expanded size after toggle")
+                                    updateWindowSize(true)
+                                }
+                            },
                             onTranslate = {
                                 processTranslation()
                             },
@@ -200,19 +228,115 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
     }
 
     private fun updateWindowSize(isExpanded: Boolean) {
+        val beforeExpanded = this.isExpanded
+        this.isExpanded = isExpanded
+
+        Log.d(
+            TAG,
+            "LAYOUT updateWindowSize called requestedExpanded=$isExpanded prevExpanded=$beforeExpanded bottomPassThrough=$bottomPassThroughEnabled"
+        )
+        logParams("before")
+
         if (isExpanded) {
+            if (!beforeExpanded) {
+                compactX = params.x
+                compactY = params.y
+                Log.d(TAG, "LAYOUT save compact position compactX=$compactX compactY=$compactY")
+            }
+
+            val metrics = expandedLayoutMetrics()
+
             params.width = WindowManager.LayoutParams.MATCH_PARENT
-            params.height = WindowManager.LayoutParams.MATCH_PARENT
+            params.height = if (bottomPassThroughEnabled) {
+                expandedOverlayHeightPx(true, metrics.availableHeight)
+            } else {
+                WindowManager.LayoutParams.MATCH_PARENT
+            }
+            params.x = 0
+            params.y = 0
             params.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+            Log.d(
+                TAG,
+                "LAYOUT expanded targetHeight=${params.height} topInset=${metrics.topInset} bottomInset=${metrics.bottomInset}"
+            )
         } else {
             params.width = WindowManager.LayoutParams.WRAP_CONTENT
             params.height = WindowManager.LayoutParams.WRAP_CONTENT
+            params.x = compactX
+            params.y = compactY
             params.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+            Log.d(TAG, "LAYOUT collapsed restore compactX=$compactX compactY=$compactY")
         }
+
+        logParams("after-calc")
 
         composeView?.let {
             windowManager?.updateViewLayout(composeView, params)
+            logParams("after-apply")
         }
+    }
+
+    private fun bottomPassThroughGapPx(): Int {
+        val density = resources.displayMetrics.density
+        val px = (PASS_THROUGH_GAP_DP * density).toInt().coerceAtLeast(1)
+        Log.d(TAG, "METRICS gapDp=$PASS_THROUGH_GAP_DP density=$density gapPx=$px")
+        return px
+    }
+
+    private fun expandedOverlayHeightPx(withBottomGap: Boolean, availableHeight: Int): Int {
+        Log.d(
+            TAG,
+            "METRICS sdk=${Build.VERSION.SDK_INT} availableHeight=$availableHeight withBottomGap=$withBottomGap"
+        )
+
+        if (!withBottomGap) return availableHeight
+
+        // En pantallas altas, 24dp puede ser imperceptible; forzamos un minimo visible.
+        val baseGapPx = bottomPassThroughGapPx()
+        val minVisibleGapPx = (availableHeight * 0.10f).toInt().coerceAtLeast(baseGapPx)
+        val effectiveGapPx = max(baseGapPx, minVisibleGapPx)
+
+        val result = (availableHeight - effectiveGapPx).coerceAtLeast(1)
+        Log.d(
+            TAG,
+            "METRICS expandedHeightWithGap=$result baseGapPx=$baseGapPx minVisibleGapPx=$minVisibleGapPx effectiveGapPx=$effectiveGapPx"
+        )
+        return result
+    }
+
+    private fun expandedLayoutMetrics(): ExpandedLayoutMetrics {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val metrics = windowManager?.currentWindowMetrics
+            val boundsHeight = metrics?.bounds?.height() ?: resources.displayMetrics.heightPixels
+            val insets = metrics?.windowInsets
+                ?.getInsetsIgnoringVisibility(WindowInsets.Type.systemBars())
+            val topInset = insets?.top ?: 0
+            val bottomInset = insets?.bottom ?: 0
+            val availableHeight = (boundsHeight - bottomInset).coerceAtLeast(1)
+
+            Log.d(
+                TAG,
+                "METRICS boundsHeight=$boundsHeight topInset=$topInset bottomInset=$bottomInset availableHeight=$availableHeight"
+            )
+            return ExpandedLayoutMetrics(availableHeight, topInset, bottomInset)
+        }
+
+        val fallbackHeight = resources.displayMetrics.heightPixels
+        return ExpandedLayoutMetrics(fallbackHeight, 0, 0)
+    }
+
+    private data class ExpandedLayoutMetrics(
+        val availableHeight: Int,
+        val topInset: Int,
+        val bottomInset: Int
+    )
+
+    private fun logParams(stage: String) {
+        val p = params
+        Log.d(
+            TAG,
+            "LAYOUT[$stage] w=${p.width} h=${p.height} x=${p.x} y=${p.y} flags=${p.flags} (0x${Integer.toHexString(p.flags)})"
+        )
     }
 
     override fun onDestroy() {

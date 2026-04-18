@@ -96,6 +96,7 @@ object SpanishUiStrings : UiStrings {
     override val configPreviewText =
         "El veloz murciélago hindú comía feliz cardillo y kiwi. Este es un texto de muestra para ver el tamaño de la fuente."
     override val configInvertGestures = "Invertir gestos"
+    override val configBottomTouchSpace = "Dejar espacio táctil abajo"
     override val configBack = "Volver"
     override val configClose = "Cerrar Overlay"
 

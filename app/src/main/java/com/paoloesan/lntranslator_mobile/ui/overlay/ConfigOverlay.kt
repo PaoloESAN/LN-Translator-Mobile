@@ -46,10 +46,12 @@ fun ConfigOverlayContent(
     currentFontSize: Int,
     currentLineSpacing: Int,
     invertGestures: Boolean,
+    bottomPassThroughEnabled: Boolean,
     currentFontFamily: OverlayFontOption,
     onFontSizeChange: (Int) -> Unit,
     onLineSpacingChange: (Int) -> Unit,
     onInvertGesturesChange: (Boolean) -> Unit,
+    onBottomPassThroughChange: (Boolean) -> Unit,
     onFontFamilyChange: (OverlayFontOption) -> Unit,
     onClose: () -> Unit,
     onBack: () -> Unit
@@ -314,6 +316,31 @@ fun ConfigOverlayContent(
             Switch(
                 checked = invertGestures,
                 onCheckedChange = onInvertGesturesChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.primary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // DEJAR ZONA TACTIL ABAJO
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = strings.configBottomTouchSpace,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 14.sp,
+                modifier = Modifier.weight(1f)
+            )
+
+            Switch(
+                checked = bottomPassThroughEnabled,
+                onCheckedChange = onBottomPassThroughChange,
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = MaterialTheme.colorScheme.primary,
                     checkedTrackColor = MaterialTheme.colorScheme.primaryContainer

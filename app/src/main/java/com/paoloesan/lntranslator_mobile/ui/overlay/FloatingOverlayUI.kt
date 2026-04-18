@@ -1,6 +1,7 @@
 package com.paoloesan.lntranslator_mobile.ui.overlay
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -57,12 +58,14 @@ fun FloatingOverlayUI(
     onClose: () -> Unit,
     onDrag: (Float, Float) -> Unit,
     onExpand: (Boolean) -> Unit,
+    onBottomPassThroughChange: (Boolean) -> Unit = {},
     onTranslate: () -> Unit,
     onPreload: () -> Unit = {},
     uiState: TranslationUiState = TranslationUiState(),
     onAnterior: () -> Unit = {},
     onSiguiente: () -> Unit = {}
 ) {
+    val logTag = "OverlayDiag"
     val strings = LocalStrings.current
     val context = LocalContext.current
     val prefs = remember {
@@ -101,6 +104,11 @@ fun FloatingOverlayUI(
             prefs.getBoolean("overlay_invert_gestures", false)
         )
     }
+    var bottomPassThroughEnabled by remember {
+        mutableStateOf(
+            prefs.getBoolean("overlay_bottom_pass_through", false)
+        )
+    }
     val scrollState = key(uiState.indiceActual) { rememberScrollState() }
 
     if (!menuOpen) {
@@ -108,6 +116,8 @@ fun FloatingOverlayUI(
             onClick = {
                 menuOpen = true
                 onExpand(true)
+                onBottomPassThroughChange(bottomPassThroughEnabled)
+                Log.d(logTag, "UI open overlay menuOpen=$menuOpen bottomPassThrough=$bottomPassThroughEnabled")
             },
             modifier = Modifier
                 .size(48.dp)
@@ -209,6 +219,7 @@ fun FloatingOverlayUI(
                     IconButton(onClick = {
                         menuOpen = false
                         onExpand(false)
+                        Log.d(logTag, "UI close overlay menuOpen=$menuOpen")
                     }, modifier = Modifier.size(24.dp)) {
                         Icon(
                             Icons.Rounded.CloseFullscreen,
@@ -223,6 +234,7 @@ fun FloatingOverlayUI(
                         currentFontSize = currentFontSize,
                         currentLineSpacing = currentLineSpacing,
                         invertGestures = invertGestures,
+                        bottomPassThroughEnabled = bottomPassThroughEnabled,
                         currentFontFamily = currentFontFamily,
                         onFontSizeChange = { newSize ->
                             currentFontSize = newSize
@@ -235,6 +247,15 @@ fun FloatingOverlayUI(
                         onInvertGesturesChange = { inverted ->
                             invertGestures = inverted
                             prefs.edit { putBoolean("overlay_invert_gestures", inverted) }
+                        },
+                        onBottomPassThroughChange = { enabled ->
+                            Log.d(
+                                logTag,
+                                "UI toggle switch old=$bottomPassThroughEnabled new=$enabled configOpen=$configOpen"
+                            )
+                            bottomPassThroughEnabled = enabled
+                            prefs.edit { putBoolean("overlay_bottom_pass_through", enabled) }
+                            onBottomPassThroughChange(enabled)
                         },
                         onFontFamilyChange = { newFontFamily ->
                             currentFontFamily = newFontFamily
