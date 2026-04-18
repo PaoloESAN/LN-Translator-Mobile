@@ -307,7 +307,7 @@ fun ConfigOverlayContent(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = strings.configInvertGestures,
+                text = strings.configInvertNavigation,
                 color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 14.sp,
                 modifier = Modifier.weight(1f)

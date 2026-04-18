@@ -91,7 +91,7 @@ interface UiStrings {
     val configFontTimesNewRoman: String
     val configFontMonospace: String
     val configPreviewText: String
-    val configInvertGestures: String
+    val configInvertNavigation: String
     val configBottomTouchSpace: String
     val configBack: String
     val configClose: String

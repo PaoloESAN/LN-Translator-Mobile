@@ -158,6 +158,13 @@ fun FloatingOverlayUI(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
+                    val leftAction = if (invertGestures) onSiguiente else onAnterior
+                    val leftEnabled = if (invertGestures) uiState.puedeIrSiguiente else uiState.puedeIrAnterior
+                    val leftDescription = if (invertGestures) strings.overlayNext else strings.overlayPrevious
+                    val rightAction = if (invertGestures) onAnterior else onSiguiente
+                    val rightEnabled = if (invertGestures) uiState.puedeIrAnterior else uiState.puedeIrSiguiente
+                    val rightDescription = if (invertGestures) strings.overlayPrevious else strings.overlayNext
+
                     Text(
                         text = when {
                             uiState.isLoading && uiState.total > 0 -> "${uiState.indiceActual + 1}/${uiState.total} ..."
@@ -168,14 +175,14 @@ fun FloatingOverlayUI(
                         fontSize = 14.sp
                     )
                     IconButton(
-                        onClick = onAnterior,
+                        onClick = leftAction,
                         modifier = Modifier.size(24.dp),
-                        enabled = uiState.puedeIrAnterior
+                        enabled = leftEnabled
                     ) {
                         Icon(
                             Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
-                            contentDescription = strings.overlayPrevious,
-                            tint = if (uiState.puedeIrAnterior) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
+                            contentDescription = leftDescription,
+                            tint = if (leftEnabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
                                 alpha = 0.38f
                             )
                         )
@@ -194,14 +201,14 @@ fun FloatingOverlayUI(
                         )
                     }
                     IconButton(
-                        onClick = onSiguiente,
+                        onClick = rightAction,
                         modifier = Modifier.size(24.dp),
-                        enabled = uiState.puedeIrSiguiente
+                        enabled = rightEnabled
                     ) {
                         Icon(
                             Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                            contentDescription = strings.overlayNext,
-                            tint = if (uiState.puedeIrSiguiente) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
+                            contentDescription = rightDescription,
+                            tint = if (rightEnabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
                                 alpha = 0.38f
                             )
                         )
