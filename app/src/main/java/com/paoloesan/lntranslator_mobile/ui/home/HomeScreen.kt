@@ -6,23 +6,24 @@ import android.media.projection.MediaProjectionManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChatBubbleOutline
-import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -48,6 +49,7 @@ import com.paoloesan.lntranslator_mobile.LocalStrings
 import com.paoloesan.lntranslator_mobile.service.OverlayService
 import com.paoloesan.lntranslator_mobile.service.ScreenCaptureService
 import com.paoloesan.lntranslator_mobile.ui.prompts.PromptDialog
+import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen(
@@ -61,6 +63,41 @@ fun HomeScreen(
     var textPrompt by rememberSaveable { mutableStateOf("") }
     var showDialog by remember { mutableStateOf(false) }
     val puedeGuardarPrompt = textPrompt.trim().isNotBlank()
+    val navigateInteraction = remember { MutableInteractionSource() }
+    val saveInteraction = remember { MutableInteractionSource() }
+    val navigatePressed by navigateInteraction.collectIsPressedAsState()
+    val savePressed by saveInteraction.collectIsPressedAsState()
+    var highlightedButton by remember { mutableStateOf<Int?>(null) }
+
+    val navigateWeight by animateFloatAsState(
+        targetValue = when (highlightedButton) {
+            0 -> 1.15f
+            1 -> 0.85f
+            else -> 1f
+        },
+        animationSpec = tween(durationMillis = 180),
+        label = "navigateWeight"
+    )
+    val saveWeight by animateFloatAsState(
+        targetValue = when (highlightedButton) {
+            0 -> 0.85f
+            1 -> 1.15f
+            else -> 1f
+        },
+        animationSpec = tween(durationMillis = 180),
+        label = "saveWeight"
+    )
+
+    LaunchedEffect(navigatePressed, savePressed) {
+        when {
+            navigatePressed -> highlightedButton = 0
+            savePressed -> highlightedButton = 1
+            highlightedButton != null -> {
+                delay(220)
+                highlightedButton = null
+            }
+        }
+    }
 
     val mediaProjectionManager = remember {
         context.getSystemService(Activity.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
@@ -101,11 +138,13 @@ fun HomeScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
     ) {
         Column(
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
@@ -125,64 +164,66 @@ fun HomeScreen(
                 fontStyle = FontStyle.Italic
             )
 
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        modifier = Modifier
+                            .weight(navigateWeight)
+                            .heightIn(min = 48.dp),
+                        interactionSource = navigateInteraction,
+                        colors = ButtonDefaults.buttonColors(
+                            MaterialTheme.colorScheme.secondaryContainer,
+                            MaterialTheme.colorScheme.onSecondaryContainer
+                        ),
+                        onClick = { onNavigateToPrompts() },
+                    ) {
+                        Text(strings.homeViewPrompts)
+                    }
+                    Button(
+                        modifier = Modifier
+                            .weight(saveWeight)
+                            .heightIn(min = 48.dp),
+                        interactionSource = saveInteraction,
+                        enabled = puedeGuardarPrompt,
+                        onClick = { showDialog = true },
+                    ) {
+                        Text(strings.homeSavePrompt)
+                    }
+                }
+
                 OutlinedTextField(
                     label = { Text(text = strings.homePromptLabel) },
                     value = textPrompt,
                     onValueChange = { textPrompt = it },
                     minLines = 3,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.fillMaxWidth()
                 )
-                Column {
-                    IconButton(
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        ),
-                        onClick = {
-                            onNavigateToPrompts()
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ChatBubbleOutline,
-                            contentDescription = strings.homeViewPrompts
-                        )
-                    }
-                    IconButton(
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        ),
-                        enabled = puedeGuardarPrompt,
-                        onClick = {
-                            showDialog = true
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Save,
-                            contentDescription = strings.homeSavePrompt
-                        )
-                    }
-                }
             }
 
-            Button(onClick = {
-                prefs.edit { putString("prompt_app", textPrompt) }
-                if (!android.provider.Settings.canDrawOverlays(context)) {
-                    val intent = android.content.Intent(
-                        android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        "package:${context.packageName}".toUri()
-                    )
-                    context.startActivity(intent)
-                } else {
-                    val captureIntent = mediaProjectionManager.createScreenCaptureIntent()
-                    screenCaptureLauncher.launch(captureIntent)
-                }
-            }) {
+            Button(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .heightIn(min = 48.dp),
+                onClick = {
+                    prefs.edit { putString("prompt_app", textPrompt) }
+                    if (!android.provider.Settings.canDrawOverlays(context)) {
+                        val intent = android.content.Intent(
+                            android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            "package:${context.packageName}".toUri()
+                        )
+                        context.startActivity(intent)
+                    } else {
+                        val captureIntent = mediaProjectionManager.createScreenCaptureIntent()
+                        screenCaptureLauncher.launch(captureIntent)
+                    }
+                }) {
                 Text(strings.homeStartButton)
             }
         }

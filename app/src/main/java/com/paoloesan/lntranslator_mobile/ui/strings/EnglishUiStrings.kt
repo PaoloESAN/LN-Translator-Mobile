@@ -54,8 +54,8 @@ object EnglishUiStrings : UiStrings {
     // Home
     override val homeWelcome = "Enter a prompt and start translating."
     override val homePromptLabel = "Context Prompt"
-    override val homeViewPrompts = "View saved prompts"
-    override val homeSavePrompt = "Save current prompt"
+    override val homeViewPrompts = "View prompts"
+    override val homeSavePrompt = "Save prompt"
     override val homeStartButton = "Start Translator"
     override val homePermissionDenied = "Capture permission denied"
 
