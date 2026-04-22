@@ -17,15 +17,18 @@ object EnglishUiStrings : UiStrings {
     override val settingsLanguageDescription = "Languages: Spanish, English."
     override val settingsUpdateTitle = "Updates"
     override val settingsUpdateDescription = "Check whether a new version is available."
-    override val updateCurrentVersion: (String) -> String = { version -> "Current version: $version" }
+    override val updateCurrentVersion: (String) -> String =
+        { version -> "Current version: $version" }
     override val updateUnknownVersion = "unknown"
     override val updateChecking = "Checking for updates..."
     override val updateNoPublishedVersion = "No published version was found."
     override val updateNoPublishedReleasesYet = "This repository has no published releases yet."
-    override val updateHttpError: (Int) -> String = { code -> "Could not reach GitHub (HTTP $code)." }
+    override val updateHttpError: (Int) -> String =
+        { code -> "Could not reach GitHub (HTTP $code)." }
     override val updateConnectionError = "Could not reach GitHub. Check your connection."
     override val updateUpToDate = "Your app is up to date."
-    override val updateNewVersionAvailable: (String) -> String = { version -> "New version available: $version" }
+    override val updateNewVersionAvailable: (String) -> String =
+        { version -> "New version available: $version" }
     override val updateAt = "Update at:"
     override val updateCheckButton = "Check for updates"
     override val updateViewChangelogButton = "View changes"
@@ -53,7 +56,7 @@ object EnglishUiStrings : UiStrings {
 
     // Home
     override val homeWelcome = "Enter a prompt and start translating."
-    override val homePromptLabel = "Context Prompt"
+    override val homePromptLabel = "Context Prompt (Optional)"
     override val homeViewPrompts = "View prompts"
     override val homeSavePrompt = "Save prompt"
     override val homeStartButton = "Start Translator"
