@@ -140,14 +140,17 @@ fun FloatingOverlayUI(
         Card(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(8.dp),
+                .padding(
+                    horizontal = if (bottomPassThroughEnabled) 0.dp else 8.dp,
+                    vertical = 8.dp
+                ),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface.copy(
                     alpha = 0.95f
                 )
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 Row(

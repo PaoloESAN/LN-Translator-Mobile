@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
@@ -166,6 +166,7 @@ fun ConfigOverlayContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 IconButton(
+                    shape = CircleShape,
                     onClick = {
                         if (currentFontSize > 10) {
                             onFontSizeChange(currentFontSize - 1)
@@ -175,7 +176,7 @@ fun ConfigOverlayContent(
                         .size(36.dp)
                         .background(
                             MaterialTheme.colorScheme.primaryContainer,
-                            RoundedCornerShape(8.dp)
+                            CircleShape
                         ),
                     enabled = currentFontSize > 10
                 ) {
@@ -198,6 +199,7 @@ fun ConfigOverlayContent(
                 )
 
                 IconButton(
+                    shape = CircleShape,
                     onClick = {
                         if (currentFontSize < 30) {
                             onFontSizeChange(currentFontSize + 1)
@@ -207,7 +209,7 @@ fun ConfigOverlayContent(
                         .size(36.dp)
                         .background(
                             MaterialTheme.colorScheme.primaryContainer,
-                            RoundedCornerShape(8.dp)
+                            CircleShape
                         ),
                     enabled = currentFontSize < 30
                 ) {
@@ -242,6 +244,7 @@ fun ConfigOverlayContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 IconButton(
+                    shape = CircleShape,
                     onClick = {
                         if (currentLineSpacing > 0) {
                             onLineSpacingChange(currentLineSpacing - 1)
@@ -251,7 +254,7 @@ fun ConfigOverlayContent(
                         .size(36.dp)
                         .background(
                             MaterialTheme.colorScheme.primaryContainer,
-                            RoundedCornerShape(8.dp)
+                            CircleShape
                         ),
                     enabled = currentLineSpacing > 0
                 ) {
@@ -274,6 +277,7 @@ fun ConfigOverlayContent(
                 )
 
                 IconButton(
+                    shape = CircleShape,
                     onClick = {
                         if (currentLineSpacing < 20) {
                             onLineSpacingChange(currentLineSpacing + 1)
@@ -283,7 +287,7 @@ fun ConfigOverlayContent(
                         .size(36.dp)
                         .background(
                             MaterialTheme.colorScheme.primaryContainer,
-                            RoundedCornerShape(8.dp)
+                            CircleShape
                         ),
                     enabled = currentLineSpacing < 20
                 ) {
@@ -325,7 +329,7 @@ fun ConfigOverlayContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // DEJAR ZONA TACTIL ABAJO
+        // DEJAR ZONA TACTIL EN LOS LADOS
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,

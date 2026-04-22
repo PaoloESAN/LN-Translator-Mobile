@@ -53,7 +53,7 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
         private const val NOTIFICATION_ID = 1
         private const val CHANNEL_ID = "overlay_channel"
         private const val PREF_BOTTOM_PASS_THROUGH = "overlay_bottom_pass_through"
-        private const val PASS_THROUGH_GAP_DP = 24
+        private const val PASS_THROUGH_SIDE_MARGIN_DP = 24
 
         fun start(context: Context) {
             val intent = Intent(context, OverlayService::class.java)
@@ -245,19 +245,24 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
             }
 
             val metrics = expandedLayoutMetrics()
+            val sideMarginPx = if (bottomPassThroughEnabled) {
+                sidePassThroughMarginPx(metrics.availableWidth)
+            } else {
+                0
+            }
 
-            params.width = WindowManager.LayoutParams.MATCH_PARENT
-            params.height = if (bottomPassThroughEnabled) {
-                expandedOverlayHeightPx(true, metrics.availableHeight)
+            params.width = if (bottomPassThroughEnabled) {
+                expandedOverlayWidthPx(true, metrics.availableWidth, sideMarginPx)
             } else {
                 WindowManager.LayoutParams.MATCH_PARENT
             }
-            params.x = 0
+            params.height = WindowManager.LayoutParams.MATCH_PARENT
+            params.x = if (bottomPassThroughEnabled) metrics.leftInset + sideMarginPx else 0
             params.y = 0
             params.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
             Log.d(
                 TAG,
-                "LAYOUT expanded targetHeight=${params.height} topInset=${metrics.topInset} bottomInset=${metrics.bottomInset}"
+                "LAYOUT expanded targetWidth=${params.width} targetHeight=${params.height} leftInset=${metrics.leftInset} rightInset=${metrics.rightInset}"
             )
         } else {
             params.width = WindowManager.LayoutParams.WRAP_CONTENT
@@ -276,30 +281,35 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
         }
     }
 
-    private fun bottomPassThroughGapPx(): Int {
+    private fun sidePassThroughMarginPx(availableWidth: Int): Int {
         val density = resources.displayMetrics.density
-        val px = (PASS_THROUGH_GAP_DP * density).toInt().coerceAtLeast(1)
-        Log.d(TAG, "METRICS gapDp=$PASS_THROUGH_GAP_DP density=$density gapPx=$px")
-        return px
+        val baseMarginPx = (PASS_THROUGH_SIDE_MARGIN_DP * density).toInt().coerceAtLeast(1)
+        val minVisibleMarginPx = (availableWidth * 0.08f).toInt().coerceAtLeast(baseMarginPx)
+        val effectiveMarginPx = max(baseMarginPx, minVisibleMarginPx)
+        Log.d(
+            TAG,
+            "METRICS sideMarginDp=$PASS_THROUGH_SIDE_MARGIN_DP density=$density baseMarginPx=$baseMarginPx minVisibleMarginPx=$minVisibleMarginPx effectiveMarginPx=$effectiveMarginPx"
+        )
+        return effectiveMarginPx
     }
 
-    private fun expandedOverlayHeightPx(withBottomGap: Boolean, availableHeight: Int): Int {
+    private fun expandedOverlayWidthPx(
+        withSideMargins: Boolean,
+        availableWidth: Int,
+        sideMarginPx: Int = 0
+    ): Int {
         Log.d(
             TAG,
-            "METRICS sdk=${Build.VERSION.SDK_INT} availableHeight=$availableHeight withBottomGap=$withBottomGap"
+            "METRICS sdk=${Build.VERSION.SDK_INT} availableWidth=$availableWidth withSideMargins=$withSideMargins"
         )
 
-        if (!withBottomGap) return availableHeight
+        if (!withSideMargins) return availableWidth
 
-        // En pantallas altas, 24dp puede ser imperceptible; forzamos un minimo visible.
-        val baseGapPx = bottomPassThroughGapPx()
-        val minVisibleGapPx = (availableHeight * 0.10f).toInt().coerceAtLeast(baseGapPx)
-        val effectiveGapPx = max(baseGapPx, minVisibleGapPx)
-
-        val result = (availableHeight - effectiveGapPx).coerceAtLeast(1)
+        val effectiveMarginPx = if (sideMarginPx > 0) sideMarginPx else sidePassThroughMarginPx(availableWidth)
+        val result = (availableWidth - (effectiveMarginPx * 2)).coerceAtLeast(1)
         Log.d(
             TAG,
-            "METRICS expandedHeightWithGap=$result baseGapPx=$baseGapPx minVisibleGapPx=$minVisibleGapPx effectiveGapPx=$effectiveGapPx"
+            "METRICS expandedWidthWithSideMargins=$result sideMarginPx=$effectiveMarginPx"
         )
         return result
     }
@@ -307,27 +317,42 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
     private fun expandedLayoutMetrics(): ExpandedLayoutMetrics {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val metrics = windowManager?.currentWindowMetrics
+            val boundsWidth = metrics?.bounds?.width() ?: resources.displayMetrics.widthPixels
             val boundsHeight = metrics?.bounds?.height() ?: resources.displayMetrics.heightPixels
             val insets = metrics?.windowInsets
                 ?.getInsetsIgnoringVisibility(WindowInsets.Type.systemBars())
+            val leftInset = insets?.left ?: 0
             val topInset = insets?.top ?: 0
+            val rightInset = insets?.right ?: 0
             val bottomInset = insets?.bottom ?: 0
+            val availableWidth = (boundsWidth - leftInset - rightInset).coerceAtLeast(1)
             val availableHeight = (boundsHeight - bottomInset).coerceAtLeast(1)
 
             Log.d(
                 TAG,
-                "METRICS boundsHeight=$boundsHeight topInset=$topInset bottomInset=$bottomInset availableHeight=$availableHeight"
+                "METRICS boundsWidth=$boundsWidth boundsHeight=$boundsHeight leftInset=$leftInset topInset=$topInset rightInset=$rightInset bottomInset=$bottomInset availableWidth=$availableWidth availableHeight=$availableHeight"
             )
-            return ExpandedLayoutMetrics(availableHeight, topInset, bottomInset)
+            return ExpandedLayoutMetrics(
+                availableWidth = availableWidth,
+                availableHeight = availableHeight,
+                leftInset = leftInset,
+                topInset = topInset,
+                rightInset = rightInset,
+                bottomInset = bottomInset
+            )
         }
 
+        val fallbackWidth = resources.displayMetrics.widthPixels
         val fallbackHeight = resources.displayMetrics.heightPixels
-        return ExpandedLayoutMetrics(fallbackHeight, 0, 0)
+        return ExpandedLayoutMetrics(fallbackWidth, fallbackHeight, 0, 0, 0, 0)
     }
 
     private data class ExpandedLayoutMetrics(
+        val availableWidth: Int,
         val availableHeight: Int,
+        val leftInset: Int,
         val topInset: Int,
+        val rightInset: Int,
         val bottomInset: Int
     )
 
