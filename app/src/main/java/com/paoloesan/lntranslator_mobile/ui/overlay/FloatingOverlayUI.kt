@@ -59,6 +59,7 @@ fun FloatingOverlayUI(
     onDrag: (Float, Float) -> Unit,
     onExpand: (Boolean) -> Unit,
     onBottomPassThroughChange: (Boolean) -> Unit = {},
+    onSideMarginDpChange: (Int) -> Unit = {},
     onTranslate: () -> Unit,
     onPreload: () -> Unit = {},
     uiState: TranslationUiState = TranslationUiState(),
@@ -109,6 +110,11 @@ fun FloatingOverlayUI(
             prefs.getBoolean("overlay_bottom_pass_through", false)
         )
     }
+    var currentSideMarginDp by remember {
+        mutableIntStateOf(
+            prefs.getInt("overlay_side_margin_dp", 12)
+        )
+    }
     val scrollState = key(uiState.indiceActual) { rememberScrollState() }
 
     if (!menuOpen) {
@@ -117,6 +123,7 @@ fun FloatingOverlayUI(
                 menuOpen = true
                 onExpand(true)
                 onBottomPassThroughChange(bottomPassThroughEnabled)
+                onSideMarginDpChange(currentSideMarginDp)
                 Log.d(logTag, "UI open overlay menuOpen=$menuOpen bottomPassThrough=$bottomPassThroughEnabled")
             },
             modifier = Modifier
@@ -245,6 +252,7 @@ fun FloatingOverlayUI(
                         currentLineSpacing = currentLineSpacing,
                         invertGestures = invertGestures,
                         bottomPassThroughEnabled = bottomPassThroughEnabled,
+                        currentSideMarginDp = currentSideMarginDp,
                         currentFontFamily = currentFontFamily,
                         onFontSizeChange = { newSize ->
                             currentFontSize = newSize
@@ -266,6 +274,12 @@ fun FloatingOverlayUI(
                             bottomPassThroughEnabled = enabled
                             prefs.edit { putBoolean("overlay_bottom_pass_through", enabled) }
                             onBottomPassThroughChange(enabled)
+                        },
+                        onSideMarginDpChange = { newMarginDp ->
+                            val clamped = newMarginDp.coerceIn(0, 32)
+                            currentSideMarginDp = clamped
+                            prefs.edit { putInt("overlay_side_margin_dp", clamped) }
+                            onSideMarginDpChange(clamped)
                         },
                         onFontFamilyChange = { newFontFamily ->
                             currentFontFamily = newFontFamily

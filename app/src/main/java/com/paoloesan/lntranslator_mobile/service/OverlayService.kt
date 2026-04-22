@@ -10,7 +10,6 @@ import android.util.Log
 import android.view.Gravity
 import android.view.WindowInsets
 import android.view.WindowManager
-import kotlin.math.max
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -42,6 +41,7 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
     private lateinit var params: WindowManager.LayoutParams
     private var isExpanded = false
     private var bottomPassThroughEnabled = false
+    private var sideMarginDp = 12
     private var compactX = 100
     private var compactY = 100
 
@@ -53,7 +53,8 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
         private const val NOTIFICATION_ID = 1
         private const val CHANNEL_ID = "overlay_channel"
         private const val PREF_BOTTOM_PASS_THROUGH = "overlay_bottom_pass_through"
-        private const val PASS_THROUGH_SIDE_MARGIN_DP = 24
+        private const val PREF_SIDE_MARGIN_DP = "overlay_side_margin_dp"
+        private const val DEFAULT_SIDE_MARGIN_DP = 12
 
         fun start(context: Context) {
             val intent = Intent(context, OverlayService::class.java)
@@ -104,7 +105,11 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
     private fun showOverlay() {
         val prefs = getSharedPreferences("settings_prefs", MODE_PRIVATE)
         bottomPassThroughEnabled = prefs.getBoolean(PREF_BOTTOM_PASS_THROUGH, false)
-        Log.d(TAG, "PREF init bottomPassThroughEnabled=$bottomPassThroughEnabled")
+        sideMarginDp = prefs.getInt(PREF_SIDE_MARGIN_DP, DEFAULT_SIDE_MARGIN_DP).coerceIn(0, 32)
+        Log.d(
+            TAG,
+            "PREF init bottomPassThroughEnabled=$bottomPassThroughEnabled sideMarginDp=$sideMarginDp"
+        )
 
         params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -180,6 +185,13 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
                                     updateWindowSize(true)
                                 }
                             },
+                            onSideMarginDpChange = { marginDp ->
+                                sideMarginDp = marginDp.coerceIn(0, 32)
+                                Log.d(TAG, "TOGGLE onSideMarginDpChange sideMarginDp=$sideMarginDp")
+                                if (isExpanded && bottomPassThroughEnabled) {
+                                    updateWindowSize(true)
+                                }
+                            },
                             onTranslate = {
                                 processTranslation()
                             },
@@ -246,7 +258,7 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
 
             val metrics = expandedLayoutMetrics()
             val sideMarginPx = if (bottomPassThroughEnabled) {
-                sidePassThroughMarginPx(metrics.availableWidth)
+                sidePassThroughMarginPx()
             } else {
                 0
             }
@@ -281,14 +293,12 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
         }
     }
 
-    private fun sidePassThroughMarginPx(availableWidth: Int): Int {
+    private fun sidePassThroughMarginPx(): Int {
         val density = resources.displayMetrics.density
-        val baseMarginPx = (PASS_THROUGH_SIDE_MARGIN_DP * density).toInt().coerceAtLeast(1)
-        val minVisibleMarginPx = (availableWidth * 0.08f).toInt().coerceAtLeast(baseMarginPx)
-        val effectiveMarginPx = max(baseMarginPx, minVisibleMarginPx)
+        val effectiveMarginPx = (sideMarginDp * density).toInt().coerceAtLeast(0)
         Log.d(
             TAG,
-            "METRICS sideMarginDp=$PASS_THROUGH_SIDE_MARGIN_DP density=$density baseMarginPx=$baseMarginPx minVisibleMarginPx=$minVisibleMarginPx effectiveMarginPx=$effectiveMarginPx"
+            "METRICS sideMarginDp=$sideMarginDp density=$density effectiveMarginPx=$effectiveMarginPx"
         )
         return effectiveMarginPx
     }
@@ -305,7 +315,7 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
 
         if (!withSideMargins) return availableWidth
 
-        val effectiveMarginPx = if (sideMarginPx > 0) sideMarginPx else sidePassThroughMarginPx(availableWidth)
+        val effectiveMarginPx = if (sideMarginPx > 0) sideMarginPx else sidePassThroughMarginPx()
         val result = (availableWidth - (effectiveMarginPx * 2)).coerceAtLeast(1)
         Log.d(
             TAG,

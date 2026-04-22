@@ -97,6 +97,7 @@ object SpanishUiStrings : UiStrings {
         "El veloz murciélago hindú comía feliz cardillo y kiwi. Este es un texto de muestra para ver el tamaño de la fuente."
     override val configInvertNavigation = "Invertir navegación"
     override val configBottomTouchSpace = "Dejar espacio táctil en los lados"
+    override val configSideTouchMarginLabel = "Espacio táctil lateral"
     override val configBack = "Volver"
     override val configClose = "Cerrar Overlay"
 

@@ -97,6 +97,7 @@ object EnglishUiStrings : UiStrings {
         "The quick brown fox jumps over the lazy dog. This is a sample text to preview the font size."
     override val configInvertNavigation = "Invert navigation"
     override val configBottomTouchSpace = "Leave touch space on the sides"
+    override val configSideTouchMarginLabel = "Side touch space"
     override val configBack = "Back"
     override val configClose = "Close Overlay"
 

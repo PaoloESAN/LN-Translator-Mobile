@@ -2,6 +2,7 @@ package com.paoloesan.lntranslator_mobile.ui.overlay
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,10 +22,16 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Label
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -40,18 +47,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.paoloesan.lntranslator_mobile.LocalStrings
+import kotlin.math.roundToInt
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ConfigOverlayContent(
     currentFontSize: Int,
     currentLineSpacing: Int,
     invertGestures: Boolean,
     bottomPassThroughEnabled: Boolean,
+    currentSideMarginDp: Int,
     currentFontFamily: OverlayFontOption,
     onFontSizeChange: (Int) -> Unit,
     onLineSpacingChange: (Int) -> Unit,
     onInvertGesturesChange: (Boolean) -> Unit,
     onBottomPassThroughChange: (Boolean) -> Unit,
+    onSideMarginDpChange: (Int) -> Unit,
     onFontFamilyChange: (OverlayFontOption) -> Unit,
     onClose: () -> Unit,
     onBack: () -> Unit
@@ -59,6 +70,7 @@ fun ConfigOverlayContent(
     val strings = LocalStrings.current
     val scrollState = rememberScrollState()
     var showFontFamilyOptions by remember { mutableStateOf(false) }
+    val sideMarginSliderInteraction = remember { MutableInteractionSource() }
 
     Column(
         modifier = Modifier
@@ -349,6 +361,50 @@ fun ConfigOverlayContent(
                     checkedThumbColor = MaterialTheme.colorScheme.primary,
                     checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
                 )
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Slider(
+                value = currentSideMarginDp.toFloat(),
+                onValueChange = { onSideMarginDpChange(it.roundToInt()) },
+                valueRange = 0f..32f,
+                steps = 15,
+                enabled = bottomPassThroughEnabled,
+                interactionSource = sideMarginSliderInteraction,
+                thumb = {
+                    Label(
+                        label = {
+                            Surface(
+                                color = MaterialTheme.colorScheme.surface,
+                                contentColor = MaterialTheme.colorScheme.onSurface,
+                                shape = MaterialTheme.shapes.small,
+                                tonalElevation = 2.dp
+                            ) {
+                                Text(
+                                    text = "$currentSideMarginDp dp",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                )
+                            }
+                        },
+                        interactionSource = sideMarginSliderInteraction
+                    ) {
+                        SliderDefaults.Thumb(
+                            interactionSource = sideMarginSliderInteraction,
+                            enabled = bottomPassThroughEnabled
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
             )
         }
 

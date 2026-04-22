@@ -93,6 +93,7 @@ interface UiStrings {
     val configPreviewText: String
     val configInvertNavigation: String
     val configBottomTouchSpace: String
+    val configSideTouchMarginLabel: String
     val configBack: String
     val configClose: String
 
