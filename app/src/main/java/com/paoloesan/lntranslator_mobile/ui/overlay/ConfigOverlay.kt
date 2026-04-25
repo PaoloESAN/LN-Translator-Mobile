@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -183,7 +182,6 @@ fun ConfigOverlayContent(
                             onFontSizeChange(currentFontSize - 1)
                         }
                     },
-                    modifier = Modifier.size(40.dp),
                     enabled = currentFontSize > 10,
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -218,7 +216,6 @@ fun ConfigOverlayContent(
                             onFontSizeChange(currentFontSize + 1)
                         }
                     },
-                    modifier = Modifier.size(40.dp),
                     enabled = currentFontSize < 30,
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -265,7 +262,6 @@ fun ConfigOverlayContent(
                             onLineSpacingChange(currentLineSpacing - 1)
                         }
                     },
-                    modifier = Modifier.size(40.dp),
                     enabled = currentLineSpacing > 0,
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -300,7 +296,6 @@ fun ConfigOverlayContent(
                             onLineSpacingChange(currentLineSpacing + 1)
                         }
                     },
-                    modifier = Modifier.size(40.dp),
                     enabled = currentLineSpacing < 20,
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
