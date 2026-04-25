@@ -1,6 +1,5 @@
 package com.paoloesan.lntranslator_mobile.ui.overlay
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -23,9 +22,9 @@ import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Label
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -49,7 +48,7 @@ import androidx.compose.ui.unit.sp
 import com.paoloesan.lntranslator_mobile.LocalStrings
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConfigOverlayContent(
     currentFontSize: Int,
@@ -177,27 +176,29 @@ fun ConfigOverlayContent(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                IconButton(
+                FilledIconButton(
                     shape = CircleShape,
                     onClick = {
                         if (currentFontSize > 10) {
                             onFontSizeChange(currentFontSize - 1)
                         }
                     },
-                    modifier = Modifier
-                        .size(36.dp)
-                        .background(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            CircleShape
+                    modifier = Modifier.size(40.dp),
+                    enabled = currentFontSize > 10,
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(
+                            alpha = 0.38f
                         ),
-                    enabled = currentFontSize > 10
+                        disabledContentColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(
+                            alpha = 0.38f
+                        )
+                    )
                 ) {
                     Icon(
                         Icons.Rounded.Remove,
                         contentDescription = strings.overlayDecreaseFont,
-                        tint = if (currentFontSize > 10) MaterialTheme.colorScheme.onPrimaryContainer
-                        else MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.38f),
-                        modifier = Modifier.size(20.dp)
                     )
                 }
 
@@ -210,27 +211,29 @@ fun ConfigOverlayContent(
                     textAlign = TextAlign.Center
                 )
 
-                IconButton(
+                FilledIconButton(
                     shape = CircleShape,
                     onClick = {
                         if (currentFontSize < 30) {
                             onFontSizeChange(currentFontSize + 1)
                         }
                     },
-                    modifier = Modifier
-                        .size(36.dp)
-                        .background(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            CircleShape
+                    modifier = Modifier.size(40.dp),
+                    enabled = currentFontSize < 30,
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(
+                            alpha = 0.38f
                         ),
-                    enabled = currentFontSize < 30
+                        disabledContentColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(
+                            alpha = 0.38f
+                        )
+                    )
                 ) {
                     Icon(
                         Icons.Rounded.Add,
                         contentDescription = strings.overlayIncreaseFont,
-                        tint = if (currentFontSize < 30) MaterialTheme.colorScheme.onPrimaryContainer
-                        else MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.38f),
-                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -255,27 +258,29 @@ fun ConfigOverlayContent(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                IconButton(
+                FilledIconButton(
                     shape = CircleShape,
                     onClick = {
                         if (currentLineSpacing > 0) {
                             onLineSpacingChange(currentLineSpacing - 1)
                         }
                     },
-                    modifier = Modifier
-                        .size(36.dp)
-                        .background(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            CircleShape
+                    modifier = Modifier.size(40.dp),
+                    enabled = currentLineSpacing > 0,
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(
+                            alpha = 0.38f
                         ),
-                    enabled = currentLineSpacing > 0
+                        disabledContentColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(
+                            alpha = 0.38f
+                        )
+                    )
                 ) {
                     Icon(
                         Icons.Rounded.Remove,
                         contentDescription = strings.overlayDecreaseFont,
-                        tint = if (currentLineSpacing > 0) MaterialTheme.colorScheme.onPrimaryContainer
-                        else MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.38f),
-                        modifier = Modifier.size(20.dp)
                     )
                 }
 
@@ -288,27 +293,29 @@ fun ConfigOverlayContent(
                     textAlign = TextAlign.Center
                 )
 
-                IconButton(
+                FilledIconButton(
                     shape = CircleShape,
                     onClick = {
                         if (currentLineSpacing < 20) {
                             onLineSpacingChange(currentLineSpacing + 1)
                         }
                     },
-                    modifier = Modifier
-                        .size(36.dp)
-                        .background(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            CircleShape
+                    modifier = Modifier.size(40.dp),
+                    enabled = currentLineSpacing < 20,
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(
+                            alpha = 0.38f
                         ),
-                    enabled = currentLineSpacing < 20
+                        disabledContentColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(
+                            alpha = 0.38f
+                        )
+                    )
                 ) {
                     Icon(
                         Icons.Rounded.Add,
                         contentDescription = strings.overlayIncreaseFont,
-                        tint = if (currentLineSpacing < 20) MaterialTheme.colorScheme.onPrimaryContainer
-                        else MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.38f),
-                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
