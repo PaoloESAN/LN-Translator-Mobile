@@ -13,18 +13,20 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -173,20 +175,16 @@ fun HomeScreen(
                         .fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Button(
+                    OutlinedButton(
                         modifier = Modifier
                             .weight(navigateWeight)
                             .heightIn(min = 48.dp),
                         interactionSource = navigateInteraction,
-                        colors = ButtonDefaults.buttonColors(
-                            MaterialTheme.colorScheme.secondaryContainer,
-                            MaterialTheme.colorScheme.onSecondaryContainer
-                        ),
                         onClick = { onNavigateToPrompts() },
                     ) {
                         Text(strings.homeViewPrompts)
                     }
-                    Button(
+                    FilledTonalButton(
                         modifier = Modifier
                             .weight(saveWeight)
                             .heightIn(min = 48.dp),
@@ -210,7 +208,8 @@ fun HomeScreen(
             Button(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .heightIn(min = 48.dp),
+                    .height(64.dp),
+                contentPadding = PaddingValues(horizontal = 32.dp),
                 onClick = {
                     prefs.edit { putString("prompt_app", textPrompt) }
                     if (!android.provider.Settings.canDrawOverlays(context)) {
