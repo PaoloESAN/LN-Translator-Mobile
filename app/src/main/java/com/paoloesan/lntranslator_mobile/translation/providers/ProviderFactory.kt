@@ -18,13 +18,27 @@ class ProviderFactory(private val context: Context) {
     }
 
     private fun registerProviders() {
-        val geminiClient = GeminiClient(context, "gemini-3-flash-preview")
+        val gemini3FlashClient = GeminiClient(
+            context = context,
+            modelVersion = "gemini-3-flash-preview",
+            modelId = "gemini_3_flash",
+            displayName = "Gemini 3 flash"
+        )
+
+        val gemini31FlashLiteClient = GeminiClient(
+            context = context,
+            modelVersion = "gemini-3.1-flash-lite-preview",
+            modelId = "gemini_31_flash",
+            displayName = "Gemini 3.1 flash"
+        )
 
         // Vision Register
-        register(VisionProvider(geminiClient))
+        register(VisionProvider(gemini3FlashClient))
+        register(VisionProvider(gemini31FlashLiteClient))
 
         // OCR + Model Register
-        register(OcrProvider(geminiClient))
+        register(OcrProvider(gemini3FlashClient))
+        register(OcrProvider(gemini31FlashLiteClient))
     }
 
     private fun register(provider: TranslationProvider) {

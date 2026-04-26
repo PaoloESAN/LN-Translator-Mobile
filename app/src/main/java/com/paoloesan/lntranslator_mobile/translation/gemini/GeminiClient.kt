@@ -24,11 +24,11 @@ import java.util.concurrent.TimeUnit
 
 class GeminiClient(
     context: Context,
-    private val modelVersion: String = "gemini-3-flash-preview"
+    private val modelVersion: String = "gemini-3-flash-preview",
+    override val modelId: String = "gemini",
+    override val displayName: String = "Gemini"
 ) : ModelClient {
 
-    override val modelId: String = "gemini"
-    override val displayName: String = "Gemini"
     override val supportsVision: Boolean = true
 
     private val appContext = context.applicationContext

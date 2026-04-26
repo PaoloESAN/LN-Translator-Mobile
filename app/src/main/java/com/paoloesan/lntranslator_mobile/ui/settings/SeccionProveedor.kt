@@ -32,7 +32,7 @@ class SeccionProveedor(
 
     companion object {
         private const val PREF_ACTIVE_PROVIDER = "active_translation_provider"
-        private const val DEFAULT_PROVIDER = "gemini"
+        private const val DEFAULT_PROVIDER = "gemini_3_flash"
     }
 
     private val prefs = contexto.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)

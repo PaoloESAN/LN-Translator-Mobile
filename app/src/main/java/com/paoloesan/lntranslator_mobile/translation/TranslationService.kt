@@ -16,7 +16,7 @@ class TranslationService(private val context: Context) {
     companion object {
         private const val TAG = "TranslationService"
         private const val PREF_ACTIVE_PROVIDER = "active_translation_provider"
-        private const val DEFAULT_PROVIDER = "gemini"
+        private const val DEFAULT_PROVIDER = "gemini_3_flash"
     }
 
     private val strings: UiStrings
