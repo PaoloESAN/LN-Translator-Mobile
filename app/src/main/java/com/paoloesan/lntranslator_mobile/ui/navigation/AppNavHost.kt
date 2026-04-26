@@ -1,6 +1,7 @@
 package com.paoloesan.lntranslator_mobile.ui.navigation
 
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.IntOffset
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -24,26 +26,31 @@ fun AppNavHost(
     contexto: AppCompatActivity,
     innerPadding: PaddingValues
 ) {
+    val navAnimationSpec = tween<IntOffset>(durationMillis = 360, easing = FastOutSlowInEasing)
+    val fadeAnimationSpec = tween<Float>(durationMillis = 220)
+
     NavHost(
         navController = navController,
         startDestination = "inicio",
         enterTransition = {
-            fadeIn(animationSpec = tween(300)) +
+            fadeIn(animationSpec = fadeAnimationSpec) +
                     slideInVertically(
-                        animationSpec = tween(300),
-                        initialOffsetY = { 40 })
+                        animationSpec = navAnimationSpec,
+                        initialOffsetY = { 56 }
+                    )
         },
         exitTransition = {
-            fadeOut(animationSpec = tween(300))
+            fadeOut(animationSpec = fadeAnimationSpec)
         },
         popEnterTransition = {
-            fadeIn(animationSpec = tween(300)) +
+            fadeIn(animationSpec = fadeAnimationSpec) +
                     slideInVertically(
-                        animationSpec = tween(300),
-                        initialOffsetY = { 40 })
+                        animationSpec = navAnimationSpec,
+                        initialOffsetY = { 56 }
+                    )
         },
         popExitTransition = {
-            fadeOut(animationSpec = tween(300))
+            fadeOut(animationSpec = fadeAnimationSpec)
         },
         modifier = Modifier.padding(
             innerPadding
@@ -62,17 +69,17 @@ fun AppNavHost(
             enterTransition = {
                 slideInVertically(
                     initialOffsetY = { it },
-                    animationSpec = tween(300)
+                    animationSpec = navAnimationSpec
                 )
             },
             popExitTransition = {
-                fadeOut(animationSpec = tween(300)) +
+                fadeOut(animationSpec = fadeAnimationSpec) +
                         slideOutVertically(
                             targetOffsetY = { it },
-                            animationSpec = tween(300)
+                            animationSpec = navAnimationSpec
                         )
             },
-            exitTransition = { fadeOut(animationSpec = tween(300)) }
+            exitTransition = { fadeOut(animationSpec = fadeAnimationSpec) }
         ) {
             PromptScreen(
                 contexto

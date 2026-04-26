@@ -25,7 +25,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -178,8 +180,9 @@ fun HomeScreen(
                     OutlinedButton(
                         modifier = Modifier
                             .weight(navigateWeight)
-                            .heightIn(min = 48.dp),
+                            .heightIn(min = 56.dp),
                         interactionSource = navigateInteraction,
+                        shape = MaterialTheme.shapes.large,
                         onClick = { onNavigateToPrompts() },
                     ) {
                         Text(strings.homeViewPrompts)
@@ -187,8 +190,9 @@ fun HomeScreen(
                     FilledTonalButton(
                         modifier = Modifier
                             .weight(saveWeight)
-                            .heightIn(min = 48.dp),
+                            .heightIn(min = 56.dp),
                         interactionSource = saveInteraction,
+                        shape = MaterialTheme.shapes.large,
                         enabled = puedeGuardarPrompt,
                         onClick = { showDialog = true },
                     ) {
@@ -207,9 +211,11 @@ fun HomeScreen(
 
             Button(
                 modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .height(64.dp),
-                contentPadding = PaddingValues(horizontal = 32.dp),
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp),
+                shape = MaterialTheme.shapes.extraLarge,
+                contentPadding = PaddingValues(horizontal = 28.dp, vertical = 14.dp),
+                colors = ButtonDefaults.buttonColors(),
                 onClick = {
                     prefs.edit { putString("prompt_app", textPrompt) }
                     if (!android.provider.Settings.canDrawOverlays(context)) {

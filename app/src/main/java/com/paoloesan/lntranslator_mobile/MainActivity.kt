@@ -16,13 +16,12 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -105,100 +104,85 @@ fun MainContent(navController: NavHostController, contexto: AppCompatActivity) {
     val rutaActual = navBackStackEntry?.destination?.route
     val rutasPrincipales = listOf("inicio", "ajustes")
     val mostrarBottombar = rutaActual in rutasPrincipales
-    val suiteType = if (mostrarBottombar) {
-        NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(
-            currentWindowAdaptiveInfo()
-        )
-    } else {
-        NavigationSuiteType.None
-    }
-    NavigationSuiteScaffold(
-        layoutType = suiteType,
-        navigationSuiteItems = {
-            item(
-                selected = rutaActual == "inicio",
-                onClick = {
-                    if (rutaActual != "inicio") {
-                        navController.navigate("inicio") {
-                            popUpTo(navController.graph.startDestinationId) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    when (rutaActual) {
+                        "inicio" -> Text(strings.appName)
+                        "ajustes" -> Text(strings.navSettings)
+                        "prompts" -> Text(strings.topbarPrompts)
+                        else -> Text(strings.appName)
+                    }
+                },
+                navigationIcon = {
+                    if (rutaActual == "prompts") {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                contentDescription = strings.navBack
+                            )
                         }
                     }
-                },
-                icon = {
-                    if (rutaActual == "inicio") {
-                        Icon(
-                            Icons.Rounded.Home,
-                            contentDescription = strings.navHome
-                        )
-                    } else {
-                        Icon(
-                            Icons.Outlined.Home,
-                            contentDescription = strings.navHome
-                        )
-                    }
-                },
-                label = { Text(strings.navHome) }
+                }
             )
-            item(
-                selected = rutaActual == "ajustes",
-                onClick = {
-                    if (rutaActual != "ajustes") {
-                        navController.navigate("ajustes") {
-                            popUpTo(navController.graph.startDestinationId) {
-                                saveState = true
+        },
+        bottomBar = {
+            if (mostrarBottombar) {
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = rutaActual == "inicio",
+                        onClick = {
+                            if (rutaActual != "inicio") {
+                                navController.navigate("inicio") {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                },
-                icon = {
-                    if (rutaActual == "ajustes") {
-                        Icon(
-                            Icons.Rounded.Settings,
-                            contentDescription = strings.navSettings
-                        )
-                    } else {
-                        Icon(
-                            Icons.Outlined.Settings,
-                            contentDescription = strings.navSettings
-                        )
-                    }
-                },
-                label = { Text(strings.navSettings) }
-            )
-        }
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        when (rutaActual) {
-                            "inicio" -> Text(strings.appName)
-                            "ajustes" -> Text(strings.navSettings)
-                            "prompts" -> Text(strings.topbarPrompts)
-                            else -> Text(strings.appName)
-                        }
-                    },
-                    navigationIcon = {
-                        if (rutaActual == "prompts") {
-                            IconButton(onClick = { navController.popBackStack() }) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                                    contentDescription = strings.navBack
-                                )
+                        },
+                        icon = {
+                            if (rutaActual == "inicio") {
+                                Icon(Icons.Rounded.Home, contentDescription = strings.navHome)
+                            } else {
+                                Icon(Icons.Outlined.Home, contentDescription = strings.navHome)
                             }
-                        }
-                    }
-                )
-            },
-            modifier = Modifier.fillMaxSize()
-        ) { innerPadding ->
-            AppNavHost(navController, contexto, innerPadding)
-        }
+                        },
+                        label = { Text(strings.navHome) },
+                        alwaysShowLabel = true,
+                        colors = NavigationBarItemDefaults.colors()
+                    )
+                    NavigationBarItem(
+                        selected = rutaActual == "ajustes",
+                        onClick = {
+                            if (rutaActual != "ajustes") {
+                                navController.navigate("ajustes") {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        },
+                        icon = {
+                            if (rutaActual == "ajustes") {
+                                Icon(Icons.Rounded.Settings, contentDescription = strings.navSettings)
+                            } else {
+                                Icon(Icons.Outlined.Settings, contentDescription = strings.navSettings)
+                            }
+                        },
+                        label = { Text(strings.navSettings) },
+                        alwaysShowLabel = true,
+                        colors = NavigationBarItemDefaults.colors()
+                    )
+                }
+            }
+        },
+        modifier = Modifier.fillMaxSize()
+    ) { innerPadding ->
+        AppNavHost(navController, contexto, innerPadding)
     }
 }

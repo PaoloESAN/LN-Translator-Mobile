@@ -419,7 +419,10 @@ fun ConfigOverlayContent(
         ) {
             Button(
                 onClick = onBack,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 56.dp),
+                shape = MaterialTheme.shapes.extraLarge,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer
                 )
@@ -432,7 +435,10 @@ fun ConfigOverlayContent(
 
             Button(
                 onClick = onClose,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 56.dp),
+                shape = MaterialTheme.shapes.extraLarge,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.errorContainer
                 )
