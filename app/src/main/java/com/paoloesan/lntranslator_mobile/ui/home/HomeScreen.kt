@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -72,6 +71,7 @@ fun HomeScreen(
     val navigatePressed by navigateInteraction.collectIsPressedAsState()
     val savePressed by saveInteraction.collectIsPressedAsState()
     var highlightedButton by remember { mutableStateOf<Int?>(null) }
+    var isNavigatingToPrompts by remember { mutableStateOf(false) }
 
     val navigateWeight by animateFloatAsState(
         targetValue = when (highlightedButton) {
@@ -183,7 +183,13 @@ fun HomeScreen(
                             .heightIn(min = 56.dp),
                         interactionSource = navigateInteraction,
                         shape = MaterialTheme.shapes.large,
-                        onClick = { onNavigateToPrompts() },
+                        enabled = !isNavigatingToPrompts,
+                        onClick = {
+                            if (!isNavigatingToPrompts) {
+                                isNavigatingToPrompts = true
+                                onNavigateToPrompts()
+                            }
+                        },
                     ) {
                         Text(strings.homeViewPrompts)
                     }

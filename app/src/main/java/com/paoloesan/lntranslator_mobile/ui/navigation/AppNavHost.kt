@@ -59,7 +59,12 @@ fun AppNavHost(
         composable("inicio") {
             HomeScreen(
                 navController = navController,
-                onNavigateToPrompts = { navController.navigate("prompts") })
+                onNavigateToPrompts = {
+                    navController.navigate("prompts") {
+                        launchSingleTop = true
+                    }
+                }
+            )
         }
         composable("ajustes") {
             SettingsScreen()
