@@ -3,6 +3,7 @@ package com.paoloesan.lntranslator_mobile.ui.overlay
 import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +30,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
@@ -42,6 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
@@ -115,7 +118,14 @@ fun FloatingOverlayUI(
             prefs.getInt("overlay_side_margin_dp", 12)
         )
     }
+    var showErrorDetails by remember { mutableStateOf(false) }
     val scrollState = key(uiState.indiceActual) { rememberScrollState() }
+
+    LaunchedEffect(uiState.error, uiState.isLoading) {
+        if (uiState.error == null || uiState.isLoading) {
+            showErrorDetails = false
+        }
+    }
 
     if (!menuOpen) {
         IconButton(
@@ -177,12 +187,23 @@ fun FloatingOverlayUI(
 
                     Text(
                         text = when {
+                            uiState.error != null -> strings.overlayErrorTitle
                             uiState.isLoading && uiState.total > 0 -> "${uiState.indiceActual + 1}/${uiState.total} ..."
                             uiState.total > 0 -> "${uiState.indiceActual + 1}/${uiState.total}"
                             else -> strings.overlayTitle
                         },
-                        color = if (uiState.isLoading) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                        fontSize = 14.sp
+                        color = when {
+                            uiState.error != null -> MaterialTheme.colorScheme.error
+                            uiState.isLoading -> MaterialTheme.colorScheme.primary
+                            else -> MaterialTheme.colorScheme.onSurface
+                        },
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .clickable(enabled = uiState.error != null) {
+                                showErrorDetails = !showErrorDetails
+                            }
                     )
                     IconButton(
                         onClick = leftAction,
@@ -198,7 +219,10 @@ fun FloatingOverlayUI(
                         )
                     }
                     IconButton(
-                        onClick = onTranslate,
+                        onClick = {
+                            showErrorDetails = false
+                            onTranslate()
+                        },
                         modifier = Modifier.size(24.dp),
                         enabled = !uiState.isLoading
                     ) {
@@ -334,7 +358,7 @@ fun FloatingOverlayUI(
                                 )
                             }
 
-                            uiState.error != null -> {
+                            uiState.error != null && showErrorDetails -> {
                                 Text(
                                     text = uiState.error,
                                     color = MaterialTheme.colorScheme.error,

@@ -240,6 +240,22 @@ class GeminiClient(
                         isRetryable = true
                     )
 
+                    400 -> {
+                        val rawErrorBody = e.response()?.errorBody()?.string().orEmpty()
+                        if (looksLikeInvalidApiKeyError(rawErrorBody)) {
+                            TranslationResult.Error(
+                                message = strings.errorInvalidApiKey,
+                                errorType = TranslationResult.ErrorType.INVALID_API_KEY,
+                                isRetryable = true
+                            )
+                        } else {
+                            TranslationResult.Error(
+                                message = strings.errorUnknown,
+                                errorType = TranslationResult.ErrorType.NETWORK_ERROR
+                            )
+                        }
+                    }
+
                     503 -> {
                         if (attempt < MAX_RETRIES) {
                             val delayMs = attempt * 1500L
@@ -254,7 +270,7 @@ class GeminiClient(
                     }
 
                     else -> TranslationResult.Error(
-                        message = "HTTP $code",
+                        message = strings.errorUnknown,
                         errorType = TranslationResult.ErrorType.NETWORK_ERROR
                     )
                 }
@@ -271,6 +287,12 @@ class GeminiClient(
             errorType = TranslationResult.ErrorType.UNKNOWN,
             isRetryable = false
         )
+    }
+
+    private fun looksLikeInvalidApiKeyError(rawErrorBody: String): Boolean {
+        if (rawErrorBody.isBlank()) return false
+        return rawErrorBody.contains("API_KEY_INVALID", ignoreCase = true) ||
+            rawErrorBody.contains("API key not valid", ignoreCase = true)
     }
 
     private fun bitmapToBase64(bitmap: Bitmap): String {

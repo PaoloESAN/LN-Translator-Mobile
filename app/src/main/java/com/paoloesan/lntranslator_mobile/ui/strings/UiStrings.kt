@@ -77,6 +77,7 @@ interface UiStrings {
     val overlayTranslate: String
     val overlayNext: String
     val overlayClose: String
+    val overlayErrorTitle: String
     val overlayLoading: String
     val overlayHelp: String
     val overlayIncreaseFont: String

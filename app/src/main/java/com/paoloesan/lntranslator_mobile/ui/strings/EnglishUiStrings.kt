@@ -79,6 +79,7 @@ object EnglishUiStrings : UiStrings {
     override val overlayTranslate = "Translate"
     override val overlayNext = "Next"
     override val overlayClose = "Close"
+    override val overlayErrorTitle = "Error"
     override val overlayLoading = "Translating..."
     override val overlayHelp = """
         Press the translate button to capture the screen...
