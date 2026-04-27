@@ -1,7 +1,6 @@
 package com.paoloesan.lntranslator_mobile.ui.prompts
 
 import android.content.Context
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Description
@@ -38,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -162,25 +163,21 @@ fun PromptScreen(
     } else {
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
             itemsIndexed(promptsList) { index, prompt ->
+                val shape = listItemShape(index, promptsList.size)
                 Card(
+                    onClick = { onPromptSelected(prompt.descripcion) },
+                    shape = shape,
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
                     ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                        .clickable(
-                            onClick = {
-                                onPromptSelected(prompt.descripcion)
-                            }
-                        )
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
@@ -205,20 +202,45 @@ fun PromptScreen(
                                 indexSeleccionado = index
                                 borrarDialog = true
                             },
-                            modifier = Modifier.size(40.dp),
+                            modifier = Modifier.size(48.dp),
+                            shape = CircleShape,
                             colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                contentColor = MaterialTheme.colorScheme.onSurface
                             )
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Delete,
-                                contentDescription = strings.deletePromptContentDescription
+                                contentDescription = strings.deletePromptContentDescription,
+                                Modifier.size(22.dp)
                             )
                         }
                     }
                 }
             }
         }
+    }
+}
+
+private fun listItemShape(index: Int, total: Int): Shape {
+    val radius = 20.dp
+    val noRadius = 4.dp
+    return when {
+        total <= 1 -> RoundedCornerShape(radius)
+        index == 0 -> RoundedCornerShape(
+            topStart = radius,
+            topEnd = radius,
+            bottomStart = noRadius,
+            bottomEnd = noRadius
+        )
+
+        index == total - 1 -> RoundedCornerShape(
+            bottomStart = radius,
+            bottomEnd = radius,
+            topStart = noRadius,
+            topEnd = noRadius
+        )
+
+        else -> RoundedCornerShape(noRadius)
     }
 }
