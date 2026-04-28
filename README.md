@@ -7,7 +7,7 @@
 Translate Japanese Light Novels directly from official websites to your preferred language with ease. This tool is designed to provide a seamless reading experience for LN fans, removing the language barrier directly on your screen.
 
 <p align="center">
-  <a href="https://github.com/PaoloESAN/LN-Translator-Mobile/releases/download/v1.3.1/LNTranslator.apk">
+  <a href="https://github.com/PaoloESAN/LN-Translator-Mobile/releases/download/v1.4.0/LNTranslator.apk">
     <img src="https://img.shields.io/badge/Download-APK-green?style=for-the-badge&logo=android" alt="Download APK">
   </a>
 </p>
@@ -32,8 +32,8 @@ https://github.com/user-attachments/assets/8ef0d227-eac6-4fd6-b907-974a7469fa7d
 ## Translation Providers
 
 The app currently offers two main ways to translate your screen:
-- **Gemini (Vision)**: Sends the captured image directly to the model for a highly contextual translation.
-- **Gemini (OCR + Text)**: Extracts the Japanese text locally using OCR first, then sends the clean text to the model for translation.
+- **Gemini 3/3.1 (Vision)**: Sends the captured image directly to the model for a highly contextual translation.
+- **Gemini 3/3.1 (OCR + Text)**: Extracts the Japanese text locally using OCR first, then sends the clean text to the model for translation.
 - **Coming Soon**: Integration with **ChatGPT (OpenAI)**, **Grok (xAI)**, and more.
 
 ## Important / Disclaimer
