@@ -64,7 +64,10 @@ interface UiStrings {
     val deletePromptTitle: String
     val deletePromptContentDescription: String
     val savePromptTitle: String
+    val editPromptTitle: String
+    val editPromptContentDescription: String
     val promptTitleLabel: String
+    val promptDescriptionLabel: String
     val promptTitleRequired: String
     val promptContextRequired: String
     val promptsEmptyTitle: String

@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -27,6 +28,7 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,7 +56,11 @@ fun PromptScreen(
     val strings = LocalStrings.current
     val promptsList = remember { mutableStateListOf<PromptData>() }
     var borrarDialog by remember { mutableStateOf(false) }
+    var editarDialog by remember { mutableStateOf(false) }
     var indexSeleccionado by remember { mutableIntStateOf(-1) }
+    var indexEditando by remember { mutableIntStateOf(-1) }
+    var tituloEditado by remember { mutableStateOf("") }
+    var descripcionEditada by remember { mutableStateOf("") }
     var cargandoPrompts by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
@@ -113,6 +119,94 @@ fun PromptScreen(
                     Text(
                         strings.deletePromptTitle,
                         style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
+        )
+    }
+
+    if (editarDialog) {
+        val tituloNormalizado = tituloEditado.trim()
+        val descripcionNormalizada = descripcionEditada.trim()
+        val tituloValido = tituloNormalizado.isNotBlank()
+        val descripcionValida = descripcionNormalizada.isNotBlank()
+        val puedeGuardar = tituloValido && descripcionValida
+
+        AlertDialog(
+            title = {
+                Text(strings.editPromptTitle, style = MaterialTheme.typography.headlineSmall)
+            },
+            onDismissRequest = { editarDialog = false },
+            confirmButton = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = { editarDialog = false },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    ) {
+                        Text(strings.buttonCancel)
+                    }
+                    Button(
+                        onClick = {
+                            if (puedeGuardar && indexEditando in promptsList.indices) {
+                                val actualizado = PromptData(
+                                    tituloNormalizado,
+                                    descripcionNormalizada
+                                )
+                                Prompt.actualizarPrompt(indexEditando, actualizado, context)
+                                promptsList[indexEditando] = actualizado
+                                editarDialog = false
+                            }
+                        },
+                        enabled = puedeGuardar,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    ) {
+                        Text(strings.buttonSave)
+                    }
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    OutlinedTextField(
+                        label = { Text(strings.promptTitleLabel) },
+                        value = tituloEditado,
+                        onValueChange = { tituloEditado = it },
+                        isError = !tituloValido,
+                        supportingText = {
+                            if (!tituloValido) {
+                                Text(strings.promptTitleRequired)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        label = { Text(strings.promptDescriptionLabel) },
+                        value = descripcionEditada,
+                        onValueChange = { descripcionEditada = it },
+                        isError = !descripcionValida,
+                        supportingText = {
+                            if (!descripcionValida) {
+                                Text(strings.promptContextRequired)
+                            }
+                        },
+                        minLines = 3,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
@@ -197,23 +291,48 @@ fun PromptScreen(
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
-                        FilledIconButton(
-                            onClick = {
-                                indexSeleccionado = index
-                                borrarDialog = true
-                            },
-                            modifier = Modifier.size(48.dp),
-                            shape = CircleShape,
-                            colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Delete,
-                                contentDescription = strings.deletePromptContentDescription,
-                                Modifier.size(22.dp)
-                            )
+                            FilledIconButton(
+                                onClick = {
+                                    indexEditando = index
+                                    tituloEditado = prompt.titulo
+                                    descripcionEditada = prompt.descripcion
+                                    editarDialog = true
+                                },
+                                modifier = Modifier.size(48.dp),
+                                shape = CircleShape,
+                                colors = IconButtonDefaults.filledIconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    contentColor = MaterialTheme.colorScheme.onSurface
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Edit,
+                                    contentDescription = strings.editPromptContentDescription,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            FilledIconButton(
+                                onClick = {
+                                    indexSeleccionado = index
+                                    borrarDialog = true
+                                },
+                                modifier = Modifier.size(48.dp),
+                                shape = CircleShape,
+                                colors = IconButtonDefaults.filledIconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    contentColor = MaterialTheme.colorScheme.onSurface
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Delete,
+                                    contentDescription = strings.deletePromptContentDescription,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
                     }
                 }

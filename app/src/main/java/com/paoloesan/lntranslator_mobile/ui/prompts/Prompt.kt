@@ -2,9 +2,9 @@ package com.paoloesan.lntranslator_mobile.ui.prompts
 
 import android.content.Context
 import android.widget.Toast
+import androidx.core.content.edit
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import androidx.core.content.edit
 
 object Prompt {
     private const val PREFS_NAME = "settings_prefs"
@@ -45,9 +45,27 @@ object Prompt {
             listaExistente.removeAt(indice)
             val json = gson.toJson(listaExistente)
             prefs.edit { putString(KEY_PROMPTS, json) }
-            Toast.makeText(context, "Prompt eliminado", Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(context, "Índice inválido", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun actualizarPrompt(indice: Int, nuevoPrompt: PromptData, context: Context) {
+        val titulo = nuevoPrompt.titulo.trim()
+        val descripcion = nuevoPrompt.descripcion.trim()
+        if (titulo.isBlank() || descripcion.isBlank()) {
+            return
+        }
+
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val listaExistente = obtenerPrompts(context).toMutableList()
+
+        if (indice in listaExistente.indices) {
+            listaExistente[indice] = PromptData(titulo, descripcion)
+            val json = gson.toJson(listaExistente)
+            prefs.edit { putString(KEY_PROMPTS, json) }
+        } else {
+            Toast.makeText(context, "Indice invalido", Toast.LENGTH_SHORT).show()
         }
     }
 }
