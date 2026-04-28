@@ -3,7 +3,6 @@ package com.paoloesan.lntranslator_mobile.ui.home
 import android.app.Activity
 import android.content.Context
 import android.media.projection.MediaProjectionManager
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
@@ -116,8 +115,6 @@ fun HomeScreen(
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 OverlayService.start(context)
             }, 500)
-        } else {
-            Toast.makeText(context, strings.homePermissionDenied, Toast.LENGTH_SHORT).show()
         }
     }
 
