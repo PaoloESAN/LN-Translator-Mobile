@@ -27,7 +27,7 @@ class ProviderFactory(private val context: Context) {
 
         val gemini31FlashLiteClient = GeminiClient(
             context = context,
-            modelVersion = "gemini-3.1-flash-lite-preview",
+            modelVersion = "gemini-3.1-flash-lite",
             modelId = "gemini_31_flash",
             displayName = "Gemini 3.1 flash"
         )
