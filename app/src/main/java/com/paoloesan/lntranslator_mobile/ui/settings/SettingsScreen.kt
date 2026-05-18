@@ -13,20 +13,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Api
 import androidx.compose.material.icons.outlined.BrightnessMedium
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Download
-import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -43,24 +43,15 @@ import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(modifier: Modifier = Modifier) {
+fun SettingsScreen(
+    modifier: Modifier = Modifier,
+    onNavigateToTranslationConfig: () -> Unit
+) {
     val context = LocalContext.current
     val strings: UiStrings = LocalStrings.current
 
     val secciones = remember(context, strings) {
         listOf(
-            SeccionProveedor(
-                Icons.Outlined.Api,
-                strings.settingsProviderTitle,
-                strings.settingsProviderDescription,
-                context
-            ),
-            SeccionKey(
-                Icons.Outlined.Key,
-                strings.settingsApikeyTitle,
-                strings.settingsApikeyDescription,
-                context
-            ),
             SeccionTema(
                 Icons.Outlined.BrightnessMedium,
                 strings.settingsThemeTitle,
@@ -88,6 +79,14 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        SeccionRow(
+            Icons.Outlined.AutoAwesome,
+            strings.settingsProviderTitle,
+            strings.settingsProviderDescription
+        ) {
+            onNavigateToTranslationConfig()
+        }
+
         secciones.forEach { seccionData ->
             SeccionRow(
                 seccionData.icono,
@@ -100,14 +99,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     if (seccionSeleccionada != null) {
         key(seccionSeleccionada) {
             val cerrarModal: () -> Unit = {
-                val seccionActual = seccionSeleccionada
-                if (seccionActual is SeccionKey) {
-                    seccionActual.guardarCambios {
-                        seccionSeleccionada = null
-                    }
-                } else {
-                    seccionSeleccionada = null
-                }
+                seccionSeleccionada = null
             }
 
             BasicAlertDialog(
@@ -159,7 +151,7 @@ fun SeccionRow(icono: ImageVector, titulo: String, descripcion: String, onClick:
                 .size(48.dp)
                 .background(
                     color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = CircleShape
+                    shape = MaterialShapes.Cookie12Sided.toShape()
                 ),
             contentAlignment = Alignment.Center
         ) {

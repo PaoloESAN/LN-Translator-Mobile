@@ -209,7 +209,8 @@ fun HomeScreen(
                     value = textPrompt,
                     onValueChange = { textPrompt = it },
                     minLines = 3,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.large
                 )
             }
 

@@ -8,6 +8,7 @@ interface UiStrings {
     val navSettings: String
     val navBack: String
     val topbarPrompts: String
+    val topbarTranslationConfig: String
 
     val settingsProviderTitle: String
     val settingsProviderDescription: String
@@ -19,6 +20,14 @@ interface UiStrings {
     val settingsLanguageDescription: String
     val settingsUpdateTitle: String
     val settingsUpdateDescription: String
+
+    val configAiModelTitle: String
+    val configActiveModel: String
+    val configTextExtraction: String
+    val configVisionOnly: String
+    val configVisionSubtitle: String
+    val configLocalOcr: String
+    val configOcrSubtitle: String
 
     val updateCurrentVersion: (String) -> String
     val updateUnknownVersion: String

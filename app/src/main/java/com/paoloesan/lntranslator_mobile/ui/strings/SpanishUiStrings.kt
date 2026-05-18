@@ -6,9 +6,10 @@ object SpanishUiStrings : UiStrings {
     override val navSettings = "Ajustes"
     override val navBack = "Volver"
     override val topbarPrompts = "Prompts"
+    override val topbarTranslationConfig = "Configuración de Traducción"
 
-    override val settingsProviderTitle = "Proveedor de Traducción"
-    override val settingsProviderDescription = "Selecciona el proveedor de traducción a usar."
+    override val settingsProviderTitle = "Configuración de Traducción"
+    override val settingsProviderDescription = "Configura modelos de IA, claves API y ajustes de OCR."
     override val settingsApikeyTitle = "API Key"
     override val settingsApikeyDescription = "El API Key que usará gemini."
     override val settingsThemeTitle = "Tema"
@@ -17,6 +18,14 @@ object SpanishUiStrings : UiStrings {
     override val settingsLanguageDescription = "Idiomas: Español, Inglés."
     override val settingsUpdateTitle = "Actualizaciones"
     override val settingsUpdateDescription = "Comprueba si hay una nueva versión disponible."
+
+    override val configAiModelTitle = "Modelo de IA"
+    override val configActiveModel = "Modelo activo"
+    override val configTextExtraction = "Extracción de Texto"
+    override val configVisionOnly = "Solo Visión"
+    override val configVisionSubtitle = "Más tokens · mejor calidad"
+    override val configLocalOcr = "OCR Local"
+    override val configOcrSubtitle = "Menos tokens · menor calidad"
     override val updateCurrentVersion: (String) -> String =
         { version -> "Version actual: $version" }
     override val updateUnknownVersion = "desconocida"

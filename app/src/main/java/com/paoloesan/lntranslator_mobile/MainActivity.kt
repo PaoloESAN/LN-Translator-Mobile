@@ -103,29 +103,33 @@ fun MainContent(navController: NavHostController, contexto: AppCompatActivity) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val rutaActual = navBackStackEntry?.destination?.route
     val rutasPrincipales = listOf("inicio", "ajustes")
+    val rutasConBack = listOf("prompts", "config_traduccion")
     val mostrarBottombar = rutaActual in rutasPrincipales
+    val mostrarTopBar = rutaActual != "config_traduccion"
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    when (rutaActual) {
-                        "inicio" -> Text(strings.appName)
-                        "ajustes" -> Text(strings.navSettings)
-                        "prompts" -> Text(strings.topbarPrompts)
-                        else -> Text(strings.appName)
-                    }
-                },
-                navigationIcon = {
-                    if (rutaActual == "prompts") {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = strings.navBack
-                            )
+            if (mostrarTopBar) {
+                TopAppBar(
+                    title = {
+                        when (rutaActual) {
+                            "inicio" -> Text(strings.appName)
+                            "ajustes" -> Text(strings.navSettings)
+                            "prompts" -> Text(strings.topbarPrompts)
+                            else -> Text(strings.appName)
+                        }
+                    },
+                    navigationIcon = {
+                        if (rutaActual in rutasConBack) {
+                            IconButton(onClick = { navController.popBackStack() }) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                    contentDescription = strings.navBack
+                                )
+                            }
                         }
                     }
-                }
-            )
+                )
+            }
         },
         bottomBar = {
             if (mostrarBottombar) {

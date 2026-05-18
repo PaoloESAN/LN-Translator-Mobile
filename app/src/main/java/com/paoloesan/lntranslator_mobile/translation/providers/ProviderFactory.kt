@@ -22,14 +22,14 @@ class ProviderFactory(private val context: Context) {
             context = context,
             modelVersion = "gemini-3-flash-preview",
             modelId = "gemini_3_flash",
-            displayName = "Gemini 3 flash"
+            displayName = "Gemini 3 Flash"
         )
 
         val gemini31FlashLiteClient = GeminiClient(
             context = context,
             modelVersion = "gemini-3.1-flash-lite",
             modelId = "gemini_31_flash",
-            displayName = "Gemini 3.1 flash"
+            displayName = "Gemini 3.1 Flash Lite"
         )
 
         // Vision Register

@@ -5,7 +5,9 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -18,6 +20,7 @@ import androidx.navigation.compose.composable
 import com.paoloesan.lntranslator_mobile.ui.home.HomeScreen
 import com.paoloesan.lntranslator_mobile.ui.prompts.PromptScreen
 import com.paoloesan.lntranslator_mobile.ui.settings.SettingsScreen
+import com.paoloesan.lntranslator_mobile.ui.settings.TranslationConfigScreen
 
 
 @Composable
@@ -67,7 +70,37 @@ fun AppNavHost(
             )
         }
         composable("ajustes") {
-            SettingsScreen()
+            SettingsScreen(
+                onNavigateToTranslationConfig = {
+                    navController.navigate("config_traduccion")
+                }
+            )
+        }
+        composable(
+            route = "config_traduccion",
+            // Slide in from right (like native Google apps)
+            enterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { it },
+                    animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
+                )
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(durationMillis = 200))
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(durationMillis = 200))
+            },
+            popExitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { it },
+                    animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
+                )
+            }
+        ) {
+            TranslationConfigScreen(
+                onBack = { navController.popBackStack() }
+            )
         }
         composable(
             route = "prompts",
