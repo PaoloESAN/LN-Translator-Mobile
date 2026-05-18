@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "material-3": {
+      "source": "hamen/material-3-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "9bf93f3f0c0cd4a309683d1f93037cf8d495687a234b2c282dd113c9709f2803"
+    },
+    "material-3-expressive": {
+      "source": "albermonte/android-skills",
+      "sourceType": "github",
+      "skillPath": "skills/material-3-expressive/SKILL.md",
+      "computedHash": "4190574ca75ce5c25f82c5af13893a2562d60e8d9c030702de36b921a012bc28"
+    }
+  }
+}
