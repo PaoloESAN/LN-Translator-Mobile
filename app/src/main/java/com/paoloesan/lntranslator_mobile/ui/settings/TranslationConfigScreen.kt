@@ -181,7 +181,7 @@ fun TranslationConfigScreen(
 
     // --- State ---
     val initialProviderId = remember {
-        prefs.getString("active_translation_provider", "gemini_3_flash") ?: "gemini_3_flash"
+        prefs.getString("active_translation_provider", "gemini_31_flash") ?: "gemini_31_flash"
     }
     var useOcr by remember { mutableStateOf(initialProviderId.startsWith("ocr_")) }
     var selectedModelId by remember { mutableStateOf(initialProviderId.removePrefix("ocr_")) }
