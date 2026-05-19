@@ -32,13 +32,22 @@ class ProviderFactory(private val context: Context) {
             displayName = "Gemini 3.1 Flash Lite"
         )
 
+        val gemini35FlashClient = GeminiClient(
+            context = context,
+            modelVersion = "gemini-3.5-flash",
+            modelId = "gemini_35_flash",
+            displayName = "Gemini 3.5 Flash"
+        )
+
         // Vision Register
         register(VisionProvider(gemini3FlashClient))
         register(VisionProvider(gemini31FlashLiteClient))
+        register(VisionProvider(gemini35FlashClient))
 
         // OCR + Model Register
         register(OcrProvider(gemini3FlashClient))
         register(OcrProvider(gemini31FlashLiteClient))
+        register(OcrProvider(gemini35FlashClient))
     }
 
     private fun register(provider: TranslationProvider) {
