@@ -29,6 +29,13 @@ interface UiStrings {
     val configLocalOcr: String
     val configOcrSubtitle: String
 
+    val configShowPrices: String
+    val configHidePrices: String
+    val configModelPricingTitle: String
+    val configGemini3FlashPricing: String
+    val configGemini31FlashLitePricing: String
+    val configGemini35FlashPricing: String
+
     val updateCurrentVersion: (String) -> String
     val updateUnknownVersion: String
     val updateChecking: String

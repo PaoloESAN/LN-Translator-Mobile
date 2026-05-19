@@ -24,6 +24,8 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuGroup
@@ -184,6 +186,7 @@ fun TranslationConfigScreen(
     var useOcr by remember { mutableStateOf(initialProviderId.startsWith("ocr_")) }
     var selectedModelId by remember { mutableStateOf(initialProviderId.removePrefix("ocr_")) }
     var showModelMenu by remember { mutableStateOf(false) }
+    var showPrices by remember { mutableStateOf(false) }
 
     val apiKeys = remember { mutableStateListOf<String>() }
     val maxApiKeys = 5
@@ -466,6 +469,74 @@ fun TranslationConfigScreen(
                 }
             }
 
+            // Collapsible Pricing Section
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showPrices = !showPrices }
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = if (showPrices) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = if (showPrices) strings.configHidePrices else strings.configShowPrices,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = if (showPrices) strings.configHidePrices else strings.configShowPrices,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                if (showPrices) {
+                    ElevatedCard(
+                        shape = MaterialTheme.shapes.large,
+                        colors = CardDefaults.elevatedCardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        ),
+                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp),
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Text(
+                                text = strings.configModelPricingTitle,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                            
+                            ModelPricingRow(
+                                modelName = "Gemini 3 Flash",
+                                pricingInfo = strings.configGemini3FlashPricing
+                            )
+                            ModelPricingRow(
+                                modelName = "Gemini 3.1 Flash Lite",
+                                pricingInfo = strings.configGemini31FlashLitePricing
+                            )
+                            ModelPricingRow(
+                                modelName = "Gemini 3.5 Flash",
+                                pricingInfo = strings.configGemini35FlashPricing
+                            )
+                        }
+                    }
+                }
+            }
+
             HorizontalDivider(
                 modifier = Modifier.padding(horizontal = 24.dp),
                 color = MaterialTheme.colorScheme.outlineVariant,
@@ -516,5 +587,27 @@ fun TranslationConfigScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ModelPricingRow(
+    modelName: String,
+    pricingInfo: String,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        Text(
+            text = modelName,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = pricingInfo,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }

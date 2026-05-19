@@ -26,6 +26,13 @@ object SpanishUiStrings : UiStrings {
     override val configVisionSubtitle = "Más tokens · mejor calidad"
     override val configLocalOcr = "OCR Local"
     override val configOcrSubtitle = "Menos tokens · menor calidad"
+
+    override val configShowPrices = "Ver precios de API"
+    override val configHidePrices = "Ocultar precios de API"
+    override val configModelPricingTitle = "Referencia de Precios de API"
+    override val configGemini3FlashPricing = "Gratis: 20 peticiones/día · Pago: ~$1.00 / 1M tokens"
+    override val configGemini31FlashLitePricing = "Gratis: 500 peticiones/día · Pago: ~$0.50 / 1M tokens"
+    override val configGemini35FlashPricing = "Gratis: 20 peticiones/día · Pago: ~$3.00 / 1M tokens"
     override val updateCurrentVersion: (String) -> String =
         { version -> "Version actual: $version" }
     override val updateUnknownVersion = "desconocida"
