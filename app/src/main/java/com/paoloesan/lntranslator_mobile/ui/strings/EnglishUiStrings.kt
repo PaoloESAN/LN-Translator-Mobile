@@ -78,6 +78,16 @@ object EnglishUiStrings : UiStrings {
     override val homeStartButton = "Start Translator"
     override val homePermissionDenied = "Capture permission denied"
 
+    // Novels
+    override val homeNovelsSectionTitle = "Current Novel"
+    override val homeSelectNovel = "Select Novel"
+    override val novelsTitle = "My Novels"
+    override val novelsEmptyTitle = "No novels"
+    override val novelsEmptySubtitle = "Add a novel to save its translations."
+    override val novelsAddTitle = "Add Novel"
+    override val novelsAddNameLabel = "Novel name"
+    override val novelsNone = "None"
+
     // Prompts
     override val deletePromptTitle = "Are you sure you want to delete this prompt?"
     override val deletePromptContentDescription = "Delete Prompt"

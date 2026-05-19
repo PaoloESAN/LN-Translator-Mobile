@@ -21,6 +21,7 @@ import com.paoloesan.lntranslator_mobile.ui.home.HomeScreen
 import com.paoloesan.lntranslator_mobile.ui.prompts.PromptScreen
 import com.paoloesan.lntranslator_mobile.ui.settings.SettingsScreen
 import com.paoloesan.lntranslator_mobile.ui.settings.TranslationConfigScreen
+import com.paoloesan.lntranslator_mobile.ui.novels.NovelsScreen
 
 
 @Composable
@@ -128,6 +129,25 @@ fun AppNavHost(
                 )
                 navController.popBackStack()
             }
+        }
+        composable(
+            route = "novels",
+            enterTransition = {
+                slideInVertically(
+                    initialOffsetY = { it },
+                    animationSpec = navAnimationSpec
+                )
+            },
+            popExitTransition = {
+                fadeOut(animationSpec = fadeAnimationSpec) +
+                        slideOutVertically(
+                            targetOffsetY = { it },
+                            animationSpec = navAnimationSpec
+                        )
+            },
+            exitTransition = { fadeOut(animationSpec = fadeAnimationSpec) }
+        ) {
+            NovelsScreen()
         }
     }
 }

@@ -21,17 +21,33 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenuGroup
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenuPopup
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +57,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
@@ -54,6 +71,7 @@ import com.paoloesan.lntranslator_mobile.service.ScreenCaptureService
 import com.paoloesan.lntranslator_mobile.ui.prompts.PromptDialog
 import kotlinx.coroutines.delay
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
@@ -63,8 +81,25 @@ fun HomeScreen(
     val context = LocalContext.current
     val strings = LocalStrings.current
     val prefs = context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
+    var savedNovelsString by remember { mutableStateOf(prefs.getString("saved_novels", "") ?: "") }
+    val novelsList by remember {
+        derivedStateOf {
+            savedNovelsString.split(",").filter { it.isNotBlank() }
+        }
+    }
     var textPrompt by rememberSaveable { mutableStateOf("") }
+    var selectedNovel by rememberSaveable {
+        mutableStateOf(
+            prefs.getString(
+                "selected_novel",
+                null
+            )
+        )
+    }
     var showDialog by remember { mutableStateOf(false) }
+    var expandedNovels by remember { mutableStateOf(false) }
+    var showAddNovelDialog by remember { mutableStateOf(false) }
+    var newNovelName by remember { mutableStateOf("") }
     val puedeGuardarPrompt = textPrompt.trim().isNotBlank()
     val navigateInteraction = remember { MutableInteractionSource() }
     val saveInteraction = remember { MutableInteractionSource() }
@@ -137,6 +172,46 @@ fun HomeScreen(
         onDismissRequest = { showDialog = false }
     )
 
+    if (showAddNovelDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddNovelDialog = false },
+            title = { Text(strings.novelsAddTitle) },
+            text = {
+                OutlinedTextField(
+                    value = newNovelName,
+                    onValueChange = { newNovelName = it },
+                    label = { Text(strings.novelsAddNameLabel) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val trimmed = newNovelName.trim()
+                        if (trimmed.isNotBlank() && !novelsList.contains(trimmed)) {
+                            val updated =
+                                if (savedNovelsString.isEmpty()) trimmed else "$savedNovelsString,$trimmed"
+                            prefs.edit { putString("saved_novels", updated) }
+                            savedNovelsString = updated
+                            selectedNovel = trimmed
+                            prefs.edit { putString("selected_novel", trimmed) }
+                        }
+                        showAddNovelDialog = false
+                        newNovelName = ""
+                    }
+                ) {
+                    Text(strings.buttonSave)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddNovelDialog = false }) {
+                    Text(strings.buttonCancel)
+                }
+            }
+        )
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -165,6 +240,119 @@ fun HomeScreen(
                 text = "\"${strings.homeWelcome}\"",
                 fontStyle = FontStyle.Italic
             )
+
+            // Section for Novels
+            ExposedDropdownMenuBox(
+                expanded = expandedNovels,
+                onExpandedChange = { expandedNovels = it },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = selectedNovel ?: strings.novelsNone,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text(strings.homeNovelsSectionTitle) },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedNovels)
+                    },
+                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth(),
+                    shape = MaterialTheme.shapes.large
+                )
+
+                DropdownMenuPopup(
+                    expanded = expandedNovels,
+                    onDismissRequest = { expandedNovels = false }
+                ) {
+                    DropdownMenuGroup(
+                        shapes = MenuDefaults.groupShape(0, 1)
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(strings.novelsNone) },
+                            selected = selectedNovel == null,
+                            shapes = MenuDefaults.itemShape(0, novelsList.count() + 2),
+                            onClick = {
+                                selectedNovel = null
+                                prefs.edit { remove("selected_novel") }
+                                expandedNovels = false
+                            },
+                            selectedLeadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = Color.Transparent,
+                                )
+                            },
+                        )
+                        novelsList.forEachIndexed { index, novel ->
+                            DropdownMenuItem(
+                                selected = novel == selectedNovel,
+                                shapes = MenuDefaults.itemShape(index, novelsList.count() + 2),
+                                text = { Text(novel) },
+                                onClick = {
+                                    selectedNovel = novel
+                                    prefs.edit { putString("selected_novel", novel) }
+                                    expandedNovels = false
+                                },
+                                selectedLeadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                        tint = Color.Transparent,
+                                    )
+                                },
+                            )
+                        }
+                        HorizontalDivider(
+                            modifier = Modifier.padding(MenuDefaults.HorizontalDividerPadding)
+                        )
+                        DropdownMenuItem(
+                            selected = false,
+                            shapes = MenuDefaults.itemShape(
+                                novelsList.count() + 1,
+                                novelsList.count() + 2
+                            ),
+                            text = {
+                                Text(
+                                    strings.novelsAddTitle,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            },
+                            onClick = {
+                                expandedNovels = false
+                                showAddNovelDialog = true
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            },
+                        )
+                    }
+
+
+                }
+            }
 
             Column(
                 modifier = Modifier.fillMaxWidth(),

@@ -9,8 +9,10 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.rounded.Book
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -65,7 +67,7 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 prefs.registerOnSharedPreferenceChangeListener(listener)
-                
+
                 onDispose {
                     prefs.unregisterOnSharedPreferenceChangeListener(listener)
                 }
@@ -102,10 +104,10 @@ fun MainContent(navController: NavHostController, contexto: AppCompatActivity) {
     val strings = LocalStrings.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val rutaActual = navBackStackEntry?.destination?.route
-    val rutasPrincipales = listOf("inicio", "ajustes")
+    val rutasPrincipales = listOf("inicio", "novels", "ajustes")
     val rutasConBack = listOf("prompts", "config_traduccion")
     val mostrarBottombar = rutaActual in rutasPrincipales
-    val mostrarTopBar = rutaActual != "config_traduccion"
+    val mostrarTopBar = rutaActual != "config_traduccion" && rutaActual != "novels"
     Scaffold(
         topBar = {
             if (mostrarTopBar) {
@@ -159,6 +161,30 @@ fun MainContent(navController: NavHostController, contexto: AppCompatActivity) {
                         colors = NavigationBarItemDefaults.colors()
                     )
                     NavigationBarItem(
+                        selected = rutaActual == "novels",
+                        onClick = {
+                            if (rutaActual != "novels") {
+                                navController.navigate("novels") {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        },
+                        icon = {
+                            if (rutaActual == "novels") {
+                                Icon(Icons.Rounded.Book, contentDescription = strings.novelsTitle)
+                            } else {
+                                Icon(Icons.Outlined.Book, contentDescription = strings.novelsTitle)
+                            }
+                        },
+                        label = { Text(strings.novelsTitle) },
+                        alwaysShowLabel = true,
+                        colors = NavigationBarItemDefaults.colors()
+                    )
+                    NavigationBarItem(
                         selected = rutaActual == "ajustes",
                         onClick = {
                             if (rutaActual != "ajustes") {
@@ -173,9 +199,15 @@ fun MainContent(navController: NavHostController, contexto: AppCompatActivity) {
                         },
                         icon = {
                             if (rutaActual == "ajustes") {
-                                Icon(Icons.Rounded.Settings, contentDescription = strings.navSettings)
+                                Icon(
+                                    Icons.Rounded.Settings,
+                                    contentDescription = strings.navSettings
+                                )
                             } else {
-                                Icon(Icons.Outlined.Settings, contentDescription = strings.navSettings)
+                                Icon(
+                                    Icons.Outlined.Settings,
+                                    contentDescription = strings.navSettings
+                                )
                             }
                         },
                         label = { Text(strings.navSettings) },

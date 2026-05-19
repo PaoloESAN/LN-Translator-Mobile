@@ -76,6 +76,16 @@ interface UiStrings {
     val homeStartButton: String
     val homePermissionDenied: String
 
+    // Novels
+    val homeNovelsSectionTitle: String
+    val homeSelectNovel: String
+    val novelsTitle: String
+    val novelsEmptyTitle: String
+    val novelsEmptySubtitle: String
+    val novelsAddTitle: String
+    val novelsAddNameLabel: String
+    val novelsNone: String
+
     // Prompts
     val deletePromptTitle: String
     val deletePromptContentDescription: String

@@ -78,6 +78,16 @@ object SpanishUiStrings : UiStrings {
     override val homeStartButton = "Iniciar Traductor"
     override val homePermissionDenied = "Permiso de captura denegado"
 
+    // Novels
+    override val homeNovelsSectionTitle = "Novela Actual"
+    override val homeSelectNovel = "Seleccionar Novela"
+    override val novelsTitle = "Mis Novelas"
+    override val novelsEmptyTitle = "No hay novelas"
+    override val novelsEmptySubtitle = "Agrega una novela para guardar sus traducciones."
+    override val novelsAddTitle = "Agregar Novela"
+    override val novelsAddNameLabel = "Nombre de la novela"
+    override val novelsNone = "Ninguna"
+
     // Prompts
     override val deletePromptTitle = "¿Estas seguro de borrar el prompt?"
     override val deletePromptContentDescription = "Eliminar Prompt"
