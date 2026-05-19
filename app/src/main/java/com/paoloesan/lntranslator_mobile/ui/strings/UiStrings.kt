@@ -80,11 +80,17 @@ interface UiStrings {
     val homeNovelsSectionTitle: String
     val homeSelectNovel: String
     val novelsTitle: String
+    val novelsSelected: (Int) -> String
     val novelsEmptyTitle: String
     val novelsEmptySubtitle: String
     val novelsAddTitle: String
     val novelsAddNameLabel: String
     val novelsNone: String
+    val novelDetailsEmptyTitle: String
+    val novelDetailsEmptySubtitle: String
+    val novelDetailsViewPages: String
+    val novelDetailsGoToPage: String
+    val novelDetailsPageNumber: String
 
     // Prompts
     val deletePromptTitle: String
@@ -130,6 +136,16 @@ interface UiStrings {
     // Notifications
     val notifTitle: String
     val notifDesc: String
+
+    // Content Descriptions
+    val cdCancelSelection: String
+    val cdEdit: String
+    val cdDelete: String
+    val cdListView: String
+    val cdGridView: String
+    val cdChangeView: String
+    val cdMenu: String
+    val cdLogo: String
 
     // Errors
     val errorNoProvider: String

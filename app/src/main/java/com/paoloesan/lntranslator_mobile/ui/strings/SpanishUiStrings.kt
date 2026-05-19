@@ -82,11 +82,18 @@ object SpanishUiStrings : UiStrings {
     override val homeNovelsSectionTitle = "Novela Actual"
     override val homeSelectNovel = "Seleccionar Novela"
     override val novelsTitle = "Mis Novelas"
+    override val novelsSelected: (Int) -> String = { count -> "$count seleccionada(s)" }
     override val novelsEmptyTitle = "No hay novelas"
     override val novelsEmptySubtitle = "Agrega una novela para guardar sus traducciones."
     override val novelsAddTitle = "Agregar Novela"
     override val novelsAddNameLabel = "Nombre de la novela"
     override val novelsNone = "Ninguna"
+
+    override val novelDetailsEmptyTitle = "No hay traducciones todavía"
+    override val novelDetailsEmptySubtitle = "Abre el traductor sobre alguna aplicación y empieza a capturar para ver las traducciones aquí."
+    override val novelDetailsViewPages = "Ver todas las páginas"
+    override val novelDetailsGoToPage = "Ir a página"
+    override val novelDetailsPageNumber = "Página"
 
     // Prompts
     override val deletePromptTitle = "¿Estas seguro de borrar el prompt?"
@@ -137,6 +144,16 @@ object SpanishUiStrings : UiStrings {
     // Notifications
     override val notifTitle = "Traductor Activo"
     override val notifDesc = "El traductor está funcionando sobre otras apps"
+
+    // Content Descriptions
+    override val cdCancelSelection = "Cancelar selección"
+    override val cdEdit = "Editar"
+    override val cdDelete = "Borrar"
+    override val cdListView = "Vista de lista"
+    override val cdGridView = "Vista de cuadrilla"
+    override val cdChangeView = "Cambiar vista"
+    override val cdMenu = "Menú"
+    override val cdLogo = "Logo de LN Translator"
 
     // Errors
     override val errorNoProvider = "No hay proveedor de traducción configurado"

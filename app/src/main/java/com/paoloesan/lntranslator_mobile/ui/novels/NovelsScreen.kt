@@ -1,41 +1,76 @@
 package com.paoloesan.lntranslator_mobile.ui.novels
 
-import androidx.compose.foundation.layout.*
+import android.content.Context
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.ViewList
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.edit
 import com.paoloesan.lntranslator_mobile.LocalStrings
-import android.content.Context
-import androidx.compose.ui.platform.LocalContext
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun NovelsScreen() {
+fun NovelsScreen(
+    onNavigateToDetails: (String) -> Unit
+) {
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
     val strings = LocalStrings.current
 
     var savedNovelsString by remember { mutableStateOf(prefs.getString("saved_novels", "") ?: "") }
-    val novelsList = remember(savedNovelsString) { savedNovelsString.split(",").filter { it.isNotBlank() } }
+    val novelsList =
+        remember(savedNovelsString) { savedNovelsString.split(",").filter { it.isNotBlank() } }
 
     var showAddDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
@@ -46,13 +81,13 @@ fun NovelsScreen() {
 
     fun saveNovelsList(newList: List<String>) {
         val updated = newList.joinToString(",")
-        prefs.edit().putString("saved_novels", updated).apply()
+        prefs.edit { putString("saved_novels", updated) }
         savedNovelsString = updated
 
         // Check if selected_novel was deleted
         val currentSelected = prefs.getString("selected_novel", null)
         if (currentSelected != null && !newList.contains(currentSelected)) {
-            prefs.edit().remove("selected_novel").apply()
+            prefs.edit { remove("selected_novel") }
         }
     }
 
@@ -95,7 +130,7 @@ fun NovelsScreen() {
         var editName by remember { mutableStateOf(oldName) }
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
-            title = { Text("Editar Novela") },
+            title = { Text(strings.editPromptTitle) },
             text = {
                 OutlinedTextField(
                     value = editName,
@@ -140,16 +175,16 @@ fun NovelsScreen() {
         topBar = {
             if (selectedNovels.isNotEmpty()) {
                 TopAppBar(
-                    title = { Text("${selectedNovels.size} seleccionada(s)") },
+                    title = { Text(strings.novelsSelected(selectedNovels.size)) },
                     navigationIcon = {
                         IconButton(onClick = { selectedNovels = emptySet() }) {
-                            Icon(Icons.Default.Close, contentDescription = "Cancelar selección")
+                            Icon(Icons.Default.Close, contentDescription = strings.cdCancelSelection)
                         }
                     },
                     actions = {
                         if (selectedNovels.size == 1) {
                             IconButton(onClick = { showEditDialog = true }) {
-                                Icon(Icons.Default.Edit, contentDescription = "Editar")
+                                Icon(Icons.Default.Edit, contentDescription = strings.cdEdit)
                             }
                         }
                         IconButton(onClick = {
@@ -157,7 +192,7 @@ fun NovelsScreen() {
                             saveNovelsList(newList)
                             selectedNovels = emptySet()
                         }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Borrar")
+                            Icon(Icons.Default.Delete, contentDescription = strings.cdDelete)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -168,11 +203,34 @@ fun NovelsScreen() {
                 TopAppBar(
                     title = { Text(strings.novelsTitle) },
                     actions = {
-                        IconButton(onClick = { isGridView = !isGridView }) {
-                            Icon(
-                                imageVector = if (isGridView) Icons.Default.ViewList else Icons.Default.GridView,
-                                contentDescription = "Cambiar vista"
-                            )
+                        Row(
+                            Modifier.padding(horizontal = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+                        ) {
+                            ToggleButton(
+                                checked = !isGridView,
+                                onCheckedChange = { isGridView = !isGridView },
+                                shapes =
+                                    ButtonGroupDefaults.connectedLeadingButtonShapes()
+
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Default.ViewList,
+                                    contentDescription = strings.cdListView
+                                )
+                            }
+                            ToggleButton(
+                                checked = isGridView,
+                                onCheckedChange = { isGridView = !isGridView },
+                                shapes =
+                                    ButtonGroupDefaults.connectedTrailingButtonShapes()
+
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.GridView,
+                                    contentDescription = strings.cdGridView
+                                )
+                            }
                         }
                     }
                 )
@@ -238,7 +296,10 @@ fun NovelsScreen() {
                                     .combinedClickable(
                                         onClick = {
                                             if (selectedNovels.isNotEmpty()) {
-                                                selectedNovels = if (isSelected) selectedNovels - novel else selectedNovels + novel
+                                                selectedNovels =
+                                                    if (isSelected) selectedNovels - novel else selectedNovels + novel
+                                            } else {
+                                                onNavigateToDetails(novel)
                                             }
                                         },
                                         onLongClick = {
@@ -287,7 +348,10 @@ fun NovelsScreen() {
                                     .combinedClickable(
                                         onClick = {
                                             if (selectedNovels.isNotEmpty()) {
-                                                selectedNovels = if (isSelected) selectedNovels - novel else selectedNovels + novel
+                                                selectedNovels =
+                                                    if (isSelected) selectedNovels - novel else selectedNovels + novel
+                                            } else {
+                                                onNavigateToDetails(novel)
                                             }
                                         },
                                         onLongClick = {

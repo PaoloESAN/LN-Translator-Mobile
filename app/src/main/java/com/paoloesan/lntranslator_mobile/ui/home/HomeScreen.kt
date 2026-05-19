@@ -228,7 +228,7 @@ fun HomeScreen(
 
             Image(
                 painter = androidx.compose.ui.res.painterResource(id = com.paoloesan.lntranslator_mobile.R.drawable.ln_translator_logo),
-                contentDescription = "LN Translator Logo",
+                contentDescription = strings.cdLogo,
                 modifier = Modifier
                     .size(200.dp)
                     .aspectRatio(1f)

@@ -22,7 +22,9 @@ import com.paoloesan.lntranslator_mobile.ui.prompts.PromptScreen
 import com.paoloesan.lntranslator_mobile.ui.settings.SettingsScreen
 import com.paoloesan.lntranslator_mobile.ui.settings.TranslationConfigScreen
 import com.paoloesan.lntranslator_mobile.ui.novels.NovelsScreen
-
+import com.paoloesan.lntranslator_mobile.ui.novels.NovelDetailsScreen
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 
 @Composable
 fun AppNavHost(
@@ -40,7 +42,7 @@ fun AppNavHost(
             fadeIn(animationSpec = fadeAnimationSpec) +
                     slideInVertically(
                         animationSpec = navAnimationSpec,
-                        initialOffsetY = { 56 }
+                        initialOffsetY = { it }
                     )
         },
         exitTransition = {
@@ -50,7 +52,7 @@ fun AppNavHost(
             fadeIn(animationSpec = fadeAnimationSpec) +
                     slideInVertically(
                         animationSpec = navAnimationSpec,
-                        initialOffsetY = { 56 }
+                        initialOffsetY = { it }
                     )
         },
         popExitTransition = {
@@ -147,7 +149,41 @@ fun AppNavHost(
             },
             exitTransition = { fadeOut(animationSpec = fadeAnimationSpec) }
         ) {
-            NovelsScreen()
+            NovelsScreen(
+                onNavigateToDetails = { novelName ->
+                    navController.navigate("novel_details/$novelName") {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+        composable(
+            route = "novel_details/{novelName}",
+            arguments = listOf(navArgument("novelName") { type = NavType.StringType }),
+            enterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { it },
+                    animationSpec = navAnimationSpec
+                )
+            },
+            exitTransition = {
+                fadeOut(animationSpec = fadeAnimationSpec)
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = fadeAnimationSpec)
+            },
+            popExitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { it },
+                    animationSpec = navAnimationSpec
+                )
+            }
+        ) { backStackEntry ->
+            val novelName = backStackEntry.arguments?.getString("novelName") ?: ""
+            NovelDetailsScreen(
+                novelName = novelName,
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }

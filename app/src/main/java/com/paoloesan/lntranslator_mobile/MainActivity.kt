@@ -107,7 +107,9 @@ fun MainContent(navController: NavHostController, contexto: AppCompatActivity) {
     val rutasPrincipales = listOf("inicio", "novels", "ajustes")
     val rutasConBack = listOf("prompts", "config_traduccion")
     val mostrarBottombar = rutaActual in rutasPrincipales
-    val mostrarTopBar = rutaActual != "config_traduccion" && rutaActual != "novels"
+    val mostrarTopBar = rutaActual != "config_traduccion" && 
+                       rutaActual != "novels" && 
+                       rutaActual?.startsWith("novel_details") == false
     Scaffold(
         topBar = {
             if (mostrarTopBar) {
