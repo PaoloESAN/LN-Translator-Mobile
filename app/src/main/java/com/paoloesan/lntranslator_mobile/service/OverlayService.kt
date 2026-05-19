@@ -101,7 +101,12 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
         )
     }
 
-    private val controller by lazy { TranslationController(TranslationService(applicationContext)) }
+    private val controller by lazy { 
+        TranslationController(
+            TranslationService(applicationContext),
+            applicationContext
+        ) 
+    }
     private fun showOverlay() {
         val prefs = getSharedPreferences("settings_prefs", MODE_PRIVATE)
         bottomPassThroughEnabled = prefs.getBoolean(PREF_BOTTOM_PASS_THROUGH, false)
@@ -376,6 +381,7 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
 
     override fun onDestroy() {
         super.onDestroy()
+        controller.release()
         composeView?.let {
             windowManager?.removeView(it)
         }

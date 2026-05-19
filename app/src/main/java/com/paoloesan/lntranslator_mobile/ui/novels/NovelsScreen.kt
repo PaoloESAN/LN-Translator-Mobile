@@ -58,6 +58,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import com.paoloesan.lntranslator_mobile.LocalStrings
+import com.paoloesan.lntranslator_mobile.ui.novels.NovelRepository
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -188,6 +189,9 @@ fun NovelsScreen(
                             }
                         }
                         IconButton(onClick = {
+                            selectedNovels.forEach { novel ->
+                                NovelRepository.deleteNovelData(context, novel)
+                            }
                             val newList = novelsList.filterNot { selectedNovels.contains(it) }
                             saveNovelsList(newList)
                             selectedNovels = emptySet()
