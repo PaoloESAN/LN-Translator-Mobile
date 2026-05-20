@@ -70,6 +70,7 @@ import com.paoloesan.lntranslator_mobile.service.OverlayService
 import com.paoloesan.lntranslator_mobile.service.ScreenCaptureService
 import com.paoloesan.lntranslator_mobile.ui.prompts.PromptDialog
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -107,6 +108,14 @@ fun HomeScreen(
     val savePressed by saveInteraction.collectIsPressedAsState()
     var highlightedButton by remember { mutableStateOf<Int?>(null) }
     var isNavigatingToPrompts by remember { mutableStateOf(false) }
+
+    LaunchedEffect(navController) {
+        navController.currentBackStackEntryFlow.collect { entry ->
+            if (entry.destination.route == "inicio") {
+                isNavigatingToPrompts = false
+            }
+        }
+    }
 
     val navigateWeight by animateFloatAsState(
         targetValue = when (highlightedButton) {
