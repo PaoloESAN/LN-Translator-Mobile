@@ -62,6 +62,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.service)
     implementation(libs.mlkit.text.recognition.japanese)
     implementation(libs.compose.markdown)
+    implementation(libs.coil.compose)
+    implementation(libs.telephoto.zoomable.image.coil3)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
