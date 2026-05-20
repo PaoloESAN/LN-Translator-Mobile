@@ -21,13 +21,13 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.outlined.FormatListBulleted
+import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonGroupDefaults
@@ -58,7 +58,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import com.paoloesan.lntranslator_mobile.LocalStrings
-import com.paoloesan.lntranslator_mobile.ui.novels.NovelRepository
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -179,7 +178,10 @@ fun NovelsScreen(
                     title = { Text(strings.novelsSelected(selectedNovels.size)) },
                     navigationIcon = {
                         IconButton(onClick = { selectedNovels = emptySet() }) {
-                            Icon(Icons.Default.Close, contentDescription = strings.cdCancelSelection)
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = strings.cdCancelSelection
+                            )
                         }
                     },
                     actions = {
@@ -219,7 +221,7 @@ fun NovelsScreen(
 
                             ) {
                                 Icon(
-                                    imageVector = Icons.AutoMirrored.Default.ViewList,
+                                    imageVector = Icons.Outlined.FormatListBulleted,
                                     contentDescription = strings.cdListView
                                 )
                             }
@@ -231,7 +233,7 @@ fun NovelsScreen(
 
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.GridView,
+                                    imageVector = Icons.Outlined.GridView,
                                     contentDescription = strings.cdGridView
                                 )
                             }

@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -227,26 +228,21 @@ fun HomeScreen(
             .statusBarsPadding()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top,
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-        ) {
+        Image(
+            painter = androidx.compose.ui.res.painterResource(id = com.paoloesan.lntranslator_mobile.R.drawable.ln_translator_logo),
+            contentDescription = strings.cdLogo,
+            modifier = Modifier
+                .weight(1f, fill = false)
+                .sizeIn(maxHeight = 200.dp, maxWidth = 200.dp)
+                .aspectRatio(1f)
+                .clip(MaterialShapes.Clover4Leaf.toShape()),
+            contentScale = ContentScale.Crop
+        )
 
-            Image(
-                painter = androidx.compose.ui.res.painterResource(id = com.paoloesan.lntranslator_mobile.R.drawable.ln_translator_logo),
-                contentDescription = strings.cdLogo,
-                modifier = Modifier
-                    .size(200.dp)
-                    .aspectRatio(1f)
-                    .clip(MaterialShapes.Clover4Leaf.toShape()),
-                contentScale = ContentScale.Crop
-            )
-
-            Text(
-                text = "\"${strings.homeWelcome}\"",
+        Text(
+            text = "\"${strings.homeWelcome}\"",
                 fontStyle = FontStyle.Italic
             )
 
@@ -433,6 +429,5 @@ fun HomeScreen(
                 }) {
                 Text(strings.homeStartButton)
             }
-        }
     }
 }

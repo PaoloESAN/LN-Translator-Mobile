@@ -94,6 +94,7 @@ object SpanishUiStrings : UiStrings {
     override val novelDetailsViewPages = "Ver todas las páginas"
     override val novelDetailsGoToPage = "Ir a página"
     override val novelDetailsPageNumber = "Página"
+    override val novelDetailsPageOf = "de"
 
     // Prompts
     override val deletePromptTitle = "¿Estas seguro de borrar el prompt?"

@@ -1,6 +1,8 @@
 package com.paoloesan.lntranslator_mobile.ui.navigation
 
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -32,35 +34,60 @@ fun AppNavHost(
     contexto: AppCompatActivity,
     innerPadding: PaddingValues
 ) {
-    val navAnimationSpec = tween<IntOffset>(durationMillis = 360, easing = FastOutSlowInEasing)
-    val fadeAnimationSpec = tween<Float>(durationMillis = 220)
+    val slideSpec = tween<IntOffset>(durationMillis = 400, easing = FastOutSlowInEasing)
+    val tabFadeSpec = tween<Float>(durationMillis = 150)
+    val rutasPrincipales = listOf("inicio", "novels", "ajustes")
 
     NavHost(
         navController = navController,
         startDestination = "inicio",
         enterTransition = {
-            fadeIn(animationSpec = fadeAnimationSpec) +
-                    slideInVertically(
-                        animationSpec = navAnimationSpec,
-                        initialOffsetY = { it }
-                    )
+            val isTabTransition = initialState.destination.route in rutasPrincipales &&
+                    targetState.destination.route in rutasPrincipales
+            if (isTabTransition) {
+                fadeIn(animationSpec = tabFadeSpec)
+            } else if (targetState.destination.route !in rutasPrincipales) {
+                slideInHorizontally(initialOffsetX = { it }, animationSpec = slideSpec)
+            } else {
+                fadeIn(animationSpec = tabFadeSpec)
+            }
         },
         exitTransition = {
-            fadeOut(animationSpec = fadeAnimationSpec)
+            val isTabTransition = initialState.destination.route in rutasPrincipales &&
+                    targetState.destination.route in rutasPrincipales
+            if (isTabTransition) {
+                fadeOut(animationSpec = tabFadeSpec)
+            } else if (targetState.destination.route !in rutasPrincipales) {
+                slideOutHorizontally(targetOffsetX = { -it / 3 }, animationSpec = slideSpec) +
+                        fadeOut(animationSpec = tween(400))
+            } else {
+                fadeOut(animationSpec = tabFadeSpec)
+            }
         },
         popEnterTransition = {
-            fadeIn(animationSpec = fadeAnimationSpec) +
-                    slideInVertically(
-                        animationSpec = navAnimationSpec,
-                        initialOffsetY = { it }
-                    )
+            val isTabTransition = initialState.destination.route in rutasPrincipales &&
+                    targetState.destination.route in rutasPrincipales
+            if (isTabTransition) {
+                fadeIn(animationSpec = tabFadeSpec)
+            } else if (initialState.destination.route !in rutasPrincipales) {
+                slideInHorizontally(initialOffsetX = { -it / 3 }, animationSpec = slideSpec) +
+                        fadeIn(animationSpec = tween(400))
+            } else {
+                fadeIn(animationSpec = tabFadeSpec)
+            }
         },
         popExitTransition = {
-            fadeOut(animationSpec = fadeAnimationSpec)
+            val isTabTransition = initialState.destination.route in rutasPrincipales &&
+                    targetState.destination.route in rutasPrincipales
+            if (isTabTransition) {
+                fadeOut(animationSpec = tabFadeSpec)
+            } else if (initialState.destination.route !in rutasPrincipales) {
+                slideOutHorizontally(targetOffsetX = { it }, animationSpec = slideSpec)
+            } else {
+                fadeOut(animationSpec = tabFadeSpec)
+            }
         },
-        modifier = Modifier.padding(
-            innerPadding
-        )
+        modifier = Modifier.padding(innerPadding)
     ) {
         composable("inicio") {
             HomeScreen(
@@ -79,49 +106,12 @@ fun AppNavHost(
                 }
             )
         }
-        composable(
-            route = "config_traduccion",
-            // Slide in from right (like native Google apps)
-            enterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { it },
-                    animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
-                )
-            },
-            exitTransition = {
-                fadeOut(animationSpec = tween(durationMillis = 200))
-            },
-            popEnterTransition = {
-                fadeIn(animationSpec = tween(durationMillis = 200))
-            },
-            popExitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { it },
-                    animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
-                )
-            }
-        ) {
+        composable(route = "config_traduccion") {
             TranslationConfigScreen(
                 onBack = { navController.popBackStack() }
             )
         }
-        composable(
-            route = "prompts",
-            enterTransition = {
-                slideInVertically(
-                    initialOffsetY = { it },
-                    animationSpec = navAnimationSpec
-                )
-            },
-            popExitTransition = {
-                fadeOut(animationSpec = fadeAnimationSpec) +
-                        slideOutVertically(
-                            targetOffsetY = { it },
-                            animationSpec = navAnimationSpec
-                        )
-            },
-            exitTransition = { fadeOut(animationSpec = fadeAnimationSpec) }
-        ) {
+        composable(route = "prompts") {
             PromptScreen(
                 contexto
             ) {
@@ -132,23 +122,7 @@ fun AppNavHost(
                 navController.popBackStack()
             }
         }
-        composable(
-            route = "novels",
-            enterTransition = {
-                slideInVertically(
-                    initialOffsetY = { it },
-                    animationSpec = navAnimationSpec
-                )
-            },
-            popExitTransition = {
-                fadeOut(animationSpec = fadeAnimationSpec) +
-                        slideOutVertically(
-                            targetOffsetY = { it },
-                            animationSpec = navAnimationSpec
-                        )
-            },
-            exitTransition = { fadeOut(animationSpec = fadeAnimationSpec) }
-        ) {
+        composable(route = "novels") {
             NovelsScreen(
                 onNavigateToDetails = { novelName ->
                     navController.navigate("novel_details/$novelName") {
@@ -159,25 +133,7 @@ fun AppNavHost(
         }
         composable(
             route = "novel_details/{novelName}",
-            arguments = listOf(navArgument("novelName") { type = NavType.StringType }),
-            enterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { it },
-                    animationSpec = navAnimationSpec
-                )
-            },
-            exitTransition = {
-                fadeOut(animationSpec = fadeAnimationSpec)
-            },
-            popEnterTransition = {
-                fadeIn(animationSpec = fadeAnimationSpec)
-            },
-            popExitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { it },
-                    animationSpec = navAnimationSpec
-                )
-            }
+            arguments = listOf(navArgument("novelName") { type = NavType.StringType })
         ) { backStackEntry ->
             val novelName = backStackEntry.arguments?.getString("novelName") ?: ""
             NovelDetailsScreen(

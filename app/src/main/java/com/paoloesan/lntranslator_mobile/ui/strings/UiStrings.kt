@@ -91,6 +91,7 @@ interface UiStrings {
     val novelDetailsViewPages: String
     val novelDetailsGoToPage: String
     val novelDetailsPageNumber: String
+    val novelDetailsPageOf: String
 
     // Prompts
     val deletePromptTitle: String
