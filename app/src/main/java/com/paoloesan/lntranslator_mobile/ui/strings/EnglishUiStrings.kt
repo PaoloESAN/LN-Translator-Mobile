@@ -92,7 +92,7 @@ object EnglishUiStrings : UiStrings {
     override val novelDetailsEmptyTitle = "No translations yet"
     override val novelDetailsEmptySubtitle = "Open the translator over any app and start capturing to see translations here."
     override val novelDetailsViewPages = "View all pages"
-    override val novelDetailsGoToPage = "Go to page"
+    override val novelDetailsGoToPage = "Pages"
     override val novelDetailsPageNumber = "Page"
     override val novelDetailsPageOf = "of"
 

@@ -66,6 +66,14 @@ object NovelRepository {
         }
     }
 
+    fun savePages(context: Context, novelName: String, pages: List<NovelPage>) {
+        try {
+            getNovelFile(context, novelName).writeText(gson.toJson(pages))
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     fun getPages(context: Context, novelName: String): List<NovelPage> {
         val file = getNovelFile(context, novelName)
         if (!file.exists()) return emptyList()

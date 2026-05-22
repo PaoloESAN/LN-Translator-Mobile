@@ -92,7 +92,7 @@ object SpanishUiStrings : UiStrings {
     override val novelDetailsEmptyTitle = "No hay traducciones todavía"
     override val novelDetailsEmptySubtitle = "Abre el traductor sobre alguna aplicación y empieza a capturar para ver las traducciones aquí."
     override val novelDetailsViewPages = "Ver todas las páginas"
-    override val novelDetailsGoToPage = "Ir a página"
+    override val novelDetailsGoToPage = "Páginas"
     override val novelDetailsPageNumber = "Página"
     override val novelDetailsPageOf = "de"
 
