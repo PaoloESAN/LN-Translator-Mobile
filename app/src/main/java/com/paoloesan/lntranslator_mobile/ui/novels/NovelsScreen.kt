@@ -74,6 +74,7 @@ fun NovelsScreen(
 
     var showAddDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
+    var showDeleteConfirmationDialog by remember { mutableStateOf(false) }
     var newNovelName by remember { mutableStateOf("") }
 
     var isGridView by remember { mutableStateOf(true) }
@@ -171,6 +172,34 @@ fun NovelsScreen(
         )
     }
 
+    if (showDeleteConfirmationDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmationDialog = false },
+            title = { Text(strings.deleteNovelConfirmationTitle) },
+            text = { Text(strings.deleteNovelConfirmationMessage(selectedNovels.size)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        selectedNovels.forEach { novel ->
+                            NovelRepository.deleteNovelData(context, novel)
+                        }
+                        val newList = novelsList.filterNot { selectedNovels.contains(it) }
+                        saveNovelsList(newList)
+                        selectedNovels = emptySet()
+                        showDeleteConfirmationDialog = false
+                    }
+                ) {
+                    Text(strings.buttonDelete)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmationDialog = false }) {
+                    Text(strings.buttonCancel)
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             if (selectedNovels.isNotEmpty()) {
@@ -190,14 +219,7 @@ fun NovelsScreen(
                                 Icon(Icons.Default.Edit, contentDescription = strings.cdEdit)
                             }
                         }
-                        IconButton(onClick = {
-                            selectedNovels.forEach { novel ->
-                                NovelRepository.deleteNovelData(context, novel)
-                            }
-                            val newList = novelsList.filterNot { selectedNovels.contains(it) }
-                            saveNovelsList(newList)
-                            selectedNovels = emptySet()
-                        }) {
+                        IconButton(onClick = { showDeleteConfirmationDialog = true }) {
                             Icon(Icons.Default.Delete, contentDescription = strings.cdDelete)
                         }
                     },

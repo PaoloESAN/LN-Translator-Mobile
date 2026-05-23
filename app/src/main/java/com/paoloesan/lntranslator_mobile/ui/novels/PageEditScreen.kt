@@ -111,6 +111,7 @@ fun PageManagementScreen(
     var dialogOriginalText by remember { mutableStateOf("") }
     var dialogImagePath by remember { mutableStateOf<String?>(null) }
     var dialogOnlyImage by remember { mutableStateOf(false) }
+    var pageToDeleteIndex by remember { mutableStateOf<Int?>(null) }
 
 
     val lazyListState = rememberLazyListState()
@@ -507,21 +508,7 @@ fun PageManagementScreen(
                                                     },
                                                     onClick = {
                                                         expandedItemMenu = false
-                                                        val listCopy = pagesList.toMutableList()
-                                                        val removedPage = listCopy.removeAt(index)
-                                                        if (removedPage.imagePath != null) {
-                                                            try {
-                                                                File(removedPage.imagePath).delete()
-                                                            } catch (e: Exception) {
-                                                                e.printStackTrace()
-                                                            }
-                                                        }
-                                                        pagesList = listCopy
-                                                        NovelRepository.savePages(
-                                                            context,
-                                                            novelName,
-                                                            listCopy
-                                                        )
+                                                        pageToDeleteIndex = index
                                                     }
                                                 )
                                             }
@@ -715,6 +702,46 @@ fun PageManagementScreen(
                 }
             }
 
+        )
+    }
+
+    if (pageToDeleteIndex != null) {
+        AlertDialog(
+            onDismissRequest = { pageToDeleteIndex = null },
+            title = { Text(strings.deletePageConfirmationTitle) },
+            text = { Text(strings.deletePageConfirmationMessage) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val index = pageToDeleteIndex!!
+                        val listCopy = pagesList.toMutableList()
+                        if (index in 0 until listCopy.size) {
+                            val removedPage = listCopy.removeAt(index)
+                            if (removedPage.imagePath != null) {
+                                try {
+                                    File(removedPage.imagePath).delete()
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+                            pagesList = listCopy
+                            NovelRepository.savePages(
+                                context,
+                                novelName,
+                                listCopy
+                            )
+                        }
+                        pageToDeleteIndex = null
+                    }
+                ) {
+                    Text(strings.buttonDelete)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pageToDeleteIndex = null }) {
+                    Text(strings.buttonCancel)
+                }
+            }
         )
     }
 }

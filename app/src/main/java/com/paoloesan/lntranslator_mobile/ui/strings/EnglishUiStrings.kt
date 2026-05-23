@@ -129,6 +129,14 @@ object EnglishUiStrings : UiStrings {
     override val pageManagementSelectImage = "Select image"
     override val pageManagementOnlyImage = "Only image"
 
+    override val deleteNovelConfirmationTitle = "Delete novel?"
+    override val deleteNovelConfirmationMessage: (Int) -> String = { count ->
+        if (count == 1) "Are you sure you want to delete the selected novel and all its data?"
+        else "Are you sure you want to delete the $count selected novels and all their data?"
+    }
+    override val deletePageConfirmationTitle = "Delete page?"
+    override val deletePageConfirmationMessage = "Are you sure you want to delete this page?"
+
 
 
     // Prompts

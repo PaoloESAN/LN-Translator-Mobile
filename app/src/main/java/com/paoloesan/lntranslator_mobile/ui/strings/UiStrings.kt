@@ -126,6 +126,11 @@ interface UiStrings {
     val pageManagementSelectImage: String
     val pageManagementOnlyImage: String
 
+    val deleteNovelConfirmationTitle: String
+    val deleteNovelConfirmationMessage: (Int) -> String
+    val deletePageConfirmationTitle: String
+    val deletePageConfirmationMessage: String
+
 
 
     // Prompts

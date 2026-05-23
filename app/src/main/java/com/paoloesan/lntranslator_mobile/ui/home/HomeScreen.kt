@@ -90,13 +90,28 @@ fun HomeScreen(
         }
     }
     var textPrompt by rememberSaveable { mutableStateOf("") }
-    var selectedNovel by rememberSaveable {
+    var selectedNovel by remember {
         mutableStateOf(
             prefs.getString(
                 "selected_novel",
                 null
             )
         )
+    }
+
+    androidx.compose.runtime.DisposableEffect(prefs) {
+        val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
+            if (key == "saved_novels") {
+                savedNovelsString = sharedPreferences.getString("saved_novels", "") ?: ""
+            }
+            if (key == "selected_novel") {
+                selectedNovel = sharedPreferences.getString("selected_novel", null)
+            }
+        }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        onDispose {
+            prefs.unregisterOnSharedPreferenceChangeListener(listener)
+        }
     }
     var showDialog by remember { mutableStateOf(false) }
     var expandedNovels by remember { mutableStateOf(false) }
