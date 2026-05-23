@@ -109,7 +109,7 @@ fun ConfigOverlayContent(
                 )
 
                 Text(
-                    text = currentFontFamily.toLabel(),
+                    text = currentFontFamily.toLabel(strings),
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
@@ -146,7 +146,7 @@ fun ConfigOverlayContent(
                             )
 
                             Text(
-                                text = option.toLabel(),
+                                text = option.toLabel(strings),
                                 color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(start = 8.dp)
                             )

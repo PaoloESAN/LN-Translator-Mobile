@@ -94,6 +94,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.edit
 import com.paoloesan.lntranslator_mobile.LocalStrings
+import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
 import dev.jeziellago.compose.markdowntext.MarkdownText
 import kotlinx.coroutines.launch
 
@@ -224,7 +225,8 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                                 onImageClick = {
                                     zoomImagePage = page
                                     showZoomDialog = true
-                                }
+                                },
+                                strings = strings
                             )
                             if (index < pages.size - 1) {
                                 HorizontalDivider(
@@ -248,7 +250,8 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                             onImageClick = {
                                 zoomImagePage = page
                                 showZoomDialog = true
-                            }
+                            },
+                            strings = strings
                         )
                     }
                 }
@@ -336,9 +339,10 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                                                 )
                                                 Spacer(modifier = Modifier.width(12.dp))
                                                 Text(
-                                                    "Imágenes",
+                                                    strings.readerShowImages,
                                                     style = MaterialTheme.typography.bodyMedium
                                                 )
+
                                             }
                                             Switch(
                                                 checked = showImages,
@@ -369,10 +373,11 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                                         ) {
                                             Text(
-                                                text = "Orientación de lectura",
+                                                text = strings.readerReadingOrientation,
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
+
                                             Spacer(modifier = Modifier.height(8.dp))
                                             Row(
                                                 modifier = Modifier.fillMaxWidth(),
@@ -405,9 +410,10 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                                                         )
                                                         Spacer(modifier = Modifier.width(4.dp))
                                                         Text(
-                                                            "Horizontal",
+                                                            strings.readerHorizontal,
                                                             style = MaterialTheme.typography.bodySmall
                                                         )
+
                                                     }
                                                 }
                                                 ToggleButton(
@@ -435,9 +441,10 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                                                         )
                                                         Spacer(modifier = Modifier.width(4.dp))
                                                         Text(
-                                                            "Vertical",
+                                                            strings.readerVertical,
                                                             style = MaterialTheme.typography.bodySmall
                                                         )
+
                                                     }
                                                 }
                                             }
@@ -507,8 +514,9 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
-                                contentDescription = "Ir",
+                                contentDescription = strings.buttonGo,
                                 tint = if (pageInputText.toIntOrNull() in 1..pages.size) {
+
                                     MaterialTheme.colorScheme.primary
                                 } else {
                                     MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
@@ -632,10 +640,12 @@ fun NovelPageItem(
     page: NovelPage,
     showImages: Boolean,
     isScrollEnabled: Boolean,
-    onImageClick: () -> Unit
+    onImageClick: () -> Unit,
+    strings: UiStrings
 ) {
     val scrollState = rememberScrollState()
-    val scrollModifier = if (isScrollEnabled) Modifier.verticalScroll(scrollState) else Modifier
+    val isOnlyImage = page.translatedText.isBlank() && page.originalText.isNullOrBlank()
+    val scrollModifier = if (isScrollEnabled && !isOnlyImage) Modifier.verticalScroll(scrollState) else Modifier
 
     val baseModifier = if (isScrollEnabled) {
         Modifier
@@ -654,7 +664,7 @@ fun NovelPageItem(
         if (isScrollEnabled) {
             Spacer(modifier = Modifier.height(72.dp))
         }
-        if (showImages && page.imagePath != null) {
+        if ((showImages || isOnlyImage) && page.imagePath != null) {
             val bitmap = remember(page.imagePath) {
                 try {
                     BitmapFactory.decodeFile(page.imagePath)
@@ -663,18 +673,35 @@ fun NovelPageItem(
                 }
             }
             bitmap?.let {
-                Card(
-                    modifier = Modifier
+                val cardModifier = if (isOnlyImage) {
+                    if (isScrollEnabled) {
+                        Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .clickable { onImageClick() }
+                    } else {
+                        Modifier
+                            .fillMaxWidth()
+                            .height(500.dp)
+                            .clickable { onImageClick() }
+                    }
+                } else {
+                    Modifier
                         .fillMaxWidth()
                         .height(200.dp)
-                        .clickable { onImageClick() },
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        .clickable { onImageClick() }
+                }
+
+                Card(
+                    modifier = cardModifier,
+                    elevation = CardDefaults.cardElevation(defaultElevation = if (isOnlyImage) 0.dp else 4.dp),
+                    colors = if (isOnlyImage) CardDefaults.cardColors(containerColor = Color.Transparent) else CardDefaults.cardColors()
                 ) {
                     Image(
                         bitmap = it.asImageBitmap(),
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        contentScale = if (isOnlyImage) ContentScale.Fit else ContentScale.Crop
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
@@ -683,11 +710,12 @@ fun NovelPageItem(
         if (!page.translatedText.isNullOrBlank()) {
             if (showImages) {
                 Text(
-                    text = "Traducción",
+                    text = strings.readerTranslationHeader,
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
@@ -703,11 +731,12 @@ fun NovelPageItem(
         if (!page.originalText.isNullOrBlank()) {
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = "Texto Original",
+                text = strings.readerOriginalTextHeader,
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.secondary,
                 fontWeight = FontWeight.Bold
             )
+
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = page.originalText,

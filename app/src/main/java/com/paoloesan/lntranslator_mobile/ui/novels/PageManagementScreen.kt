@@ -25,7 +25,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -56,8 +55,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.Switch
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -77,7 +78,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.paoloesan.lntranslator_mobile.LocalStrings
@@ -95,7 +95,7 @@ fun PageManagementScreen(
     val strings = LocalStrings.current
 
     var pagesList by remember { mutableStateOf(NovelRepository.getPages(context, novelName)) }
-    var isEditMode by remember { mutableStateOf(false) }
+    var isEditMode by remember { mutableStateOf(true) }
 
     // Gestures and drag state
     var activeDragIndex by remember { mutableStateOf<Int?>(null) }
@@ -110,6 +110,8 @@ fun PageManagementScreen(
     var dialogTranslatedText by remember { mutableStateOf("") }
     var dialogOriginalText by remember { mutableStateOf("") }
     var dialogImagePath by remember { mutableStateOf<String?>(null) }
+    var dialogOnlyImage by remember { mutableStateOf(false) }
+
 
     val lazyListState = rememberLazyListState()
 
@@ -141,7 +143,7 @@ fun PageManagementScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Páginas - $novelName") },
+                title = { Text("${strings.pageManagementTitle} - $novelName") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -149,17 +151,10 @@ fun PageManagementScreen(
                             contentDescription = strings.navBack
                         )
                     }
-                },
-                actions = {
-                    IconButton(onClick = { isEditMode = !isEditMode }) {
-                        Icon(
-                            imageVector = if (isEditMode) Icons.Default.Check else Icons.Default.Edit,
-                            contentDescription = if (isEditMode) "Finalizar edición" else "Editar páginas"
-                        )
-                    }
                 }
             )
         },
+
         bottomBar = {
             if (isEditMode) {
                 BottomAppBar {
@@ -176,15 +171,17 @@ fun PageManagementScreen(
                                 dialogTranslatedText = ""
                                 dialogOriginalText = ""
                                 dialogImagePath = null
-                                dialogTitle = "Añadir página"
+                                dialogTitle = strings.pageManagementAddPageTitle
+                                dialogOnlyImage = false
                                 showPageDialog = true
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Icon(Icons.Default.Add, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Añadir página")
+                            Text(strings.pageManagementAddPage)
                         }
+
                     }
                 }
             }
@@ -195,44 +192,6 @@ fun PageManagementScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Jump To Page UI (only visible when not in edit mode)
-            if (!isEditMode && pagesList.isNotEmpty()) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    var jumpText by remember { mutableStateOf("") }
-                    OutlinedTextField(
-                        value = jumpText,
-                        onValueChange = { input ->
-                            if (input.all { it.isDigit() }) {
-                                jumpText = input
-                            }
-                        },
-                        label = { Text("Ir a la página") },
-                        modifier = Modifier.weight(1f),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    Button(
-                        onClick = {
-                            val pageNum = jumpText.toIntOrNull()
-                            if (pageNum != null && pageNum in 1..pagesList.size) {
-                                onPageSelected(pageNum - 1)
-                            }
-                        },
-                        enabled = jumpText.isNotBlank(),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text("Ir")
-                    }
-                }
-            }
-
             if (pagesList.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -246,13 +205,17 @@ fun PageManagementScreen(
                             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("No hay páginas", style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            strings.pageManagementNoPages,
+                            style = MaterialTheme.typography.titleLarge
+                        )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "Presiona Editar para añadir una",
+                            strings.pageManagementPressEditToAdd,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+
                     }
                 }
             } else {
@@ -296,7 +259,8 @@ fun PageManagementScreen(
                                         dialogTranslatedText = page.translatedText
                                         dialogOriginalText = page.originalText ?: ""
                                         dialogImagePath = page.imagePath
-                                        dialogTitle = "Editar página"
+                                        dialogTitle = strings.pageManagementEditPageTitle
+                                        dialogOnlyImage = page.translatedText.isBlank() && (page.originalText.isNullOrBlank()) && page.imagePath != null
                                         showPageDialog = true
                                     } else {
                                         onPageSelected(index)
@@ -320,7 +284,8 @@ fun PageManagementScreen(
                                     // Drag handle
                                     Icon(
                                         imageVector = Icons.Default.Reorder,
-                                        contentDescription = "Arrastrar para reordenar",
+                                        contentDescription = strings.pageManagementDragToReorder,
+
                                         modifier = Modifier
                                             .padding(horizontal = 8.dp, vertical = 16.dp)
                                             .pointerInput(page.id) {
@@ -429,15 +394,15 @@ fun PageManagementScreen(
                                         .padding(vertical = 4.dp)
                                 ) {
                                     Text(
-                                        text = "Página ${index + 1}",
+                                        text = strings.pageManagementPageNumber(index + 1),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
                                     val previewText = when {
-                                        !page.translatedText.isNullOrBlank() -> page.translatedText
+                                        page.translatedText.isNotBlank() -> page.translatedText
                                         !page.originalText.isNullOrBlank() -> page.originalText
-                                        else -> "Página solo de imagen"
+                                        else -> strings.pageManagementImageOnlyPage
                                     }
                                     Text(
                                         text = previewText,
@@ -446,6 +411,7 @@ fun PageManagementScreen(
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
+
                                 }
 
                                 if (isEditMode) {
@@ -454,8 +420,9 @@ fun PageManagementScreen(
                                         IconButton(onClick = { expandedItemMenu = true }) {
                                             Icon(
                                                 Icons.Default.MoreVert,
-                                                contentDescription = "Opciones"
+                                                contentDescription = strings.pageManagementOptions
                                             )
+
                                         }
 
                                         DropdownMenu(
@@ -463,7 +430,7 @@ fun PageManagementScreen(
                                             onDismissRequest = { expandedItemMenu = false }
                                         ) {
                                             DropdownMenuItem(
-                                                text = { Text("Insertar página arriba") },
+                                                text = { Text(strings.pageManagementInsertAbove) },
                                                 leadingIcon = {
                                                     Icon(
                                                         Icons.Default.VerticalAlignTop,
@@ -477,12 +444,15 @@ fun PageManagementScreen(
                                                     dialogTranslatedText = ""
                                                     dialogOriginalText = ""
                                                     dialogImagePath = null
-                                                    dialogTitle = "Insertar página"
+                                                    dialogTitle =
+                                                        strings.pageManagementInsertPageTitle
+                                                    dialogOnlyImage = false
                                                     showPageDialog = true
                                                 }
+
                                             )
                                             DropdownMenuItem(
-                                                text = { Text("Insertar página abajo") },
+                                                text = { Text(strings.pageManagementInsertBelow) },
                                                 leadingIcon = {
                                                     Icon(
                                                         Icons.Default.VerticalAlignBottom,
@@ -496,15 +466,18 @@ fun PageManagementScreen(
                                                     dialogTranslatedText = ""
                                                     dialogOriginalText = ""
                                                     dialogImagePath = null
-                                                    dialogTitle = "Insertar página"
+                                                    dialogTitle =
+                                                        strings.pageManagementInsertPageTitle
+                                                    dialogOnlyImage = false
                                                     showPageDialog = true
                                                 }
+
                                             )
                                             HorizontalDivider()
                                             DropdownMenuItem(
                                                 text = {
                                                     Text(
-                                                        "Eliminar página",
+                                                        strings.pageManagementDeletePage,
                                                         color = MaterialTheme.colorScheme.error
                                                     )
                                                 },
@@ -534,6 +507,7 @@ fun PageManagementScreen(
                                                     )
                                                 }
                                             )
+
                                         }
                                     }
                                 }
@@ -568,20 +542,41 @@ fun PageManagementScreen(
                         .fillMaxWidth()
                         .verticalScroll(rememberLazyListState().run { rememberScrollState() }) // Scroll in case of small screens
                 ) {
-                    OutlinedTextField(
-                        value = dialogTranslatedText,
-                        onValueChange = { dialogTranslatedText = it },
-                        label = { Text("Texto traducido") },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 3
-                    )
-                    OutlinedTextField(
-                        value = dialogOriginalText,
-                        onValueChange = { dialogOriginalText = it },
-                        label = { Text("Texto original (opcional)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 2
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { dialogOnlyImage = !dialogOnlyImage }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = strings.pageManagementOnlyImage,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Switch(
+                            checked = dialogOnlyImage,
+                            onCheckedChange = { dialogOnlyImage = it }
+                        )
+                    }
+
+                    if (!dialogOnlyImage) {
+                        OutlinedTextField(
+                            value = dialogTranslatedText,
+                            onValueChange = { dialogTranslatedText = it },
+                            label = { Text(strings.pageManagementTranslatedTextLabel) },
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 3
+                        )
+                        OutlinedTextField(
+                            value = dialogOriginalText,
+                            onValueChange = { dialogOriginalText = it },
+                            label = { Text(strings.pageManagementOriginalTextLabel) },
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 2
+                        )
+                    }
+
 
                     Column(
                         modifier = Modifier
@@ -589,7 +584,7 @@ fun PageManagementScreen(
                             .padding(top = 8.dp)
                     ) {
                         Text(
-                            text = "Imagen de la página",
+                            text = strings.pageManagementPageImageLabel,
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -629,7 +624,7 @@ fun PageManagementScreen(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Close,
-                                            contentDescription = "Quitar imagen",
+                                            contentDescription = strings.pageManagementRemoveImage,
                                             tint = MaterialTheme.colorScheme.error
                                         )
                                     }
@@ -642,17 +637,19 @@ fun PageManagementScreen(
                             ) {
                                 Icon(Icons.Default.Image, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Seleccionar imagen")
+                                Text(strings.pageManagementSelectImage)
                             }
                         }
                     }
+
                 }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        // Allow saving if there is translated text OR an image (or both)
-                        if (dialogTranslatedText.isNotBlank() || dialogImagePath != null) {
+                        val textToSave = if (dialogOnlyImage) "" else dialogTranslatedText
+                        val originalToSave = if (dialogOnlyImage) "" else dialogOriginalText
+                        if (textToSave.isNotBlank() || dialogImagePath != null) {
                             val listCopy = pagesList.toMutableList()
                             if (dialogPageId != null) {
                                 // Editing existing page
@@ -667,16 +664,16 @@ fun PageManagementScreen(
                                         }
                                     }
                                     listCopy[index] = oldPage.copy(
-                                        translatedText = dialogTranslatedText,
-                                        originalText = dialogOriginalText.takeIf { it.isNotBlank() },
+                                        translatedText = textToSave,
+                                        originalText = originalToSave.takeIf { it.isNotBlank() },
                                         imagePath = dialogImagePath
                                     )
                                 }
                             } else {
                                 // Inserting/Adding new page
                                 val newPage = NovelPage(
-                                    translatedText = dialogTranslatedText,
-                                    originalText = dialogOriginalText.takeIf { it.isNotBlank() },
+                                    translatedText = textToSave,
+                                    originalText = originalToSave.takeIf { it.isNotBlank() },
                                     imagePath = dialogImagePath
                                 )
                                 if (dialogInsertIndex in 0..listCopy.size) {
@@ -689,16 +686,18 @@ fun PageManagementScreen(
                             NovelRepository.savePages(context, novelName, listCopy)
                             showPageDialog = false
                         }
-                    }
+                    },
+                    enabled = if (dialogOnlyImage) dialogImagePath != null else (dialogTranslatedText.isNotBlank() || dialogImagePath != null)
                 ) {
-                    Text("Guardar")
+                    Text(strings.buttonSave)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showPageDialog = false }) {
-                    Text("Cancelar")
+                    Text(strings.buttonCancel)
                 }
             }
+
         )
     }
 }

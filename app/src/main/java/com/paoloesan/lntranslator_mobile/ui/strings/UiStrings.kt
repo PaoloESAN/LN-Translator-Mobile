@@ -92,6 +92,40 @@ interface UiStrings {
     val novelDetailsGoToPage: String
     val novelDetailsPageNumber: String
     val novelDetailsPageOf: String
+    val readerShowImages: String
+    val readerReadingOrientation: String
+    val readerHorizontal: String
+    val readerVertical: String
+    val readerTranslationHeader: String
+    val readerOriginalTextHeader: String
+    val buttonGo: String
+
+    val pageManagementTitle: String
+    val pageManagementFinishEdit: String
+    val pageManagementEditPages: String
+    val pageManagementAddPage: String
+    val pageManagementAddPageTitle: String
+    val pageManagementEditPageTitle: String
+    val pageManagementInsertPageTitle: String
+    val pageManagementJumpToPage: String
+    val pageManagementGo: String
+    val pageManagementNoPages: String
+    val pageManagementPressEditToAdd: String
+    val pageManagementPageNumber: (Int) -> String
+    val pageManagementImageOnlyPage: String
+    val pageManagementOptions: String
+    val pageManagementDragToReorder: String
+    val pageManagementInsertAbove: String
+    val pageManagementInsertBelow: String
+    val pageManagementDeletePage: String
+    val pageManagementTranslatedTextLabel: String
+    val pageManagementOriginalTextLabel: String
+    val pageManagementPageImageLabel: String
+    val pageManagementRemoveImage: String
+    val pageManagementSelectImage: String
+    val pageManagementOnlyImage: String
+
+
 
     // Prompts
     val deletePromptTitle: String
