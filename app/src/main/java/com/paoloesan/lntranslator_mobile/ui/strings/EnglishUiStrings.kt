@@ -120,6 +120,7 @@ object EnglishUiStrings : UiStrings {
     override val pageManagementDragToReorder = "Drag to reorder"
     override val pageManagementInsertAbove = "Insert page above"
     override val pageManagementInsertBelow = "Insert page below"
+    override val pageManagementEditPage = "Edit page"
     override val pageManagementDeletePage = "Delete page"
     override val pageManagementTranslatedTextLabel = "Translated text"
     override val pageManagementOriginalTextLabel = "Original text (optional)"

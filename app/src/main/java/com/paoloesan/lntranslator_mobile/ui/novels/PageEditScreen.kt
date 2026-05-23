@@ -29,7 +29,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -44,21 +43,22 @@ import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuGroup
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -84,7 +84,7 @@ import com.paoloesan.lntranslator_mobile.LocalStrings
 import java.io.File
 import java.io.FileOutputStream
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PageManagementScreen(
     novelName: String,
@@ -252,20 +252,86 @@ fun PageManagementScreen(
                                 }
                                 .then(offsetModifier)
                                 .animateItem()
-                                .clickable {
+                                .then(
                                     if (isEditMode) {
-                                        dialogPageId = page.id
-                                        dialogInsertIndex = -1
-                                        dialogTranslatedText = page.translatedText
-                                        dialogOriginalText = page.originalText ?: ""
-                                        dialogImagePath = page.imagePath
-                                        dialogTitle = strings.pageManagementEditPageTitle
-                                        dialogOnlyImage = page.translatedText.isBlank() && (page.originalText.isNullOrBlank()) && page.imagePath != null
-                                        showPageDialog = true
+                                        Modifier.pointerInput(page.id) {
+                                            detectDragGestures(
+                                                onDragStart = {
+                                                    val currIndex =
+                                                        pagesList.indexOfFirst { it.id == page.id }
+                                                    if (currIndex != -1) {
+                                                        activeDragIndex = currIndex
+                                                        dragOffsetY = 0f
+                                                    }
+                                                },
+                                                onDragEnd = {
+                                                    activeDragIndex = null
+                                                    dragOffsetY = 0f
+                                                    NovelRepository.savePages(
+                                                        context,
+                                                        novelName,
+                                                        pagesList
+                                                    )
+                                                },
+                                                onDragCancel = {
+                                                    activeDragIndex = null
+                                                    dragOffsetY = 0f
+                                                },
+                                                onDrag = { change, dragAmount ->
+                                                    change.consume()
+                                                    dragOffsetY += dragAmount.y
+
+                                                    val currentIndex = activeDragIndex
+                                                        ?: return@detectDragGestures
+                                                    val currentHeight =
+                                                        itemHeights[page.id] ?: 150f
+
+                                                    if (dragOffsetY > 0f) {
+                                                        val nextIndex = currentIndex + 1
+                                                        if (nextIndex < pagesList.size) {
+                                                            val nextHeight =
+                                                                itemHeights[pagesList[nextIndex].id]
+                                                                    ?: currentHeight
+                                                            if (dragOffsetY > nextHeight * 0.7f) {
+                                                                    val listCopy =
+                                                                        pagesList.toMutableList()
+                                                                    val item = listCopy.removeAt(
+                                                                        currentIndex
+                                                                    )
+                                                                    listCopy.add(nextIndex, item)
+                                                                    pagesList = listCopy
+                                                                    activeDragIndex = nextIndex
+                                                                    dragOffsetY -= nextHeight
+                                                            }
+                                                        }
+                                                    } else if (dragOffsetY < 0f) {
+                                                        val prevIndex = currentIndex - 1
+                                                        if (prevIndex >= 0) {
+                                                            val prevHeight =
+                                                                itemHeights[pagesList[prevIndex].id]
+                                                                    ?: currentHeight
+                                                            if (dragOffsetY < -prevHeight * 0.7f) {
+                                                                    val listCopy =
+                                                                        pagesList.toMutableList()
+                                                                    val item = listCopy.removeAt(
+                                                                        currentIndex
+                                                                    )
+                                                                    listCopy.add(prevIndex, item)
+                                                                    pagesList = listCopy
+                                                                    activeDragIndex = prevIndex
+                                                                    dragOffsetY += prevHeight
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            )
+                                        }
                                     } else {
-                                        onPageSelected(index)
+                                        Modifier.clickable {
+                                            onPageSelected(index)
+                                        }
                                     }
-                                },
+                                ),
                             colors = CardDefaults.cardColors(
                                 containerColor = if (isDragging) {
                                     MaterialTheme.colorScheme.surfaceVariant
@@ -281,85 +347,10 @@ fun PageManagementScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 if (isEditMode) {
-                                    // Drag handle
                                     Icon(
                                         imageVector = Icons.Default.Reorder,
                                         contentDescription = strings.pageManagementDragToReorder,
-
-                                        modifier = Modifier
-                                            .padding(horizontal = 8.dp, vertical = 16.dp)
-                                            .pointerInput(page.id) {
-                                                detectDragGestures(
-                                                    onDragStart = {
-                                                        val currIndex =
-                                                            pagesList.indexOfFirst { it.id == page.id }
-                                                        if (currIndex != -1) {
-                                                            activeDragIndex = currIndex
-                                                            dragOffsetY = 0f
-                                                        }
-                                                    },
-                                                    onDragEnd = {
-                                                        activeDragIndex = null
-                                                        dragOffsetY = 0f
-                                                        NovelRepository.savePages(
-                                                            context,
-                                                            novelName,
-                                                            pagesList
-                                                        )
-                                                    },
-                                                    onDragCancel = {
-                                                        activeDragIndex = null
-                                                        dragOffsetY = 0f
-                                                    },
-                                                    onDrag = { change, dragAmount ->
-                                                        change.consume()
-                                                        dragOffsetY += dragAmount.y
-
-                                                        val currentIndex = activeDragIndex
-                                                            ?: return@detectDragGestures
-                                                        val currentHeight =
-                                                            itemHeights[page.id] ?: 150f
-
-                                                        if (dragOffsetY > 0f) {
-                                                            val nextIndex = currentIndex + 1
-                                                            if (nextIndex < pagesList.size) {
-                                                                val nextHeight =
-                                                                    itemHeights[pagesList[nextIndex].id]
-                                                                        ?: currentHeight
-                                                                if (dragOffsetY > nextHeight * 0.7f) {
-                                                                    val listCopy =
-                                                                        pagesList.toMutableList()
-                                                                    val item = listCopy.removeAt(
-                                                                        currentIndex
-                                                                    )
-                                                                    listCopy.add(nextIndex, item)
-                                                                    pagesList = listCopy
-                                                                    activeDragIndex = nextIndex
-                                                                    dragOffsetY -= nextHeight
-                                                                }
-                                                            }
-                                                        } else if (dragOffsetY < 0f) {
-                                                            val prevIndex = currentIndex - 1
-                                                            if (prevIndex >= 0) {
-                                                                val prevHeight =
-                                                                    itemHeights[pagesList[prevIndex].id]
-                                                                        ?: currentHeight
-                                                                if (dragOffsetY < -prevHeight * 0.7f) {
-                                                                    val listCopy =
-                                                                        pagesList.toMutableList()
-                                                                    val item = listCopy.removeAt(
-                                                                        currentIndex
-                                                                    )
-                                                                    listCopy.add(prevIndex, item)
-                                                                    pagesList = listCopy
-                                                                    activeDragIndex = prevIndex
-                                                                    dragOffsetY += prevHeight
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                )
-                                            },
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp),
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
@@ -425,89 +416,115 @@ fun PageManagementScreen(
 
                                         }
 
-                                        DropdownMenu(
+                                        DropdownMenuPopup(
                                             expanded = expandedItemMenu,
                                             onDismissRequest = { expandedItemMenu = false }
                                         ) {
-                                            DropdownMenuItem(
-                                                text = { Text(strings.pageManagementInsertAbove) },
-                                                leadingIcon = {
-                                                    Icon(
-                                                        Icons.Default.VerticalAlignTop,
-                                                        contentDescription = null
-                                                    )
-                                                },
-                                                onClick = {
-                                                    expandedItemMenu = false
-                                                    dialogPageId = null
-                                                    dialogInsertIndex = index
-                                                    dialogTranslatedText = ""
-                                                    dialogOriginalText = ""
-                                                    dialogImagePath = null
-                                                    dialogTitle =
-                                                        strings.pageManagementInsertPageTitle
-                                                    dialogOnlyImage = false
-                                                    showPageDialog = true
-                                                }
-
-                                            )
-                                            DropdownMenuItem(
-                                                text = { Text(strings.pageManagementInsertBelow) },
-                                                leadingIcon = {
-                                                    Icon(
-                                                        Icons.Default.VerticalAlignBottom,
-                                                        contentDescription = null
-                                                    )
-                                                },
-                                                onClick = {
-                                                    expandedItemMenu = false
-                                                    dialogPageId = null
-                                                    dialogInsertIndex = index + 1
-                                                    dialogTranslatedText = ""
-                                                    dialogOriginalText = ""
-                                                    dialogImagePath = null
-                                                    dialogTitle =
-                                                        strings.pageManagementInsertPageTitle
-                                                    dialogOnlyImage = false
-                                                    showPageDialog = true
-                                                }
-
-                                            )
-                                            HorizontalDivider()
-                                            DropdownMenuItem(
-                                                text = {
-                                                    Text(
-                                                        strings.pageManagementDeletePage,
-                                                        color = MaterialTheme.colorScheme.error
-                                                    )
-                                                },
-                                                leadingIcon = {
-                                                    Icon(
-                                                        Icons.Default.Delete,
-                                                        contentDescription = null,
-                                                        tint = MaterialTheme.colorScheme.error
-                                                    )
-                                                },
-                                                onClick = {
-                                                    expandedItemMenu = false
-                                                    val listCopy = pagesList.toMutableList()
-                                                    val removedPage = listCopy.removeAt(index)
-                                                    if (removedPage.imagePath != null) {
-                                                        try {
-                                                            File(removedPage.imagePath).delete()
-                                                        } catch (e: Exception) {
-                                                            e.printStackTrace()
-                                                        }
+                                            DropdownMenuGroup(
+                                                shapes = MenuDefaults.groupShape(0, 2)
+                                            ) {
+                                                DropdownMenuItem(
+                                                    text = { Text(strings.pageManagementInsertAbove) },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            Icons.Default.VerticalAlignTop,
+                                                            contentDescription = null
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        expandedItemMenu = false
+                                                        dialogPageId = null
+                                                        dialogInsertIndex = index
+                                                        dialogTranslatedText = ""
+                                                        dialogOriginalText = ""
+                                                        dialogImagePath = null
+                                                        dialogTitle =
+                                                            strings.pageManagementInsertPageTitle
+                                                        dialogOnlyImage = false
+                                                        showPageDialog = true
                                                     }
-                                                    pagesList = listCopy
-                                                    NovelRepository.savePages(
-                                                        context,
-                                                        novelName,
-                                                        listCopy
-                                                    )
-                                                }
-                                            )
-
+                                                )
+                                                DropdownMenuItem(
+                                                    text = { Text(strings.pageManagementInsertBelow) },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            Icons.Default.VerticalAlignBottom,
+                                                            contentDescription = null
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        expandedItemMenu = false
+                                                        dialogPageId = null
+                                                        dialogInsertIndex = index + 1
+                                                        dialogTranslatedText = ""
+                                                        dialogOriginalText = ""
+                                                        dialogImagePath = null
+                                                        dialogTitle =
+                                                            strings.pageManagementInsertPageTitle
+                                                        dialogOnlyImage = false
+                                                        showPageDialog = true
+                                                    }
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.height(MenuDefaults.GroupSpacing))
+                                            DropdownMenuGroup(
+                                                shapes = MenuDefaults.groupShape(1, 2)
+                                            ) {
+                                                DropdownMenuItem(
+                                                    text = { Text(strings.pageManagementEditPage) },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            Icons.Default.Edit,
+                                                            contentDescription = null
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        expandedItemMenu = false
+                                                        dialogPageId = page.id
+                                                        dialogInsertIndex = -1
+                                                        dialogTranslatedText = page.translatedText
+                                                        dialogOriginalText = page.originalText ?: ""
+                                                        dialogImagePath = page.imagePath
+                                                        dialogTitle = strings.pageManagementEditPageTitle
+                                                        dialogOnlyImage =
+                                                            page.translatedText.isBlank() && (page.originalText.isNullOrBlank()) && page.imagePath != null
+                                                        showPageDialog = true
+                                                    }
+                                                )
+                                                DropdownMenuItem(
+                                                    text = {
+                                                        Text(
+                                                            strings.pageManagementDeletePage,
+                                                            color = MaterialTheme.colorScheme.error
+                                                        )
+                                                    },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            Icons.Default.Delete,
+                                                            contentDescription = null,
+                                                            tint = MaterialTheme.colorScheme.error
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        expandedItemMenu = false
+                                                        val listCopy = pagesList.toMutableList()
+                                                        val removedPage = listCopy.removeAt(index)
+                                                        if (removedPage.imagePath != null) {
+                                                            try {
+                                                                File(removedPage.imagePath).delete()
+                                                            } catch (e: Exception) {
+                                                                e.printStackTrace()
+                                                            }
+                                                        }
+                                                        pagesList = listCopy
+                                                        NovelRepository.savePages(
+                                                            context,
+                                                            novelName,
+                                                            listCopy
+                                                        )
+                                                    }
+                                                )
+                                            }
                                         }
                                     }
                                 }

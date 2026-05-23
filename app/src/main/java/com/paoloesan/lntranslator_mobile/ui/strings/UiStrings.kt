@@ -117,6 +117,7 @@ interface UiStrings {
     val pageManagementDragToReorder: String
     val pageManagementInsertAbove: String
     val pageManagementInsertBelow: String
+    val pageManagementEditPage: String
     val pageManagementDeletePage: String
     val pageManagementTranslatedTextLabel: String
     val pageManagementOriginalTextLabel: String

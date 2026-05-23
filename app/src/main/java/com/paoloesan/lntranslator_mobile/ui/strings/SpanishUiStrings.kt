@@ -120,6 +120,7 @@ object SpanishUiStrings : UiStrings {
     override val pageManagementDragToReorder = "Arrastrar para reordenar"
     override val pageManagementInsertAbove = "Insertar página arriba"
     override val pageManagementInsertBelow = "Insertar página abajo"
+    override val pageManagementEditPage = "Editar página"
     override val pageManagementDeletePage = "Eliminar página"
     override val pageManagementTranslatedTextLabel = "Texto traducido"
     override val pageManagementOriginalTextLabel = "Texto original (opcional)"
