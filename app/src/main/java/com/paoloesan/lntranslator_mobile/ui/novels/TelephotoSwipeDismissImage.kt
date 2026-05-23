@@ -4,6 +4,8 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -34,7 +37,9 @@ import kotlin.math.roundToInt
 @Composable
 fun TelephotoSwipeDismissImage(
     imageUrl: Any,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onClick: () -> Unit = {},
+    onZoomedChanged: (Boolean) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
 
@@ -45,10 +50,19 @@ fun TelephotoSwipeDismissImage(
     var animationJob by remember { mutableStateOf<Job?>(null) }
 
     val isFractionalZoomOne = (zoomableState.zoomableState.zoomFraction ?: 0f) < 0.1f
+    val isZoomed = !isFractionalZoomOne
+
+    LaunchedEffect(isZoomed) {
+        onZoomedChanged(isZoomed)
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { onClick() }
             .drawBehind {
                 val swipeFraction = if (containerHeight > 0f) {
                     (abs(offsetY) / containerHeight).coerceIn(0f, 1f)
@@ -66,6 +80,7 @@ fun TelephotoSwipeDismissImage(
             contentDescription = "Imagen con Zoom y Swipe",
             state = zoomableState,
             contentScale = ContentScale.Fit,
+            onClick = { onClick() },
             modifier = Modifier
                 .fillMaxSize()
                 .offset { IntOffset(0, offsetY.roundToInt()) }

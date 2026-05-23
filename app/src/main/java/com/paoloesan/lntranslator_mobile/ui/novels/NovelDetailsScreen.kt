@@ -3,6 +3,7 @@ package com.paoloesan.lntranslator_mobile.ui.novels
 import android.content.Context
 import android.graphics.BitmapFactory
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -602,6 +603,8 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
 
     // Pinch-to-zoom full screen dialog
     if (showZoomDialog && zoomImagePage?.imagePath != null) {
+        var isUiVisible by remember { mutableStateOf(true) }
+        var isZoomed by remember { mutableStateOf(false) }
         Dialog(
             onDismissRequest = { showZoomDialog = false },
             properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -612,22 +615,42 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     TelephotoSwipeDismissImage(
-                        java.io.File(zoomImagePage!!.imagePath!!)
-                    ) { showZoomDialog = false }
+                        imageUrl = java.io.File(zoomImagePage!!.imagePath!!),
+                        onDismiss = { showZoomDialog = false },
+                        onClick = { isUiVisible = !isUiVisible },
+                        onZoomedChanged = { zoomed ->
+                            isZoomed = zoomed
+                            if (zoomed) {
+                                isUiVisible = false
+                            } else {
+                                isUiVisible = true
+                            }
+                        }
+                    )
 
-                    IconButton(
-                        onClick = { showZoomDialog = false },
+                    AnimatedVisibility(
+                        visible = isUiVisible,
+                        enter = fadeIn(animationSpec = tween(150)),
+                        exit = fadeOut(animationSpec = tween(150)),
                         modifier = Modifier
-                            .align(Alignment.TopEnd)
+                            .align(Alignment.TopStart)
                             .padding(16.dp)
                             .statusBarsPadding()
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = Color.Black,
-                            modifier = Modifier.size(28.dp)
-                        )
+                        Surface(
+                            shape = RoundedCornerShape(percent = 50),
+                            color = Color.Black.copy(alpha = 0.5f),
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            IconButton(onClick = { showZoomDialog = false }) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                    contentDescription = "Back",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
