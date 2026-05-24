@@ -18,6 +18,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -135,19 +136,23 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
     }
     var isManagingPages by remember { mutableStateOf(false) }
 
+    val savedLastPage = remember(novelName, pages) {
+        prefs.getInt("last_page_$novelName", 0).coerceIn(0, (pages.size - 1).coerceAtLeast(0))
+    }
+
     // Navigation and Page Synchronization
     val pagerState = androidx.compose.runtime.key(pages) {
         if (pages.isNotEmpty()) {
             rememberPagerState(
                 pageCount = { pages.size },
-                initialPage = (pages.size - 1).coerceAtLeast(0)
+                initialPage = savedLastPage
             )
         } else {
             null
         }
     }
     val listState = androidx.compose.runtime.key(pages) {
-        rememberLazyListState(initialFirstVisibleItemIndex = (pages.size - 1).coerceAtLeast(0))
+        rememberLazyListState(initialFirstVisibleItemIndex = savedLastPage)
     }
 
     val currentPageIndex by remember(listState, pagerState, isVerticalMode) {
@@ -176,6 +181,18 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
 
 
     var showSystemBars by remember { mutableStateOf(true) }
+
+    var isFirstLoad by remember { mutableStateOf(true) }
+    LaunchedEffect(currentPageIndex) {
+        if (pages.isNotEmpty()) {
+            prefs.edit { putInt("last_page_$novelName", currentPageIndex) }
+        }
+        if (isFirstLoad) {
+            isFirstLoad = false
+        } else {
+            showSystemBars = false
+        }
+    }
 
     AnimatedContent(
         targetState = isManagingPages,
@@ -725,96 +742,135 @@ fun NovelPageItem(
             .padding(horizontal = 16.dp, vertical = 8.dp)
     }
 
-    Column(
-        modifier = baseModifier
-            .then(scrollModifier)
-    ) {
-        if (isScrollEnabled) {
-            Spacer(modifier = Modifier.height(72.dp))
-        }
-        if ((showImages || isOnlyImage) && page.imagePath != null) {
-            val bitmap = remember(page.imagePath) {
-                try {
-                    BitmapFactory.decodeFile(page.imagePath)
-                } catch (_: Exception) {
-                    null
+    Box(modifier = baseModifier) {
+        Column(
+            modifier = if (isScrollEnabled) Modifier
+                .fillMaxSize()
+                .then(scrollModifier) else Modifier
+                .fillMaxWidth()
+                .then(scrollModifier)
+        ) {
+            if (isScrollEnabled) {
+                Spacer(modifier = Modifier.height(72.dp))
+            }
+            if ((showImages || isOnlyImage) && page.imagePath != null) {
+                val bitmap = remember(page.imagePath) {
+                    try {
+                        BitmapFactory.decodeFile(page.imagePath)
+                    } catch (_: Exception) {
+                        null
+                    }
+                }
+                bitmap?.let {
+                    if (isOnlyImage) {
+                        BoxWithConstraints(
+                            modifier = if (isScrollEnabled) Modifier
+                                .fillMaxWidth()
+                                .weight(1f) else Modifier
+                                .fillMaxWidth()
+                                .height(500.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            val imageRatio = it.width.toFloat() / it.height.toFloat()
+                            val maxRatio = maxWidth / maxHeight
+                            val (imageWidth, imageHeight) = if (imageRatio > maxRatio) {
+                                Pair(maxWidth, maxWidth / imageRatio)
+                            } else {
+                                Pair(maxHeight * imageRatio, maxHeight)
+                            }
+                            Card(
+                                modifier = Modifier
+                                    .size(imageWidth, imageHeight)
+                                    .clickable { onImageClick() },
+                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                            ) {
+                                Image(
+                                    bitmap = it.asImageBitmap(),
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Fit
+                                )
+                            }
+                        }
+                    } else {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                                .clickable { onImageClick() },
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        ) {
+                            Image(
+                                bitmap = it.asImageBitmap(),
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
-            bitmap?.let {
-                val cardModifier = if (isOnlyImage) {
-                    if (isScrollEnabled) {
-                        Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                            .clickable { onImageClick() }
-                    } else {
-                        Modifier
-                            .fillMaxWidth()
-                            .height(500.dp)
-                            .clickable { onImageClick() }
-                    }
-                } else {
-                    Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .clickable { onImageClick() }
+            if (!page.translatedText.isNullOrBlank()) {
+                if (showImages) {
+                    Text(
+                        text = strings.readerTranslationHeader,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
 
-                Card(
-                    modifier = cardModifier,
-                    elevation = CardDefaults.cardElevation(defaultElevation = if (isOnlyImage) 0.dp else 4.dp),
-                    colors = if (isOnlyImage) CardDefaults.cardColors(containerColor = Color.Transparent) else CardDefaults.cardColors()
-                ) {
-                    Image(
-                        bitmap = it.asImageBitmap(),
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = if (isOnlyImage) ContentScale.Fit else ContentScale.Crop
+                MarkdownText(
+                    markdown = page.translatedText,
+                    modifier = Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
+                )
             }
-        }
-        if (!page.translatedText.isNullOrBlank()) {
-            if (showImages) {
+
+            if (!page.originalText.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = strings.readerTranslationHeader,
+                    text = strings.readerOriginalTextHeader,
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = MaterialTheme.colorScheme.secondary,
                     fontWeight = FontWeight.Bold
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = page.originalText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
-            MarkdownText(
-                markdown = page.translatedText,
-                modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            )
+            if (isScrollEnabled) {
+                Spacer(modifier = Modifier.height(88.dp))
+            }
         }
 
-        if (!page.originalText.isNullOrBlank()) {
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(
-                text = strings.readerOriginalTextHeader,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.secondary,
-                fontWeight = FontWeight.Bold
+        // Show bottom gradient indicator if scrollable and not at the end
+        if (isScrollEnabled && !isOnlyImage && scrollState.maxValue > 0 && scrollState.value < scrollState.maxValue) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+                    .align(Alignment.BottomCenter)
+                    .background(
+                        brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                MaterialTheme.colorScheme.background.copy(alpha = 0.95f)
+                            )
+                        )
+                    )
             )
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = page.originalText,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        if (isScrollEnabled) {
-            Spacer(modifier = Modifier.height(88.dp))
         }
     }
 }

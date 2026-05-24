@@ -153,7 +153,7 @@ fun NovelsScreen(
 
                                 val currentActive = prefs.getString("selected_novel", null)
                                 if (currentActive == oldName) {
-                                    prefs.edit().putString("selected_novel", trimmed).apply()
+                                    prefs.edit { putString("selected_novel", trimmed) }
                                 }
                             }
                             selectedNovels = setOf(trimmed)
@@ -182,6 +182,7 @@ fun NovelsScreen(
                     onClick = {
                         selectedNovels.forEach { novel ->
                             NovelRepository.deleteNovelData(context, novel)
+                            prefs.edit { remove("last_page_$novel") }
                         }
                         val newList = novelsList.filterNot { selectedNovels.contains(it) }
                         saveNovelsList(newList)
