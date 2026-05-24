@@ -37,6 +37,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -49,10 +50,13 @@ import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.StayCurrentLandscape
 import androidx.compose.material.icons.filled.StayCurrentPortrait
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -61,22 +65,26 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -95,10 +103,14 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.edit
 import com.paoloesan.lntranslator_mobile.LocalStrings
+import com.paoloesan.lntranslator_mobile.ui.overlay.OverlayFontOption
+import com.paoloesan.lntranslator_mobile.ui.overlay.toComposeFontFamily
+import com.paoloesan.lntranslator_mobile.ui.overlay.toLabel
 import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
 import dev.jeziellago.compose.markdowntext.MarkdownText
 import kotlinx.coroutines.launch
@@ -125,6 +137,20 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
             )
         )
     }
+    var readerFontSize by remember {
+        mutableIntStateOf(prefs.getInt("reader_font_size", 18))
+    }
+    var readerLineSpacing by remember {
+        mutableIntStateOf(prefs.getInt("reader_line_spacing", 5))
+    }
+    var readerFontFamily by remember {
+        mutableStateOf(
+            OverlayFontOption.fromPref(
+                prefs.getString("reader_font_family", OverlayFontOption.ROBOTO.prefValue)
+            )
+        )
+    }
+    var showConfigDialog by remember { mutableStateOf(false) }
 
     var pages by remember(novelName) {
         mutableStateOf(
@@ -268,6 +294,9 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                                     page = page,
                                     showImages = showImages,
                                     isScrollEnabled = false,
+                                    readerFontSize = readerFontSize,
+                                    readerLineSpacing = readerLineSpacing,
+                                    readerFontFamily = readerFontFamily,
                                     onImageClick = {
                                         zoomImagePage = page
                                         showZoomDialog = true
@@ -293,6 +322,9 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                                 page = page,
                                 showImages = showImages,
                                 isScrollEnabled = true,
+                                readerFontSize = readerFontSize,
+                                readerLineSpacing = readerLineSpacing,
+                                readerFontFamily = readerFontFamily,
                                 onImageClick = {
                                     zoomImagePage = page
                                     showZoomDialog = true
@@ -508,6 +540,31 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                                                     }
                                                 }
                                             }
+
+                                            HorizontalDivider(
+                                                modifier = Modifier.padding(
+                                                    MenuDefaults.HorizontalDividerPadding
+                                                )
+                                            )
+
+                                            DropdownMenuItem(
+                                                text = {
+                                                    Text(
+                                                        strings.overlayConfig,
+                                                        style = MaterialTheme.typography.bodyLarge
+                                                    )
+                                                },
+                                                leadingIcon = {
+                                                    Icon(
+                                                        Icons.Default.Settings,
+                                                        contentDescription = null
+                                                    )
+                                                },
+                                                onClick = {
+                                                    expandedMenu = false
+                                                    showConfigDialog = true
+                                                }
+                                            )
                                         }
                                     }
                                 }
@@ -661,6 +718,28 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
         }
 
 
+        if (showConfigDialog) {
+            ReaderConfigDialog(
+                fontSize = readerFontSize,
+                lineSpacing = readerLineSpacing,
+                fontFamily = readerFontFamily,
+                onFontSizeChange = { newSize ->
+                    readerFontSize = newSize
+                    prefs.edit { putInt("reader_font_size", newSize) }
+                },
+                onLineSpacingChange = { newSpacing ->
+                    readerLineSpacing = newSpacing
+                    prefs.edit { putInt("reader_line_spacing", newSpacing) }
+                },
+                onFontFamilyChange = { newFontFamily ->
+                    readerFontFamily = newFontFamily
+                    prefs.edit { putString("reader_font_family", newFontFamily.prefValue) }
+                },
+                onDismiss = { showConfigDialog = false },
+                strings = strings
+            )
+        }
+
         // Pinch-to-zoom full screen dialog
         if (showZoomDialog && zoomImagePage?.imagePath != null) {
             var isUiVisible by remember { mutableStateOf(true) }
@@ -724,11 +803,19 @@ fun NovelPageItem(
     page: NovelPage,
     showImages: Boolean,
     isScrollEnabled: Boolean,
+    readerFontSize: Int,
+    readerLineSpacing: Int,
+    readerFontFamily: OverlayFontOption,
     onImageClick: () -> Unit,
     strings: UiStrings
 ) {
     val scrollState = rememberScrollState()
     val isOnlyImage = page.translatedText.isBlank() && page.originalText.isNullOrBlank()
+    val showGradient by remember(scrollState, isScrollEnabled, isOnlyImage) {
+        derivedStateOf {
+            isScrollEnabled && !isOnlyImage && scrollState.maxValue > 0 && scrollState.value < scrollState.maxValue
+        }
+    }
     val scrollModifier =
         if (isScrollEnabled && !isOnlyImage) Modifier.verticalScroll(scrollState) else Modifier
 
@@ -812,7 +899,7 @@ fun NovelPageItem(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             }
-            if (!page.translatedText.isNullOrBlank()) {
+            if (page.translatedText.isNotBlank()) {
                 if (showImages) {
                     Text(
                         text = strings.readerTranslationHeader,
@@ -828,6 +915,9 @@ fun NovelPageItem(
                     markdown = page.translatedText,
                     modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.bodyLarge.copy(
+                        fontSize = readerFontSize.sp,
+                        lineHeight = (readerFontSize + readerLineSpacing).sp,
+                        fontFamily = readerFontFamily.toComposeFontFamily(),
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 )
@@ -845,8 +935,12 @@ fun NovelPageItem(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = page.originalText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = (readerFontSize * 0.85f).sp,
+                        lineHeight = ((readerFontSize + readerLineSpacing) * 0.85f).sp,
+                        fontFamily = readerFontFamily.toComposeFontFamily(),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 )
             }
 
@@ -856,7 +950,7 @@ fun NovelPageItem(
         }
 
         // Show bottom gradient indicator if scrollable and not at the end
-        if (isScrollEnabled && !isOnlyImage && scrollState.maxValue > 0 && scrollState.value < scrollState.maxValue) {
+        if (showGradient) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -906,5 +1000,280 @@ fun EmptyNovelState(padding: PaddingValues) {
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun ReaderConfigDialog(
+    fontSize: Int,
+    lineSpacing: Int,
+    fontFamily: OverlayFontOption,
+    onFontSizeChange: (Int) -> Unit,
+    onLineSpacingChange: (Int) -> Unit,
+    onFontFamilyChange: (OverlayFontOption) -> Unit,
+    onDismiss: () -> Unit,
+    strings: UiStrings
+) {
+    var showFontFamilyOptions by remember { mutableStateOf(false) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(28.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = strings.overlayConfig,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                Text(
+                    text = strings.configPreviewText,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = fontSize.sp,
+                    lineHeight = (fontSize + lineSpacing).sp,
+                    fontFamily = fontFamily.toComposeFontFamily(),
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                )
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showFontFamilyOptions = true }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = strings.configFontFamilyLabel,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        Text(
+                            text = fontFamily.toLabel(strings),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    DropdownMenuPopup(
+                        expanded = showFontFamilyOptions,
+                        onDismissRequest = { showFontFamilyOptions = false },
+                        modifier = Modifier.width(200.dp)
+                    ) {
+                        DropdownMenuGroup(
+                            shapes = MenuDefaults.groupShape(0, 1)
+                        ) {
+                            OverlayFontOption.entries.forEachIndexed { index, option ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = option.toLabel(strings),
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    },
+                                    onClick = {
+                                        onFontFamilyChange(option)
+                                        showFontFamilyOptions = false
+                                    },
+                                    selected = option == fontFamily,
+                                    selectedLeadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                            tint = Color.Transparent
+                                        )
+                                    },
+                                    shapes = MenuDefaults.itemShape(
+                                        index,
+                                        OverlayFontOption.entries.size
+                                    ),
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = strings.configFontSizeLabel,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        FilledIconButton(
+                            shape = CircleShape,
+                            onClick = {
+                                if (fontSize > 10) {
+                                    onFontSizeChange(fontSize - 1)
+                                }
+                            },
+                            enabled = fontSize > 10,
+                            modifier = Modifier.size(36.dp),
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        ) {
+                            Icon(
+                                Icons.Rounded.Remove,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+
+                        Text(
+                            text = "$fontSize",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.width(32.dp),
+                            textAlign = TextAlign.Center
+                        )
+
+                        FilledIconButton(
+                            shape = CircleShape,
+                            onClick = {
+                                if (fontSize < 30) {
+                                    onFontSizeChange(fontSize + 1)
+                                }
+                            },
+                            enabled = fontSize < 30,
+                            modifier = Modifier.size(36.dp),
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        ) {
+                            Icon(
+                                Icons.Rounded.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = strings.configLineSpacingLabel,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        FilledIconButton(
+                            shape = CircleShape,
+                            onClick = {
+                                if (lineSpacing > 0) {
+                                    onLineSpacingChange(lineSpacing - 1)
+                                }
+                            },
+                            enabled = lineSpacing > 0,
+                            modifier = Modifier.size(36.dp),
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        ) {
+                            Icon(
+                                Icons.Rounded.Remove,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+
+                        Text(
+                            text = "$lineSpacing",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.width(32.dp),
+                            textAlign = TextAlign.Center
+                        )
+
+                        FilledIconButton(
+                            shape = CircleShape,
+                            onClick = {
+                                if (lineSpacing < 20) {
+                                    onLineSpacingChange(lineSpacing + 1)
+                                }
+                            },
+                            enabled = lineSpacing < 20,
+                            modifier = Modifier.size(36.dp),
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        ) {
+                            Icon(
+                                Icons.Rounded.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text(
+                        text = strings.buttonClose,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
     }
 }
