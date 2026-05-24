@@ -8,20 +8,25 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
@@ -33,6 +38,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilledTonalButton
@@ -58,6 +64,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush.Companion.verticalGradient
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -71,7 +78,6 @@ import com.paoloesan.lntranslator_mobile.service.OverlayService
 import com.paoloesan.lntranslator_mobile.service.ScreenCaptureService
 import com.paoloesan.lntranslator_mobile.ui.prompts.PromptDialog
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -100,14 +106,15 @@ fun HomeScreen(
     }
 
     androidx.compose.runtime.DisposableEffect(prefs) {
-        val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
-            if (key == "saved_novels") {
-                savedNovelsString = sharedPreferences.getString("saved_novels", "") ?: ""
+        val listener =
+            android.content.SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
+                if (key == "saved_novels") {
+                    savedNovelsString = sharedPreferences.getString("saved_novels", "") ?: ""
+                }
+                if (key == "selected_novel") {
+                    selectedNovel = sharedPreferences.getString("selected_novel", null)
+                }
             }
-            if (key == "selected_novel") {
-                selectedNovel = sharedPreferences.getString("selected_novel", null)
-            }
-        }
         prefs.registerOnSharedPreferenceChangeListener(listener)
         onDispose {
             prefs.unregisterOnSharedPreferenceChangeListener(listener)
@@ -258,191 +265,229 @@ fun HomeScreen(
 
         Text(
             text = "\"${strings.homeWelcome}\"",
-                fontStyle = FontStyle.Italic
+            fontStyle = FontStyle.Italic
+        )
+
+        // Section for Novels
+        ExposedDropdownMenuBox(
+            expanded = expandedNovels,
+            onExpandedChange = { expandedNovels = it },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            OutlinedTextField(
+                value = selectedNovel ?: strings.novelsNone,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text(strings.homeNovelsSectionTitle) },
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedNovels)
+                },
+                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                modifier = Modifier
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
+                    .fillMaxWidth(),
+                shape = MaterialTheme.shapes.large
             )
 
-            // Section for Novels
-            ExposedDropdownMenuBox(
+            DropdownMenuPopup(
                 expanded = expandedNovels,
-                onExpandedChange = { expandedNovels = it },
-                modifier = Modifier.fillMaxWidth()
+                onDismissRequest = { expandedNovels = false }
             ) {
-                OutlinedTextField(
-                    value = selectedNovel ?: strings.novelsNone,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text(strings.homeNovelsSectionTitle) },
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedNovels)
-                    },
-                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth(),
-                    shape = MaterialTheme.shapes.large
-                )
-
-                DropdownMenuPopup(
-                    expanded = expandedNovels,
-                    onDismissRequest = { expandedNovels = false }
+                DropdownMenuGroup(
+                    shapes = MenuDefaults.groupShape(0, 1)
                 ) {
-                    DropdownMenuGroup(
-                        shapes = MenuDefaults.groupShape(0, 1)
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(strings.novelsNone) },
-                            selected = selectedNovel == null,
-                            shapes = MenuDefaults.itemShape(0, novelsList.count() + 2),
-                            onClick = {
-                                selectedNovel = null
-                                prefs.edit { remove("selected_novel") }
-                                expandedNovels = false
-                            },
-                            selectedLeadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
+                    DropdownMenuItem(
+                        text = { Text(strings.novelsNone) },
+                        selected = selectedNovel == null,
+                        shapes = MenuDefaults.itemShape(0, novelsList.count() + 2),
+                        onClick = {
+                            selectedNovel = null
+                            prefs.edit { remove("selected_novel") }
+                            expandedNovels = false
+                        },
+                        selectedLeadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = Color.Transparent,
+                            )
+                        },
+                    )
+
+                    val dropdownScrollState = rememberScrollState()
+                    val showDropdownGradient by remember(dropdownScrollState) {
+                        derivedStateOf {
+                            dropdownScrollState.maxValue > 0 && dropdownScrollState.value < dropdownScrollState.maxValue
+                        }
+                    }
+
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 170.dp)
+                                .verticalScroll(dropdownScrollState)
+                        ) {
+                            novelsList.forEachIndexed { index, novel ->
+                                DropdownMenuItem(
+                                    selected = novel == selectedNovel,
+                                    shapes = MenuDefaults.itemShape(
+                                        index + 1,
+                                        novelsList.count() + 2
+                                    ),
+                                    text = { Text(novel) },
+                                    onClick = {
+                                        selectedNovel = novel
+                                        prefs.edit { putString("selected_novel", novel) }
+                                        expandedNovels = false
+                                    },
+                                    selectedLeadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                            tint = Color.Transparent,
+                                        )
+                                    },
                                 )
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
-                                    tint = Color.Transparent,
-                                )
-                            },
-                        )
-                        novelsList.forEachIndexed { index, novel ->
-                            DropdownMenuItem(
-                                selected = novel == selectedNovel,
-                                shapes = MenuDefaults.itemShape(index, novelsList.count() + 2),
-                                text = { Text(novel) },
-                                onClick = {
-                                    selectedNovel = novel
-                                    prefs.edit { putString("selected_novel", novel) }
-                                    expandedNovels = false
-                                },
-                                selectedLeadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp),
+                            }
+                        }
+
+                        if (showDropdownGradient) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(24.dp)
+                                    .align(Alignment.BottomCenter)
+                                    .background(
+                                        brush = verticalGradient(
+                                            colors = listOf(
+                                                Color.Transparent,
+                                                MaterialTheme.colorScheme.surfaceContainer.copy(
+                                                    alpha = 0.95f
+                                                )
+                                            )
+                                        )
                                     )
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp),
-                                        tint = Color.Transparent,
-                                    )
-                                },
                             )
                         }
-                        HorizontalDivider(
-                            modifier = Modifier.padding(MenuDefaults.HorizontalDividerPadding)
-                        )
-                        DropdownMenuItem(
-                            selected = false,
-                            shapes = MenuDefaults.itemShape(
-                                novelsList.count() + 1,
-                                novelsList.count() + 2
-                            ),
-                            text = {
-                                Text(
-                                    strings.novelsAddTitle,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            },
-                            onClick = {
-                                expandedNovels = false
-                                showAddNovelDialog = true
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
-                                )
-                            },
-                        )
                     }
 
-
-                }
-            }
-
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedButton(
-                        modifier = Modifier
-                            .weight(navigateWeight)
-                            .heightIn(min = 56.dp),
-                        interactionSource = navigateInteraction,
-                        shape = MaterialTheme.shapes.large,
-                        enabled = !isNavigatingToPrompts,
-                        onClick = {
-                            if (!isNavigatingToPrompts) {
-                                isNavigatingToPrompts = true
-                                onNavigateToPrompts()
-                            }
+                    HorizontalDivider(
+                        modifier = Modifier.padding(MenuDefaults.HorizontalDividerPadding)
+                    )
+                    DropdownMenuItem(
+                        selected = false,
+                        shapes = MenuDefaults.itemShape(
+                            novelsList.count() + 1,
+                            novelsList.count() + 2
+                        ),
+                        text = {
+                            Text(
+                                strings.novelsAddTitle,
+                                color = MaterialTheme.colorScheme.primary
+                            )
                         },
-                    ) {
-                        Text(strings.homeViewPrompts)
-                    }
-                    FilledTonalButton(
-                        modifier = Modifier
-                            .weight(saveWeight)
-                            .heightIn(min = 56.dp),
-                        interactionSource = saveInteraction,
-                        shape = MaterialTheme.shapes.large,
-                        enabled = puedeGuardarPrompt,
-                        onClick = { showDialog = true },
-                    ) {
-                        Text(strings.homeSavePrompt)
-                    }
+                        onClick = {
+                            expandedNovels = false
+                            showAddNovelDialog = true
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        },
+                    )
                 }
-
-                OutlinedTextField(
-                    label = { Text(text = strings.homePromptLabel) },
-                    value = textPrompt,
-                    onValueChange = { textPrompt = it },
-                    minLines = 3,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.large
-                )
             }
+        }
 
-            Button(
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 56.dp),
-                shape = MaterialTheme.shapes.extraLarge,
-                contentPadding = PaddingValues(horizontal = 28.dp, vertical = 14.dp),
-                colors = ButtonDefaults.buttonColors(),
-                onClick = {
-                    prefs.edit { putString("prompt_app", textPrompt) }
-                    if (!android.provider.Settings.canDrawOverlays(context)) {
-                        val intent = android.content.Intent(
-                            android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                            "package:${context.packageName}".toUri()
-                        )
-                        context.startActivity(intent)
-                    } else {
-                        val captureIntent = mediaProjectionManager.createScreenCaptureIntent()
-                        screenCaptureLauncher.launch(captureIntent)
-                    }
-                }) {
-                Text(strings.homeStartButton)
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    modifier = Modifier
+                        .weight(navigateWeight)
+                        .heightIn(min = 56.dp),
+                    interactionSource = navigateInteraction,
+                    shape = MaterialTheme.shapes.large,
+                    enabled = !isNavigatingToPrompts,
+                    onClick = {
+                        if (!isNavigatingToPrompts) {
+                            isNavigatingToPrompts = true
+                            onNavigateToPrompts()
+                        }
+                    },
+                ) {
+                    Text(strings.homeViewPrompts)
+                }
+                FilledTonalButton(
+                    modifier = Modifier
+                        .weight(saveWeight)
+                        .heightIn(min = 56.dp),
+                    interactionSource = saveInteraction,
+                    shape = MaterialTheme.shapes.large,
+                    enabled = puedeGuardarPrompt,
+                    onClick = { showDialog = true },
+                ) {
+                    Text(strings.homeSavePrompt)
+                }
             }
+
+            OutlinedTextField(
+                label = { Text(text = strings.homePromptLabel) },
+                value = textPrompt,
+                onValueChange = { textPrompt = it },
+                minLines = 3,
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large
+            )
+        }
+
+        Button(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 56.dp),
+            shape = MaterialTheme.shapes.extraLarge,
+            contentPadding = PaddingValues(horizontal = 28.dp, vertical = 14.dp),
+            colors = ButtonDefaults.buttonColors(),
+            onClick = {
+                prefs.edit { putString("prompt_app", textPrompt) }
+                if (!android.provider.Settings.canDrawOverlays(context)) {
+                    val intent = android.content.Intent(
+                        android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        "package:${context.packageName}".toUri()
+                    )
+                    context.startActivity(intent)
+                } else {
+                    val captureIntent = mediaProjectionManager.createScreenCaptureIntent()
+                    screenCaptureLauncher.launch(captureIntent)
+                }
+            }) {
+            Text(strings.homeStartButton)
+        }
     }
 }

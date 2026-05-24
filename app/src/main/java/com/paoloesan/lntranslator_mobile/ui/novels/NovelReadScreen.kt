@@ -128,7 +128,7 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
     var zoomImagePage by remember { mutableStateOf<NovelPage?>(null) }
 
     // Configurable States
-    var showImages by remember { mutableStateOf(prefs.getBoolean("reader_show_images", true)) }
+    var showImages by remember { mutableStateOf(prefs.getBoolean("reader_show_images", false)) }
     var isVerticalMode by remember {
         mutableStateOf(
             prefs.getBoolean(
