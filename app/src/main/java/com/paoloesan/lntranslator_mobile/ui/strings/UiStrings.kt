@@ -197,6 +197,14 @@ interface UiStrings {
     val errorInvalidApiKey: String
     val errorModelOverloaded: String
     val errorUnknown: String
+
+    val cdShare: String
+    val menuShare: String
+    val menuImport: String
+    val importSuccess: (String) -> String
+    val importError: String
+    val importInvalidZip: String
+    val cdMenuActions: String
 }
 
 object StringsProvider {

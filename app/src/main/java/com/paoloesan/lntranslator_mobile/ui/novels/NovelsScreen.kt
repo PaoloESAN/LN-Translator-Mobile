@@ -1,7 +1,14 @@
 package com.paoloesan.lntranslator_mobile.ui.novels
 
 import android.content.Context
+import android.content.Intent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,37 +32,50 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DriveFolderUpload
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuGroup
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonMenu
+import androidx.compose.material3.FloatingActionButtonMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ToggleFloatingActionButton
+import androidx.compose.material3.ToggleFloatingActionButtonDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import com.paoloesan.lntranslator_mobile.LocalStrings
 
@@ -89,6 +109,32 @@ fun NovelsScreen(
         val currentSelected = prefs.getString("selected_novel", null)
         if (currentSelected != null && !newList.contains(currentSelected)) {
             prefs.edit { remove("selected_novel") }
+        }
+    }
+
+    val scope = rememberCoroutineScope()
+    var fabMenuExpanded by remember { mutableStateOf(false) }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            val finalName = NovelRepository.importNovelFromZip(context, uri, novelsList)
+            if (finalName != null) {
+                val updatedList = novelsList + finalName
+                saveNovelsList(updatedList)
+                Toast.makeText(
+                    context,
+                    strings.importSuccess(finalName),
+                    Toast.LENGTH_LONG
+                ).show()
+            } else {
+                Toast.makeText(
+                    context,
+                    strings.importError,
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         }
     }
 
@@ -202,208 +248,374 @@ fun NovelsScreen(
     }
 
     Scaffold(
-        topBar = {
-            if (selectedNovels.isNotEmpty()) {
-                TopAppBar(
-                    title = { Text(strings.novelsSelected(selectedNovels.size)) },
-                    navigationIcon = {
-                        IconButton(onClick = { selectedNovels = emptySet() }) {
-                            Icon(
-                                Icons.Default.Close,
-                                contentDescription = strings.cdCancelSelection
-                            )
-                        }
-                    },
-                    actions = {
-                        if (selectedNovels.size == 1) {
-                            IconButton(onClick = { showEditDialog = true }) {
-                                Icon(Icons.Default.Edit, contentDescription = strings.cdEdit)
-                            }
-                        }
-                        IconButton(onClick = { showDeleteConfirmationDialog = true }) {
-                            Icon(Icons.Default.Delete, contentDescription = strings.cdDelete)
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                )
-            } else {
-                TopAppBar(
-                    title = { Text(strings.novelsTitle) },
-                    actions = {
-                        Row(
-                            Modifier.padding(horizontal = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
-                        ) {
-                            ToggleButton(
-                                checked = !isGridView,
-                                onCheckedChange = { isGridView = !isGridView },
-                                shapes =
-                                    ButtonGroupDefaults.connectedLeadingButtonShapes()
-
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.FormatListBulleted,
-                                    contentDescription = strings.cdListView
-                                )
-                            }
-                            ToggleButton(
-                                checked = isGridView,
-                                onCheckedChange = { isGridView = !isGridView },
-                                shapes =
-                                    ButtonGroupDefaults.connectedTrailingButtonShapes()
-
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.GridView,
-                                    contentDescription = strings.cdGridView
-                                )
-                            }
-                        }
-                    }
-                )
-            }
-        },
-        floatingActionButton = {
-            if (selectedNovels.isEmpty()) {
-                FloatingActionButton(onClick = { showAddDialog = true }) {
-                    Icon(Icons.Default.Add, contentDescription = strings.novelsAddTitle)
-                }
-            }
-        }
+        // topBar is rendered inside the content Column to allow Z-index overlaying by the scrim
     ) { padding ->
-        if (novelsList.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(32.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Book,
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = strings.novelsEmptyTitle,
-                    style = MaterialTheme.typography.titleLarge
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = strings.novelsEmptySubtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center
-                )
-            }
-        } else {
-            if (isGridView) {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentPadding = PaddingValues(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(novelsList) { novel ->
-                        val isSelected = selectedNovels.contains(novel)
-                        ElevatedCard(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1f),
-                            colors = if (isSelected) CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer) else CardDefaults.elevatedCardColors()
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .combinedClickable(
-                                        onClick = {
-                                            if (selectedNovels.isNotEmpty()) {
-                                                selectedNovels =
-                                                    if (isSelected) selectedNovels - novel else selectedNovels + novel
-                                            } else {
-                                                onNavigateToDetails(novel)
-                                            }
-                                        },
-                                        onLongClick = {
-                                            selectedNovels = selectedNovels + novel
-                                        }
-                                    )
-                                    .padding(16.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                if (selectedNovels.isNotEmpty()) {
+                    TopAppBar(
+                        title = { Text(strings.novelsSelected(selectedNovels.size)) },
+                        navigationIcon = {
+                            IconButton(onClick = { selectedNovels = emptySet() }) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = strings.cdCancelSelection
+                                )
+                            }
+                        },
+                        actions = {
+                            var dropdownExpanded by remember { mutableStateOf(false) }
+                            Box {
+                                IconButton(onClick = { dropdownExpanded = true }) {
                                     Icon(
-                                        imageVector = Icons.Default.Book,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(48.dp),
-                                        tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary
+                                        Icons.Default.MoreVert,
+                                        contentDescription = strings.cdMenuActions
                                     )
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    Text(
-                                        text = novel,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        textAlign = TextAlign.Center,
-                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                }
+                                DropdownMenuPopup(
+                                    expanded = dropdownExpanded,
+                                    onDismissRequest = { dropdownExpanded = false }
+                                ) {
+                                    DropdownMenuGroup(
+                                        shapes = MenuDefaults.groupShape(0, 1)
+                                    ) {
+                                        if (selectedNovels.size == 1) {
+                                            DropdownMenuItem(
+                                                text = { Text(strings.menuShare) },
+                                                leadingIcon = {
+                                                    Icon(
+                                                        Icons.Default.Share,
+                                                        contentDescription = null
+                                                    )
+                                                },
+                                                onClick = {
+                                                    dropdownExpanded = false
+                                                    val novelName = selectedNovels.first()
+                                                    val zipFile =
+                                                        NovelRepository.exportNovelToZip(
+                                                            context,
+                                                            novelName
+                                                        )
+                                                    if (zipFile != null && zipFile.exists()) {
+                                                        try {
+                                                            val fileUri =
+                                                                FileProvider.getUriForFile(
+                                                                    context,
+                                                                    "${context.packageName}.fileprovider",
+                                                                    zipFile
+                                                                )
+                                                            val shareIntent =
+                                                                Intent(Intent.ACTION_SEND).apply {
+                                                                    type = "application/zip"
+                                                                    putExtra(
+                                                                        Intent.EXTRA_STREAM,
+                                                                        fileUri
+                                                                    )
+                                                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                                }
+                                                            context.startActivity(
+                                                                Intent.createChooser(
+                                                                    shareIntent,
+                                                                    strings.menuShare
+                                                                )
+                                                            )
+                                                        } catch (e: Exception) {
+                                                            e.printStackTrace()
+                                                            Toast.makeText(
+                                                                context,
+                                                                strings.importError,
+                                                                Toast.LENGTH_SHORT
+                                                            ).show()
+                                                        }
+                                                    } else {
+                                                        Toast.makeText(
+                                                            context,
+                                                            strings.importError,
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
+                                                    }
+                                                }
+                                            )
+                                            DropdownMenuItem(
+                                                text = { Text(strings.cdEdit) },
+                                                leadingIcon = {
+                                                    Icon(
+                                                        Icons.Default.Edit,
+                                                        contentDescription = null
+                                                    )
+                                                },
+                                                onClick = {
+                                                    dropdownExpanded = false
+                                                    showEditDialog = true
+                                                }
+                                            )
+                                        }
+                                        DropdownMenuItem(
+                                            text = { Text(strings.cdDelete) },
+                                            leadingIcon = {
+                                                Icon(
+                                                    Icons.Default.Delete,
+                                                    contentDescription = null
+                                                )
+                                            },
+                                            onClick = {
+                                                dropdownExpanded = false
+                                                showDeleteConfirmationDialog = true
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    )
+                } else {
+                    TopAppBar(
+                        title = { Text(strings.novelsTitle) },
+                        actions = {
+                            Row(
+                                Modifier.padding(horizontal = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+                            ) {
+                                ToggleButton(
+                                    checked = !isGridView,
+                                    onCheckedChange = { isGridView = !isGridView },
+                                    shapes =
+                                        ButtonGroupDefaults.connectedLeadingButtonShapes()
+
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.FormatListBulleted,
+                                        contentDescription = strings.cdListView
+                                    )
+                                }
+                                ToggleButton(
+                                    checked = isGridView,
+                                    onCheckedChange = { isGridView = !isGridView },
+                                    shapes =
+                                        ButtonGroupDefaults.connectedTrailingButtonShapes()
+
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.GridView,
+                                        contentDescription = strings.cdGridView
                                     )
                                 }
                             }
                         }
-                    }
+                    )
                 }
-            } else {
-                LazyColumn(
+
+                Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                        .fillMaxWidth()
+                        .weight(1f)
                 ) {
-                    items(novelsList) { novel ->
-                        val isSelected = selectedNovels.contains(novel)
-                        ElevatedCard(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = if (isSelected) CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer) else CardDefaults.elevatedCardColors()
+                    if (novelsList.isEmpty()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(32.dp),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .combinedClickable(
-                                        onClick = {
-                                            if (selectedNovels.isNotEmpty()) {
-                                                selectedNovels =
-                                                    if (isSelected) selectedNovels - novel else selectedNovels + novel
-                                            } else {
-                                                onNavigateToDetails(novel)
-                                            }
-                                        },
-                                        onLongClick = {
-                                            selectedNovels = selectedNovels + novel
-                                        }
-                                    )
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                            Icon(
+                                imageVector = Icons.Default.Book,
+                                contentDescription = null,
+                                modifier = Modifier.size(64.dp),
+                                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = strings.novelsEmptyTitle,
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = strings.novelsEmptySubtitle,
+                                style = MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    } else {
+                        if (isGridView) {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Book,
-                                    contentDescription = null,
-                                    tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Text(
-                                    text = novel,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-                                )
+                                items(novelsList) { novel ->
+                                    val isSelected = selectedNovels.contains(novel)
+                                    ElevatedCard(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .aspectRatio(1f),
+                                        colors = if (isSelected) CardDefaults.elevatedCardColors(
+                                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                                        ) else CardDefaults.elevatedCardColors()
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .combinedClickable(
+                                                    onClick = {
+                                                        if (selectedNovels.isNotEmpty()) {
+                                                            selectedNovels =
+                                                                if (isSelected) selectedNovels - novel else selectedNovels + novel
+                                                        } else {
+                                                            onNavigateToDetails(novel)
+                                                        }
+                                                    },
+                                                    onLongClick = {
+                                                        selectedNovels = selectedNovels + novel
+                                                    }
+                                                )
+                                                .padding(16.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Book,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(48.dp),
+                                                    tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary
+                                                )
+                                                Spacer(modifier = Modifier.height(16.dp))
+                                                Text(
+                                                    text = novel,
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    textAlign = TextAlign.Center,
+                                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                items(novelsList) { novel ->
+                                    val isSelected = selectedNovels.contains(novel)
+                                    ElevatedCard(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = if (isSelected) CardDefaults.elevatedCardColors(
+                                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                                        ) else CardDefaults.elevatedCardColors()
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .combinedClickable(
+                                                    onClick = {
+                                                        if (selectedNovels.isNotEmpty()) {
+                                                            selectedNovels =
+                                                                if (isSelected) selectedNovels - novel else selectedNovels + novel
+                                                        } else {
+                                                            onNavigateToDetails(novel)
+                                                        }
+                                                    },
+                                                    onLongClick = {
+                                                        selectedNovels = selectedNovels + novel
+                                                    }
+                                                )
+                                                .padding(16.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Book,
+                                                contentDescription = null,
+                                                tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary
+                                            )
+                                            Spacer(modifier = Modifier.width(16.dp))
+                                            Text(
+                                                text = novel,
+                                                style = MaterialTheme.typography.titleMedium,
+                                                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
+
+                    // Close content Box
+                }
+
+                // Close Column
+            }
+
+            if (fabMenuExpanded) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.32f))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            fabMenuExpanded = false
+                        }
+                )
+            }
+
+            if (selectedNovels.isEmpty()) {
+                FloatingActionButtonMenu(
+                    expanded = fabMenuExpanded,
+                    modifier = Modifier.align(Alignment.BottomEnd),
+                    button = {
+                        ToggleFloatingActionButton(
+                            containerSize = ToggleFloatingActionButtonDefaults.containerSize(
+                                80.dp,
+                                55.dp
+                            ),
+                            checked = fabMenuExpanded,
+                            onCheckedChange = { fabMenuExpanded = it },
+                        ) {
+                            Icon(
+                                imageVector = if (fabMenuExpanded) Icons.Filled.Close else Icons.Filled.Add,
+                                tint = if (fabMenuExpanded) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                                contentDescription = if (fabMenuExpanded) strings.buttonClose else strings.novelsAddTitle
+                            )
+                        }
+                    }
+                ) {
+                    FloatingActionButtonMenuItem(
+                        onClick = {
+                            fabMenuExpanded = false
+                            importLauncher.launch("application/zip")
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.DriveFolderUpload,
+                                contentDescription = null
+                            )
+                        },
+                        text = { Text(strings.menuImport) }
+                    )
+                    FloatingActionButtonMenuItem(
+                        onClick = {
+                            fabMenuExpanded = false
+                            showAddDialog = true
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                            )
+                        },
+                        text = { Text(strings.novelsAddTitle) }
+                    )
                 }
             }
         }

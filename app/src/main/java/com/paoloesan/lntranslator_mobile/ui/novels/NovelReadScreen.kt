@@ -392,12 +392,6 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                                                 }
                                             )
 
-                                            HorizontalDivider(
-                                                modifier = Modifier.padding(
-                                                    MenuDefaults.HorizontalDividerPadding
-                                                )
-                                            )
-
                                             // Show/Hide Images Switch Row
                                             Row(
                                                 modifier = Modifier
@@ -759,11 +753,7 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                             onClick = { isUiVisible = !isUiVisible },
                             onZoomedChanged = { zoomed ->
                                 isZoomed = zoomed
-                                if (zoomed) {
-                                    isUiVisible = false
-                                } else {
-                                    isUiVisible = true
-                                }
+                                isUiVisible = !zoomed
                             }
                         )
 

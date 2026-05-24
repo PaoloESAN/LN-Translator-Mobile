@@ -209,4 +209,12 @@ object SpanishUiStrings : UiStrings {
     override val errorInvalidApiKey = "API Key inválida"
     override val errorModelOverloaded = "Modelo sobrecargado. Intenta de nuevo."
     override val errorUnknown = "Error desconocido"
+
+    override val cdShare = "Compartir"
+    override val menuShare = "Compartir"
+    override val menuImport = "Importar Novela"
+    override val importSuccess: (String) -> String = { name -> "Novela importada exitosamente: $name" }
+    override val importError = "Error al importar la novela"
+    override val importInvalidZip = "Archivo ZIP inválido o corrupto"
+    override val cdMenuActions = "Acciones de novela"
 }
