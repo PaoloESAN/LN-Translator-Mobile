@@ -102,6 +102,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -344,8 +345,21 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                 ) {
                     TopAppBar(
                         title = {
-                            Column {
-                                Text(novelName, style = MaterialTheme.typography.titleMedium)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = if (novelName.length > 5) novelName.dropLast(5) else novelName,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f, fill = false)
+                                )
+                                if (novelName.length > 5) {
+                                    Text(
+                                        text = novelName.takeLast(5),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        maxLines = 1
+                                    )
+                                }
                             }
                         },
                         navigationIcon = {

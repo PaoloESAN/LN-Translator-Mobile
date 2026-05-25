@@ -98,6 +98,56 @@ object NovelRepository {
         getImagesDir(context, novelName).deleteRecursively()
     }
 
+    fun getCoverFile(context: Context, novelName: String): File {
+        return File(getImagesDir(context, novelName), "cover.jpg")
+    }
+
+    fun saveCoverImage(context: Context, novelName: String, uri: Uri) {
+        val coverFile = getCoverFile(context, novelName)
+        try {
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                FileOutputStream(coverFile).use { output ->
+                    input.copyTo(output)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun renameNovelData(context: Context, oldName: String, newName: String) {
+        val oldJson = getNovelFile(context, oldName)
+        val newJson = getNovelFile(context, newName)
+        if (oldJson.exists()) {
+            oldJson.renameTo(newJson)
+        }
+
+        val oldDir = getImagesDir(context, oldName)
+        val newDir = getImagesDir(context, newName)
+        if (oldDir.exists()) {
+            oldDir.renameTo(newDir)
+        }
+
+        // Update image paths inside JSON if they are absolute
+        if (newJson.exists()) {
+            try {
+                val json = newJson.readText()
+                val type = object : TypeToken<List<NovelPage>>() {}.type
+                val pages: List<NovelPage> = gson.fromJson(json, type) ?: emptyList()
+                val updatedPages = pages.map { page ->
+                    if (page.imagePath != null && page.imagePath.contains("images_$oldName")) {
+                        page.copy(imagePath = page.imagePath.replace("images_$oldName", "images_$newName"))
+                    } else {
+                        page
+                    }
+                }
+                newJson.writeText(gson.toJson(updatedPages))
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     fun exportNovelToZip(context: Context, novelName: String): File? {
         val pages = getPages(context, novelName)
         if (pages.isEmpty()) return null

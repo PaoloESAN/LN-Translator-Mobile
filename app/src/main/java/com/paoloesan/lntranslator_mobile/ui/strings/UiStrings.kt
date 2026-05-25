@@ -86,6 +86,7 @@ interface UiStrings {
     val novelsAddTitle: String
     val novelsEditTitle: String
     val novelsAddNameLabel: String
+    val novelsCoverOptional: String
     val novelsNone: String
     val novelDetailsEmptyTitle: String
     val novelDetailsEmptySubtitle: String

@@ -3,6 +3,7 @@ package com.paoloesan.lntranslator_mobile.ui.novels
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -10,6 +11,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -38,6 +40,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DriveFolderUpload
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.GridView
@@ -45,9 +48,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenuGroup
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -56,7 +56,6 @@ import androidx.compose.material3.FloatingActionButtonMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -74,16 +73,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.content.edit
+import coil3.compose.AsyncImage
 import com.paoloesan.lntranslator_mobile.LocalStrings
 import kotlinx.coroutines.launch
 
@@ -108,6 +111,13 @@ fun NovelsScreen(
 
     var isGridView by remember { mutableStateOf(prefs.getBoolean("is_grid_view", true)) }
     var selectedNovels by remember { mutableStateOf(setOf<String>()) }
+
+    var novelCoverUri by remember { mutableStateOf<Uri?>(null) }
+    val coverPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        novelCoverUri = uri
+    }
 
     fun saveNovelsList(newList: List<String>) {
         val updated = newList.joinToString(",")
@@ -257,15 +267,56 @@ fun NovelsScreen(
 
     if (showAddDialog) {
         AlertDialog(
-            onDismissRequest = { showAddDialog = false },
+            onDismissRequest = {
+                showAddDialog = false
+                novelCoverUri = null
+            },
             title = { Text(strings.novelsAddTitle) },
             text = {
-                OutlinedTextField(
-                    value = newNovelName,
-                    onValueChange = { newNovelName = it },
-                    label = { Text(strings.novelsAddNameLabel) },
-                    singleLine = true
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    OutlinedTextField(
+                        value = newNovelName,
+                        onValueChange = { newNovelName = it },
+                        label = { Text(strings.novelsAddNameLabel) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = strings.novelsCoverOptional,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .width(140.dp)
+                                .aspectRatio(0.7f)
+                                .clip(MaterialTheme.shapes.medium)
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .clickable { coverPickerLauncher.launch("image/*") },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (novelCoverUri != null) {
+                                AsyncImage(
+                                    model = novelCoverUri,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Default.Image,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
             },
             confirmButton = {
                 Button(
@@ -273,16 +324,23 @@ fun NovelsScreen(
                         val trimmed = newNovelName.trim()
                         if (trimmed.isNotBlank() && !novelsList.contains(trimmed)) {
                             saveNovelsList(novelsList + trimmed)
+                            novelCoverUri?.let { uri ->
+                                NovelRepository.saveCoverImage(context, trimmed, uri)
+                            }
                         }
                         showAddDialog = false
                         newNovelName = ""
+                        novelCoverUri = null
                     }
                 ) {
                     Text(strings.buttonSave)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showAddDialog = false }) {
+                TextButton(onClick = {
+                    showAddDialog = false
+                    novelCoverUri = null
+                }) {
                     Text(strings.buttonCancel)
                 }
             }
@@ -293,42 +351,102 @@ fun NovelsScreen(
         val oldName = selectedNovels.first()
         var editName by remember { mutableStateOf(oldName) }
         AlertDialog(
-            onDismissRequest = { showEditDialog = false },
+            onDismissRequest = {
+                showEditDialog = false
+                novelCoverUri = null
+            },
             title = { Text(strings.novelsEditTitle) },
             text = {
-                OutlinedTextField(
-                    value = editName,
-                    onValueChange = { editName = it },
-                    label = { Text(strings.novelsAddNameLabel) },
-                    singleLine = true
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    OutlinedTextField(
+                        value = editName,
+                        onValueChange = { editName = it },
+                        label = { Text(strings.novelsAddNameLabel) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = strings.novelsCoverOptional,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .width(140.dp)
+                                .aspectRatio(0.7f)
+                                .clip(MaterialTheme.shapes.medium)
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .clickable { coverPickerLauncher.launch("image/*") },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            val coverFile =
+                                remember(oldName) { NovelRepository.getCoverFile(context, oldName) }
+                            if (novelCoverUri != null) {
+                                AsyncImage(
+                                    model = novelCoverUri,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else if (coverFile.exists()) {
+                                AsyncImage(
+                                    model = coverFile,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Default.Image,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
             },
             confirmButton = {
                 Button(
                     onClick = {
                         val trimmed = editName.trim()
-                        if (trimmed.isNotBlank() && trimmed != oldName) {
-                            val newList = novelsList.toMutableList()
-                            val index = newList.indexOf(oldName)
-                            if (index != -1) {
-                                newList[index] = trimmed
-                                saveNovelsList(newList)
+                        if (trimmed.isNotBlank()) {
+                            if (trimmed != oldName) {
+                                val newList = novelsList.toMutableList()
+                                val index = newList.indexOf(oldName)
+                                if (index != -1) {
+                                    newList[index] = trimmed
+                                    saveNovelsList(newList)
 
-                                val currentActive = prefs.getString("selected_novel", null)
-                                if (currentActive == oldName) {
-                                    prefs.edit { putString("selected_novel", trimmed) }
+                                    val currentActive = prefs.getString("selected_novel", null)
+                                    if (currentActive == oldName) {
+                                        prefs.edit { putString("selected_novel", trimmed) }
+                                    }
+                                    NovelRepository.renameNovelData(context, oldName, trimmed)
                                 }
+                            }
+                            novelCoverUri?.let { uri ->
+                                NovelRepository.saveCoverImage(context, trimmed, uri)
                             }
                             selectedNovels = setOf(trimmed)
                         }
                         showEditDialog = false
+                        novelCoverUri = null
                     }
                 ) {
                     Text(strings.buttonSave)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showEditDialog = false }) {
+                TextButton(onClick = {
+                    showEditDialog = false
+                    novelCoverUri = null
+                }) {
                     Text(strings.buttonCancel)
                 }
             }
@@ -513,10 +631,15 @@ fun NovelsScreen(
                                     ElevatedCard(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .aspectRatio(1f),
-                                        colors = if (isSelected) CardDefaults.elevatedCardColors(
-                                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                                        ) else CardDefaults.elevatedCardColors()
+                                            .aspectRatio(0.7f)
+                                            .then(
+                                                if (isSelected) Modifier.border(
+                                                    2.dp,
+                                                    MaterialTheme.colorScheme.primary,
+                                                    CardDefaults.elevatedShape
+                                                ) else Modifier
+                                            ),
+                                        colors = CardDefaults.elevatedCardColors()
                                     ) {
                                         Box(
                                             modifier = Modifier
@@ -534,24 +657,78 @@ fun NovelsScreen(
                                                     onLongClick = {
                                                         selectedNovels = selectedNovels + novel
                                                     }
-                                                )
-                                                .padding(16.dp),
-                                            contentAlignment = Alignment.Center
+                                                ),
+                                            contentAlignment = Alignment.BottomCenter
                                         ) {
-                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Book,
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(48.dp),
-                                                    tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary
+                                            val coverFile = remember(novel) {
+                                                NovelRepository.getCoverFile(
+                                                    context,
+                                                    novel
                                                 )
-                                                Spacer(modifier = Modifier.height(16.dp))
+                                            }
+                                            val hasCover = coverFile.exists()
+
+                                            if (hasCover) {
+                                                AsyncImage(
+                                                    model = coverFile,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.fillMaxSize(),
+                                                    contentScale = ContentScale.Crop
+                                                )
+                                                // Gradient overlay for text readability - only when there is a cover
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .background(
+                                                            androidx.compose.ui.graphics.Brush.verticalGradient(
+                                                                colors = listOf(
+                                                                    Color.Transparent,
+                                                                    Color.Black.copy(alpha = 0.7f)
+                                                                ),
+                                                                startY = 300f // Start gradient near the bottom
+                                                            )
+                                                        )
+                                                )
+                                            } else {
+                                                Box(
+                                                    modifier = Modifier.fillMaxSize(),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Book,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(48.dp),
+                                                        tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary.copy(
+                                                            alpha = 0.4f
+                                                        )
+                                                    )
+                                                }
+                                            }
+
+                                            Row(
+                                                modifier = Modifier
+                                                    .padding(12.dp)
+                                                    .fillMaxWidth(),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.Center
+                                            ) {
                                                 Text(
-                                                    text = novel,
+                                                    text = if (novel.length > 5) novel.dropLast(5) else novel,
                                                     style = MaterialTheme.typography.titleMedium,
                                                     textAlign = TextAlign.Center,
-                                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                                    color = if (hasCover) Color.White else (if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface),
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                    modifier = Modifier.weight(1f, fill = false)
                                                 )
+                                                if (novel.length > 5) {
+                                                    Text(
+                                                        text = novel.takeLast(5),
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        color = if (hasCover) Color.White else (if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface),
+                                                        maxLines = 1
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -591,17 +768,50 @@ fun NovelsScreen(
                                                 .padding(16.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Book,
-                                                contentDescription = null,
-                                                tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary
-                                            )
+                                            val coverFile = remember(novel) {
+                                                NovelRepository.getCoverFile(
+                                                    context,
+                                                    novel
+                                                )
+                                            }
+                                            if (coverFile.exists()) {
+                                                AsyncImage(
+                                                    model = coverFile,
+                                                    contentDescription = null,
+                                                    modifier = Modifier
+                                                        .size(40.dp)
+                                                        .clip(MaterialTheme.shapes.small),
+                                                    contentScale = ContentScale.Crop
+                                                )
+                                            } else {
+                                                Icon(
+                                                    imageVector = Icons.Default.Book,
+                                                    contentDescription = null,
+                                                    tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary
+                                                )
+                                            }
                                             Spacer(modifier = Modifier.width(16.dp))
-                                            Text(
-                                                text = novel,
-                                                style = MaterialTheme.typography.titleMedium,
-                                                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-                                            )
+                                            Row(
+                                                modifier = Modifier.weight(1f),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = if (novel.length > 5) novel.dropLast(5) else novel,
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                    modifier = Modifier.weight(1f, fill = false)
+                                                )
+                                                if (novel.length > 5) {
+                                                    Text(
+                                                        text = novel.takeLast(5),
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                                                        maxLines = 1
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
                                 }

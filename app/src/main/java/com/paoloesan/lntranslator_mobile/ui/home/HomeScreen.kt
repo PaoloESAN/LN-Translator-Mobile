@@ -3,12 +3,14 @@ package com.paoloesan.lntranslator_mobile.ui.home
 import android.app.Activity
 import android.content.Context
 import android.media.projection.MediaProjectionManager
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,11 +28,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -69,13 +74,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.navigation.NavController
+import coil3.compose.AsyncImage
 import com.paoloesan.lntranslator_mobile.LocalStrings
 import com.paoloesan.lntranslator_mobile.service.OverlayService
 import com.paoloesan.lntranslator_mobile.service.ScreenCaptureService
+import com.paoloesan.lntranslator_mobile.ui.novels.NovelRepository
 import com.paoloesan.lntranslator_mobile.ui.prompts.PromptDialog
 import kotlinx.coroutines.delay
 
@@ -124,6 +132,13 @@ fun HomeScreen(
     var expandedNovels by remember { mutableStateOf(false) }
     var showAddNovelDialog by remember { mutableStateOf(false) }
     var newNovelName by remember { mutableStateOf("") }
+    var novelCoverUri by remember { mutableStateOf<Uri?>(null) }
+
+    val coverPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        novelCoverUri = uri
+    }
     val puedeGuardarPrompt = textPrompt.trim().isNotBlank()
     val navigateInteraction = remember { MutableInteractionSource() }
     val saveInteraction = remember { MutableInteractionSource() }
@@ -206,16 +221,56 @@ fun HomeScreen(
 
     if (showAddNovelDialog) {
         AlertDialog(
-            onDismissRequest = { showAddNovelDialog = false },
+            onDismissRequest = {
+                showAddNovelDialog = false
+                novelCoverUri = null
+            },
             title = { Text(strings.novelsAddTitle) },
             text = {
-                OutlinedTextField(
-                    value = newNovelName,
-                    onValueChange = { newNovelName = it },
-                    label = { Text(strings.novelsAddNameLabel) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    OutlinedTextField(
+                        value = newNovelName,
+                        onValueChange = { newNovelName = it },
+                        label = { Text(strings.novelsAddNameLabel) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = strings.novelsCoverOptional,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .width(140.dp)
+                                .aspectRatio(0.7f)
+                                .clip(MaterialTheme.shapes.medium)
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .clickable { coverPickerLauncher.launch("image/*") },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (novelCoverUri != null) {
+                                AsyncImage(
+                                    model = novelCoverUri,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Default.Image,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
             },
             confirmButton = {
                 Button(
@@ -228,16 +283,24 @@ fun HomeScreen(
                             savedNovelsString = updated
                             selectedNovel = trimmed
                             prefs.edit { putString("selected_novel", trimmed) }
+
+                            novelCoverUri?.let { uri ->
+                                NovelRepository.saveCoverImage(context, trimmed, uri)
+                            }
                         }
                         showAddNovelDialog = false
                         newNovelName = ""
+                        novelCoverUri = null
                     }
                 ) {
                     Text(strings.buttonSave)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showAddNovelDialog = false }) {
+                TextButton(onClick = {
+                    showAddNovelDialog = false
+                    novelCoverUri = null
+                }) {
                     Text(strings.buttonCancel)
                 }
             }
@@ -274,8 +337,16 @@ fun HomeScreen(
             onExpandedChange = { expandedNovels = it },
             modifier = Modifier.fillMaxWidth()
         ) {
+            val displayValue = remember(selectedNovel, strings.novelsNone) {
+                val novel = selectedNovel ?: strings.novelsNone
+                if (novel.length > 25) {
+                    novel.take(17) + "..." + novel.takeLast(5)
+                } else {
+                    novel
+                }
+            }
             OutlinedTextField(
-                value = selectedNovel ?: strings.novelsNone,
+                value = displayValue,
                 onValueChange = {},
                 readOnly = true,
                 label = { Text(strings.homeNovelsSectionTitle) },
@@ -343,7 +414,22 @@ fun HomeScreen(
                                         index + 1,
                                         novelsList.count() + 2
                                     ),
-                                    text = { Text(novel) },
+                                    text = {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                text = if (novel.length > 5) novel.dropLast(5) else novel,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                modifier = Modifier.weight(1f, fill = false)
+                                            )
+                                            if (novel.length > 5) {
+                                                Text(
+                                                    text = novel.takeLast(5),
+                                                    maxLines = 1
+                                                )
+                                            }
+                                        }
+                                    },
                                     onClick = {
                                         selectedNovel = novel
                                         prefs.edit { putString("selected_novel", novel) }

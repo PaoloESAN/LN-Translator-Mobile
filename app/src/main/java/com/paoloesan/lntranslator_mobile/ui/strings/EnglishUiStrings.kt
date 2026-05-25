@@ -86,8 +86,9 @@ object EnglishUiStrings : UiStrings {
     override val novelsEmptyTitle = "No novels"
     override val novelsEmptySubtitle = "Add a novel to save its translations."
     override val novelsAddTitle = "Add Novel"
-    override val novelsEditTitle = "Edit Title"
+    override val novelsEditTitle = "Edit Novel"
     override val novelsAddNameLabel = "Novel name"
+    override val novelsCoverOptional = "Cover (Optional)"
     override val novelsNone = "None"
 
     override val novelDetailsEmptyTitle = "No translations yet"

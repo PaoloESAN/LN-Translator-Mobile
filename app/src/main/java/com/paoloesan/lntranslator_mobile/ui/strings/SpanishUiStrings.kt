@@ -86,8 +86,9 @@ object SpanishUiStrings : UiStrings {
     override val novelsEmptyTitle = "No hay novelas"
     override val novelsEmptySubtitle = "Agrega una novela para guardar sus traducciones."
     override val novelsAddTitle = "Agregar Novela"
-    override val novelsEditTitle = "Editar Título"
+    override val novelsEditTitle = "Editar Novela"
     override val novelsAddNameLabel = "Nombre de la novela"
+    override val novelsCoverOptional = "Portada (Opcional)"
     override val novelsNone = "Ninguna"
 
     override val novelDetailsEmptyTitle = "No hay traducciones todavía"

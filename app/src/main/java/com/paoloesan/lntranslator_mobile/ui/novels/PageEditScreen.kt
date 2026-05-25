@@ -144,7 +144,23 @@ fun PageManagementScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("${strings.pageManagementTitle} - $novelName") },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        val titleStart = "${strings.pageManagementTitle} - "
+                        Text(
+                            text = titleStart + (if (novelName.length > 5) novelName.dropLast(5) else novelName),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                        if (novelName.length > 5) {
+                            Text(
+                                text = novelName.takeLast(5),
+                                maxLines = 1
+                            )
+                        }
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
