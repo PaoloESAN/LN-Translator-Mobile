@@ -115,6 +115,13 @@ object NovelRepository {
         }
     }
 
+    fun deleteCoverImage(context: Context, novelName: String) {
+        val coverFile = getCoverFile(context, novelName)
+        if (coverFile.exists()) {
+            coverFile.delete()
+        }
+    }
+
     fun renameNovelData(context: Context, oldName: String, newName: String) {
         val oldJson = getNovelFile(context, oldName)
         val newJson = getNovelFile(context, newName)
@@ -235,18 +242,22 @@ object NovelRepository {
             val type = object : TypeToken<List<NovelPage>>() {}.type
             val pages: List<NovelPage> = gson.fromJson(rawJson, type) ?: emptyList()
 
-            // Save images to local app files directory
+            // Save ALL images (including cover.jpg) from the zip to local app files directory
             val finalImagesDir = getImagesDir(context, finalNovelName)
+            tempImagesMap.forEach { (fileName, bytes) ->
+                val imageFile = File(finalImagesDir, fileName)
+                FileOutputStream(imageFile).use { fos ->
+                    fos.write(bytes)
+                }
+            }
+
+            // Update page paths to point to the new local absolute paths
             val updatedPages = pages.map { page ->
                 if (page.imagePath != null) {
                     val fileName = File(page.imagePath).name
-                    val imageBytes = tempImagesMap[fileName]
-                    if (imageBytes != null) {
-                        val imageFile = File(finalImagesDir, fileName)
-                        FileOutputStream(imageFile).use { fos ->
-                            fos.write(imageBytes)
-                        }
-                        page.copy(imagePath = imageFile.absolutePath)
+                    val localFile = File(finalImagesDir, fileName)
+                    if (localFile.exists()) {
+                        page.copy(imagePath = localFile.absolutePath)
                     } else {
                         page.copy(imagePath = null)
                     }

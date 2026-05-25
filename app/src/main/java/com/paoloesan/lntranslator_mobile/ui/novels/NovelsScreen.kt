@@ -34,15 +34,16 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.FormatListBulleted
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DriveFolderUpload
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.HighlightOff
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -67,6 +68,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -111,6 +113,7 @@ fun NovelsScreen(
 
     var isGridView by remember { mutableStateOf(prefs.getBoolean("is_grid_view", true)) }
     var selectedNovels by remember { mutableStateOf(setOf<String>()) }
+    var coverUpdateTrigger by remember { mutableIntStateOf(0) }
 
     var novelCoverUri by remember { mutableStateOf<Uri?>(null) }
     val coverPickerLauncher = rememberLauncherForActivityResult(
@@ -159,7 +162,7 @@ fun NovelsScreen(
         if (uri != null) {
             val finalName = NovelRepository.importNovelFromZip(context, uri, novelsList)
             if (finalName != null) {
-                val updatedList = novelsList + finalName
+                val updatedList = listOf(finalName) + novelsList
                 saveNovelsList(updatedList)
                 Toast.makeText(
                     context,
@@ -301,12 +304,24 @@ fun NovelsScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             if (novelCoverUri != null) {
-                                AsyncImage(
-                                    model = novelCoverUri,
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
+                                Box(modifier = Modifier.fillMaxSize()) {
+                                    AsyncImage(
+                                        model = novelCoverUri,
+                                        contentDescription = null,
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    IconButton(
+                                        onClick = { novelCoverUri = null },
+                                        modifier = Modifier.align(Alignment.TopEnd)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.HighlightOff,
+                                            contentDescription = null,
+                                            tint = Color.Black
+                                        )
+                                    }
+                                }
                             } else {
                                 Icon(
                                     Icons.Default.Image,
@@ -323,7 +338,7 @@ fun NovelsScreen(
                     onClick = {
                         val trimmed = newNovelName.trim()
                         if (trimmed.isNotBlank() && !novelsList.contains(trimmed)) {
-                            saveNovelsList(novelsList + trimmed)
+                            saveNovelsList(listOf(trimmed) + novelsList)
                             novelCoverUri?.let { uri ->
                                 NovelRepository.saveCoverImage(context, trimmed, uri)
                             }
@@ -350,6 +365,7 @@ fun NovelsScreen(
     if (showEditDialog && selectedNovels.size == 1) {
         val oldName = selectedNovels.first()
         var editName by remember { mutableStateOf(oldName) }
+        var isCoverDeleted by remember { mutableStateOf(false) }
         AlertDialog(
             onDismissRequest = {
                 showEditDialog = false
@@ -386,20 +402,50 @@ fun NovelsScreen(
                         ) {
                             val coverFile =
                                 remember(oldName) { NovelRepository.getCoverFile(context, oldName) }
+
                             if (novelCoverUri != null) {
-                                AsyncImage(
-                                    model = novelCoverUri,
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else if (coverFile.exists()) {
-                                AsyncImage(
-                                    model = coverFile,
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
+                                Box(modifier = Modifier.fillMaxSize()) {
+                                    AsyncImage(
+                                        model = novelCoverUri,
+                                        contentDescription = null,
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    IconButton(
+                                        onClick = { novelCoverUri = null },
+                                        modifier = Modifier.align(Alignment.TopEnd)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.HighlightOff,
+                                            contentDescription = null,
+                                            tint = Color.Black
+                                        )
+                                    }
+                                }
+                            } else if (coverFile.exists() && !isCoverDeleted) {
+                                Box(modifier = Modifier.fillMaxSize()) {
+                                    AsyncImage(
+                                        model = remember(oldName, coverUpdateTrigger) {
+                                            coil3.request.ImageRequest.Builder(context)
+                                                .data(coverFile)
+                                                .memoryCacheKey("${coverFile.absolutePath}_$coverUpdateTrigger")
+                                                .build()
+                                        },
+                                        contentDescription = null,
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    IconButton(
+                                        onClick = { isCoverDeleted = true },
+                                        modifier = Modifier.align(Alignment.TopEnd)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.HighlightOff,
+                                            contentDescription = null,
+                                            tint = Color.Black
+                                        )
+                                    }
+                                }
                             } else {
                                 Icon(
                                     Icons.Default.Image,
@@ -416,7 +462,7 @@ fun NovelsScreen(
                     onClick = {
                         val trimmed = editName.trim()
                         if (trimmed.isNotBlank()) {
-                            if (trimmed != oldName) {
+                            val finalName = if (trimmed != oldName) {
                                 val newList = novelsList.toMutableList()
                                 val index = newList.indexOf(oldName)
                                 if (index != -1) {
@@ -429,11 +475,20 @@ fun NovelsScreen(
                                     }
                                     NovelRepository.renameNovelData(context, oldName, trimmed)
                                 }
+                                trimmed
+                            } else {
+                                oldName
                             }
-                            novelCoverUri?.let { uri ->
-                                NovelRepository.saveCoverImage(context, trimmed, uri)
+
+                            if (novelCoverUri != null) {
+                                NovelRepository.saveCoverImage(context, finalName, novelCoverUri!!)
+                                coverUpdateTrigger++
+                            } else if (isCoverDeleted) {
+                                NovelRepository.deleteCoverImage(context, finalName)
+                                coverUpdateTrigger++
                             }
-                            selectedNovels = setOf(trimmed)
+
+                            selectedNovels = emptySet()
                         }
                         showEditDialog = false
                         novelCoverUri = null
@@ -562,7 +617,7 @@ fun NovelsScreen(
 
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Outlined.FormatListBulleted,
+                                        imageVector = Icons.AutoMirrored.Outlined.FormatListBulleted,
                                         contentDescription = strings.cdListView
                                     )
                                 }
@@ -660,7 +715,7 @@ fun NovelsScreen(
                                                 ),
                                             contentAlignment = Alignment.BottomCenter
                                         ) {
-                                            val coverFile = remember(novel) {
+                                            val coverFile = remember(novel, coverUpdateTrigger) {
                                                 NovelRepository.getCoverFile(
                                                     context,
                                                     novel
@@ -670,7 +725,12 @@ fun NovelsScreen(
 
                                             if (hasCover) {
                                                 AsyncImage(
-                                                    model = coverFile,
+                                                    model = remember(novel, coverUpdateTrigger) {
+                                                        coil3.request.ImageRequest.Builder(context)
+                                                            .data(coverFile)
+                                                            .memoryCacheKey("${coverFile.absolutePath}_$coverUpdateTrigger")
+                                                            .build()
+                                                    },
                                                     contentDescription = null,
                                                     modifier = Modifier.fillMaxSize(),
                                                     contentScale = ContentScale.Crop
@@ -768,7 +828,7 @@ fun NovelsScreen(
                                                 .padding(16.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            val coverFile = remember(novel) {
+                                            val coverFile = remember(novel, coverUpdateTrigger) {
                                                 NovelRepository.getCoverFile(
                                                     context,
                                                     novel
@@ -776,7 +836,12 @@ fun NovelsScreen(
                                             }
                                             if (coverFile.exists()) {
                                                 AsyncImage(
-                                                    model = coverFile,
+                                                    model = remember(novel, coverUpdateTrigger) {
+                                                        coil3.request.ImageRequest.Builder(context)
+                                                            .data(coverFile)
+                                                            .memoryCacheKey("${coverFile.absolutePath}_$coverUpdateTrigger")
+                                                            .build()
+                                                    },
                                                     contentDescription = null,
                                                     modifier = Modifier
                                                         .size(40.dp)

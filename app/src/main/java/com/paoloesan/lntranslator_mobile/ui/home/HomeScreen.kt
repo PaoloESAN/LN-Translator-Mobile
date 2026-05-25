@@ -34,6 +34,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.HighlightOff
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -49,6 +50,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
@@ -255,12 +257,24 @@ fun HomeScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             if (novelCoverUri != null) {
-                                AsyncImage(
-                                    model = novelCoverUri,
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
+                                Box(modifier = Modifier.fillMaxSize()) {
+                                    AsyncImage(
+                                        model = novelCoverUri,
+                                        contentDescription = null,
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    IconButton(
+                                        onClick = { novelCoverUri = null },
+                                        modifier = Modifier.align(Alignment.TopEnd)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.HighlightOff,
+                                            contentDescription = null,
+                                            tint = Color.Black
+                                        )
+                                    }
+                                }
                             } else {
                                 Icon(
                                     Icons.Default.Image,
@@ -278,7 +292,7 @@ fun HomeScreen(
                         val trimmed = newNovelName.trim()
                         if (trimmed.isNotBlank() && !novelsList.contains(trimmed)) {
                             val updated =
-                                if (savedNovelsString.isEmpty()) trimmed else "$savedNovelsString,$trimmed"
+                                if (savedNovelsString.isEmpty()) trimmed else "$trimmed,$savedNovelsString"
                             prefs.edit { putString("saved_novels", updated) }
                             savedNovelsString = updated
                             selectedNovel = trimmed
