@@ -38,7 +38,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DriveFolderUpload
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.GridView
@@ -107,7 +106,7 @@ fun NovelsScreen(
     var showDeleteConfirmationDialog by remember { mutableStateOf(false) }
     var newNovelName by remember { mutableStateOf("") }
 
-    var isGridView by remember { mutableStateOf(true) }
+    var isGridView by remember { mutableStateOf(prefs.getBoolean("is_grid_view", true)) }
     var selectedNovels by remember { mutableStateOf(setOf<String>()) }
 
     fun saveNovelsList(newList: List<String>) {
@@ -384,79 +383,42 @@ fun NovelsScreen(
                             }
                         },
                         actions = {
-                            var dropdownExpanded by remember { mutableStateOf(false) }
-                            Box {
-                                IconButton(onClick = { dropdownExpanded = true }) {
+                            if (selectedNovels.size == 1) {
+                                IconButton(onClick = {
+                                    val novelName = selectedNovels.first()
+                                    val zipFile = NovelRepository.exportNovelToZip(
+                                        context,
+                                        novelName
+                                    )
+                                    if (zipFile != null && zipFile.exists()) {
+                                        tempZipFileForSharing = zipFile
+                                        novelNameBeingShared = novelName
+                                        showShareOptionsDialog = true
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            strings.novelEmptyError,
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }) {
                                     Icon(
-                                        Icons.Default.MoreVert,
-                                        contentDescription = strings.cdMenuActions
+                                        Icons.Default.Share,
+                                        contentDescription = strings.menuShare
                                     )
                                 }
-                                DropdownMenuPopup(
-                                    expanded = dropdownExpanded,
-                                    onDismissRequest = { dropdownExpanded = false }
-                                ) {
-                                    DropdownMenuGroup(
-                                        shapes = MenuDefaults.groupShape(0, 1)
-                                    ) {
-                                        if (selectedNovels.size == 1) {
-                                            DropdownMenuItem(
-                                                text = { Text(strings.menuShare) },
-                                                leadingIcon = {
-                                                    Icon(
-                                                        Icons.Default.Share,
-                                                        contentDescription = null
-                                                    )
-                                                },
-                                                onClick = {
-                                                    dropdownExpanded = false
-                                                    val novelName = selectedNovels.first()
-                                                    val zipFile = NovelRepository.exportNovelToZip(
-                                                        context,
-                                                        novelName
-                                                    )
-                                                    if (zipFile != null && zipFile.exists()) {
-                                                        tempZipFileForSharing = zipFile
-                                                        novelNameBeingShared = novelName
-                                                        showShareOptionsDialog = true
-                                                    } else {
-                                                        Toast.makeText(
-                                                            context,
-                                                            strings.novelEmptyError,
-                                                            Toast.LENGTH_SHORT
-                                                        ).show()
-                                                    }
-                                                }
-                                            )
-                                            DropdownMenuItem(
-                                                text = { Text(strings.cdEdit) },
-                                                leadingIcon = {
-                                                    Icon(
-                                                        Icons.Default.Edit,
-                                                        contentDescription = null
-                                                    )
-                                                },
-                                                onClick = {
-                                                    dropdownExpanded = false
-                                                    showEditDialog = true
-                                                }
-                                            )
-                                        }
-                                        DropdownMenuItem(
-                                            text = { Text(strings.cdDelete) },
-                                            leadingIcon = {
-                                                Icon(
-                                                    Icons.Default.Delete,
-                                                    contentDescription = null
-                                                )
-                                            },
-                                            onClick = {
-                                                dropdownExpanded = false
-                                                showDeleteConfirmationDialog = true
-                                            }
-                                        )
-                                    }
+                                IconButton(onClick = { showEditDialog = true }) {
+                                    Icon(
+                                        Icons.Default.Edit,
+                                        contentDescription = strings.cdEdit
+                                    )
                                 }
+                            }
+                            IconButton(onClick = { showDeleteConfirmationDialog = true }) {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = strings.cdDelete
+                                )
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
@@ -473,7 +435,10 @@ fun NovelsScreen(
                             ) {
                                 ToggleButton(
                                     checked = !isGridView,
-                                    onCheckedChange = { isGridView = !isGridView },
+                                    onCheckedChange = {
+                                        isGridView = false
+                                        prefs.edit { putBoolean("is_grid_view", false) }
+                                    },
                                     shapes =
                                         ButtonGroupDefaults.connectedLeadingButtonShapes()
 
@@ -485,7 +450,10 @@ fun NovelsScreen(
                                 }
                                 ToggleButton(
                                     checked = isGridView,
-                                    onCheckedChange = { isGridView = !isGridView },
+                                    onCheckedChange = {
+                                        isGridView = true
+                                        prefs.edit { putBoolean("is_grid_view", true) }
+                                    },
                                     shapes =
                                         ButtonGroupDefaults.connectedTrailingButtonShapes()
 
