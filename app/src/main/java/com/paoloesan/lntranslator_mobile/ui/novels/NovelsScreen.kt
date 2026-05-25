@@ -1,10 +1,14 @@
 package com.paoloesan.lntranslator_mobile.ui.novels
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -71,14 +75,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import com.paoloesan.lntranslator_mobile.LocalStrings
+import kotlinx.coroutines.launch
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun NovelsScreen(
@@ -112,8 +122,27 @@ fun NovelsScreen(
         }
     }
 
+    fun moveNovelToTop(novel: String) {
+        val newList = listOf(novel) + (novelsList - novel)
+        saveNovelsList(newList)
+    }
+
     val scope = rememberCoroutineScope()
     var fabMenuExpanded by remember { mutableStateOf(false) }
+
+    var isFabVisible by remember { mutableStateOf(true) }
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (available.y < -1) {
+                    isFabVisible = false
+                } else if (available.y > 1) {
+                    isFabVisible = true
+                }
+                return Offset.Zero
+            }
+        }
+    }
 
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -136,6 +165,95 @@ fun NovelsScreen(
                 ).show()
             }
         }
+    }
+
+    var showShareOptionsDialog by remember { mutableStateOf(false) }
+    var tempZipFileForSharing by remember { mutableStateOf<java.io.File?>(null) }
+    var novelNameBeingShared by remember { mutableStateOf("") }
+
+    val createDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri ->
+        if (uri != null) {
+            val file = tempZipFileForSharing
+            if (file != null && file.exists()) {
+                scope.launch {
+                    val success = try {
+                        context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                            java.io.FileInputStream(file).use { inputStream ->
+                                inputStream.copyTo(outputStream)
+                            }
+                        }
+                        true
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        false
+                    }
+                    if (success) {
+                        Toast.makeText(context, strings.shareDialogSaveSuccess, Toast.LENGTH_SHORT)
+                            .show()
+                    } else {
+                        Toast.makeText(context, strings.shareDialogSaveError, Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                }
+            }
+        }
+    }
+
+    if (showShareOptionsDialog) {
+        AlertDialog(
+            onDismissRequest = { showShareOptionsDialog = false },
+            title = { Text(strings.shareDialogTitle) },
+            text = { Text(strings.shareDialogMessage) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showShareOptionsDialog = false
+                        createDocumentLauncher.launch("novel_${novelNameBeingShared}.zip")
+                    }
+                ) {
+                    Text(strings.shareDialogDownload)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showShareOptionsDialog = false
+                        val file = tempZipFileForSharing
+                        if (file != null && file.exists()) {
+                            try {
+                                val fileUri = FileProvider.getUriForFile(
+                                    context,
+                                    "${context.packageName}.fileprovider",
+                                    file
+                                )
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "application/zip"
+                                    putExtra(Intent.EXTRA_STREAM, fileUri)
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                context.startActivity(
+                                    Intent.createChooser(
+                                        shareIntent,
+                                        strings.menuShare
+                                    )
+                                )
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                                Toast.makeText(
+                                    context,
+                                    strings.importError,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    }
+                ) {
+                    Text(strings.shareDialogShare)
+                }
+            }
+        )
     }
 
     if (showAddDialog) {
@@ -177,7 +295,7 @@ fun NovelsScreen(
         var editName by remember { mutableStateOf(oldName) }
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
-            title = { Text(strings.editPromptTitle) },
+            title = { Text(strings.novelsEditTitle) },
             text = {
                 OutlinedTextField(
                     value = editName,
@@ -247,11 +365,11 @@ fun NovelsScreen(
         )
     }
 
-    Scaffold(
-        // topBar is rendered inside the content Column to allow Z-index overlaying by the scrim
-    ) { padding ->
+    Scaffold { _ ->
         Box(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .nestedScroll(nestedScrollConnection)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 if (selectedNovels.isNotEmpty()) {
@@ -293,46 +411,18 @@ fun NovelsScreen(
                                                 onClick = {
                                                     dropdownExpanded = false
                                                     val novelName = selectedNovels.first()
-                                                    val zipFile =
-                                                        NovelRepository.exportNovelToZip(
-                                                            context,
-                                                            novelName
-                                                        )
+                                                    val zipFile = NovelRepository.exportNovelToZip(
+                                                        context,
+                                                        novelName
+                                                    )
                                                     if (zipFile != null && zipFile.exists()) {
-                                                        try {
-                                                            val fileUri =
-                                                                FileProvider.getUriForFile(
-                                                                    context,
-                                                                    "${context.packageName}.fileprovider",
-                                                                    zipFile
-                                                                )
-                                                            val shareIntent =
-                                                                Intent(Intent.ACTION_SEND).apply {
-                                                                    type = "application/zip"
-                                                                    putExtra(
-                                                                        Intent.EXTRA_STREAM,
-                                                                        fileUri
-                                                                    )
-                                                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                                                }
-                                                            context.startActivity(
-                                                                Intent.createChooser(
-                                                                    shareIntent,
-                                                                    strings.menuShare
-                                                                )
-                                                            )
-                                                        } catch (e: Exception) {
-                                                            e.printStackTrace()
-                                                            Toast.makeText(
-                                                                context,
-                                                                strings.importError,
-                                                                Toast.LENGTH_SHORT
-                                                            ).show()
-                                                        }
+                                                        tempZipFileForSharing = zipFile
+                                                        novelNameBeingShared = novelName
+                                                        showShareOptionsDialog = true
                                                     } else {
                                                         Toast.makeText(
                                                             context,
-                                                            strings.importError,
+                                                            strings.novelEmptyError,
                                                             Toast.LENGTH_SHORT
                                                         ).show()
                                                     }
@@ -469,6 +559,7 @@ fun NovelsScreen(
                                                             selectedNovels =
                                                                 if (isSelected) selectedNovels - novel else selectedNovels + novel
                                                         } else {
+                                                            moveNovelToTop(novel)
                                                             onNavigateToDetails(novel)
                                                         }
                                                     },
@@ -521,6 +612,7 @@ fun NovelsScreen(
                                                             selectedNovels =
                                                                 if (isSelected) selectedNovels - novel else selectedNovels + novel
                                                         } else {
+                                                            moveNovelToTop(novel)
                                                             onNavigateToDetails(novel)
                                                         }
                                                     },
@@ -570,52 +662,58 @@ fun NovelsScreen(
             }
 
             if (selectedNovels.isEmpty()) {
-                FloatingActionButtonMenu(
-                    expanded = fabMenuExpanded,
-                    modifier = Modifier.align(Alignment.BottomEnd),
-                    button = {
-                        ToggleFloatingActionButton(
-                            containerSize = ToggleFloatingActionButtonDefaults.containerSize(
-                                80.dp,
-                                55.dp
-                            ),
-                            checked = fabMenuExpanded,
-                            onCheckedChange = { fabMenuExpanded = it },
-                        ) {
-                            Icon(
-                                imageVector = if (fabMenuExpanded) Icons.Filled.Close else Icons.Filled.Add,
-                                tint = if (fabMenuExpanded) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                                contentDescription = if (fabMenuExpanded) strings.buttonClose else strings.novelsAddTitle
-                            )
-                        }
-                    }
+                AnimatedVisibility(
+                    visible = isFabVisible || fabMenuExpanded,
+                    enter = slideInVertically(initialOffsetY = { it }),
+                    exit = slideOutVertically(targetOffsetY = { it }),
+                    modifier = Modifier.align(Alignment.BottomEnd)
                 ) {
-                    FloatingActionButtonMenuItem(
-                        onClick = {
-                            fabMenuExpanded = false
-                            importLauncher.launch("application/zip")
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Default.DriveFolderUpload,
-                                contentDescription = null
-                            )
-                        },
-                        text = { Text(strings.menuImport) }
-                    )
-                    FloatingActionButtonMenuItem(
-                        onClick = {
-                            fabMenuExpanded = false
-                            showAddDialog = true
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = null,
-                            )
-                        },
-                        text = { Text(strings.novelsAddTitle) }
-                    )
+                    FloatingActionButtonMenu(
+                        expanded = fabMenuExpanded,
+                        button = {
+                            ToggleFloatingActionButton(
+                                containerSize = ToggleFloatingActionButtonDefaults.containerSize(
+                                    80.dp,
+                                    55.dp
+                                ),
+                                checked = fabMenuExpanded,
+                                onCheckedChange = { fabMenuExpanded = it },
+                            ) {
+                                Icon(
+                                    imageVector = if (fabMenuExpanded) Icons.Filled.Close else Icons.Filled.Add,
+                                    tint = if (fabMenuExpanded) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                                    contentDescription = if (fabMenuExpanded) strings.buttonClose else strings.novelsAddTitle
+                                )
+                            }
+                        }
+                    ) {
+                        FloatingActionButtonMenuItem(
+                            onClick = {
+                                fabMenuExpanded = false
+                                importLauncher.launch("application/zip")
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Default.DriveFolderUpload,
+                                    contentDescription = null
+                                )
+                            },
+                            text = { Text(strings.menuImport) }
+                        )
+                        FloatingActionButtonMenuItem(
+                            onClick = {
+                                fabMenuExpanded = false
+                                showAddDialog = true
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                )
+                            },
+                            text = { Text(strings.novelsAddTitle) }
+                        )
+                    }
                 }
             }
         }

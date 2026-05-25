@@ -84,6 +84,7 @@ interface UiStrings {
     val novelsEmptyTitle: String
     val novelsEmptySubtitle: String
     val novelsAddTitle: String
+    val novelsEditTitle: String
     val novelsAddNameLabel: String
     val novelsNone: String
     val novelDetailsEmptyTitle: String
@@ -203,8 +204,16 @@ interface UiStrings {
     val menuImport: String
     val importSuccess: (String) -> String
     val importError: String
+    val novelEmptyError: String
     val importInvalidZip: String
     val cdMenuActions: String
+
+    val shareDialogTitle: String
+    val shareDialogMessage: String
+    val shareDialogDownload: String
+    val shareDialogShare: String
+    val shareDialogSaveSuccess: String
+    val shareDialogSaveError: String
 }
 
 object StringsProvider {

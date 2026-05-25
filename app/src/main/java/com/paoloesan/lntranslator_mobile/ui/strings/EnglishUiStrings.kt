@@ -86,6 +86,7 @@ object EnglishUiStrings : UiStrings {
     override val novelsEmptyTitle = "No novels"
     override val novelsEmptySubtitle = "Add a novel to save its translations."
     override val novelsAddTitle = "Add Novel"
+    override val novelsEditTitle = "Edit Title"
     override val novelsAddNameLabel = "Novel name"
     override val novelsNone = "None"
 
@@ -215,6 +216,14 @@ object EnglishUiStrings : UiStrings {
     override val menuImport = "Import Novel"
     override val importSuccess: (String) -> String = { name -> "Novel imported successfully: $name" }
     override val importError = "Error importing novel"
+    override val novelEmptyError = "The novel is empty"
     override val importInvalidZip = "Invalid or corrupt ZIP file"
     override val cdMenuActions = "Novel actions"
+
+    override val shareDialogTitle = "Share Novel"
+    override val shareDialogMessage = "What do you want to do with the novel's compressed (.zip) file?"
+    override val shareDialogDownload = "Save to device"
+    override val shareDialogShare = "Share with other apps"
+    override val shareDialogSaveSuccess = "File saved successfully"
+    override val shareDialogSaveError = "Error saving file"
 }

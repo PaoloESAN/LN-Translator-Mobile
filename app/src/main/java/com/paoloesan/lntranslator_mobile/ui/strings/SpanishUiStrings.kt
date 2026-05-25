@@ -86,6 +86,7 @@ object SpanishUiStrings : UiStrings {
     override val novelsEmptyTitle = "No hay novelas"
     override val novelsEmptySubtitle = "Agrega una novela para guardar sus traducciones."
     override val novelsAddTitle = "Agregar Novela"
+    override val novelsEditTitle = "Editar Título"
     override val novelsAddNameLabel = "Nombre de la novela"
     override val novelsNone = "Ninguna"
 
@@ -215,6 +216,14 @@ object SpanishUiStrings : UiStrings {
     override val menuImport = "Importar Novela"
     override val importSuccess: (String) -> String = { name -> "Novela importada exitosamente: $name" }
     override val importError = "Error al importar la novela"
+    override val novelEmptyError = "La novela está vacía"
     override val importInvalidZip = "Archivo ZIP inválido o corrupto"
     override val cdMenuActions = "Acciones de novela"
+
+    override val shareDialogTitle = "Compartir Novela"
+    override val shareDialogMessage = "¿Qué deseas hacer con el archivo comprimido (.zip) de la novela?"
+    override val shareDialogDownload = "Guardar en dispositivo"
+    override val shareDialogShare = "Compartir con otras apps"
+    override val shareDialogSaveSuccess = "Archivo guardado exitosamente"
+    override val shareDialogSaveError = "Error al guardar el archivo"
 }
