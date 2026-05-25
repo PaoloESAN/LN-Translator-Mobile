@@ -58,15 +58,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleFloatingActionButton
 import androidx.compose.material3.ToggleFloatingActionButtonDefaults
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -90,6 +89,10 @@ import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import coil3.compose.AsyncImage
 import com.paoloesan.lntranslator_mobile.LocalStrings
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarActions
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarNavigationIcon
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
 import kotlinx.coroutines.launch
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -101,6 +104,11 @@ fun NovelsScreen(
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
     val strings = LocalStrings.current
+
+    val topBarTitle = LocalTopAppBarTitle.current
+    val topBarActions = LocalTopAppBarActions.current
+    val topBarNavIcon = LocalTopAppBarNavigationIcon.current
+    val topBarColors = LocalTopAppBarColors.current
 
     var savedNovelsString by remember { mutableStateOf(prefs.getString("saved_novels", "") ?: "") }
     val novelsList =
@@ -537,345 +545,322 @@ fun NovelsScreen(
         )
     }
 
-    Scaffold { _ ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .nestedScroll(nestedScrollConnection)
-        ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                if (selectedNovels.isNotEmpty()) {
-                    TopAppBar(
-                        title = { Text(strings.novelsSelected(selectedNovels.size)) },
-                        navigationIcon = {
-                            IconButton(onClick = { selectedNovels = emptySet() }) {
-                                Icon(
-                                    Icons.Default.Close,
-                                    contentDescription = strings.cdCancelSelection
-                                )
-                            }
-                        },
-                        actions = {
-                            if (selectedNovels.size == 1) {
-                                IconButton(onClick = {
-                                    val novelName = selectedNovels.first()
-                                    val zipFile = NovelRepository.exportNovelToZip(
-                                        context,
-                                        novelName
-                                    )
-                                    if (zipFile != null && zipFile.exists()) {
-                                        tempZipFileForSharing = zipFile
-                                        novelNameBeingShared = novelName
-                                        showShareOptionsDialog = true
-                                    } else {
-                                        Toast.makeText(
-                                            context,
-                                            strings.novelEmptyError,
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                }) {
-                                    Icon(
-                                        Icons.Default.Share,
-                                        contentDescription = strings.menuShare
-                                    )
-                                }
-                                IconButton(onClick = { showEditDialog = true }) {
-                                    Icon(
-                                        Icons.Default.Edit,
-                                        contentDescription = strings.cdEdit
-                                    )
-                                }
-                            }
-                            IconButton(onClick = { showDeleteConfirmationDialog = true }) {
-                                Icon(
-                                    Icons.Default.Delete,
-                                    contentDescription = strings.cdDelete
-                                )
-                            }
-                        },
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    )
-                } else {
-                    TopAppBar(
-                        title = { Text(strings.novelsTitle) },
-                        actions = {
-                            Row(
-                                Modifier.padding(horizontal = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
-                            ) {
-                                ToggleButton(
-                                    checked = !isGridView,
-                                    onCheckedChange = {
-                                        isGridView = false
-                                        prefs.edit { putBoolean("is_grid_view", false) }
-                                    },
-                                    shapes =
-                                        ButtonGroupDefaults.connectedLeadingButtonShapes()
+    val selectionColors = TopAppBarDefaults.topAppBarColors(
+        containerColor = MaterialTheme.colorScheme.surfaceVariant
+    )
 
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Outlined.FormatListBulleted,
-                                        contentDescription = strings.cdListView
-                                    )
-                                }
-                                ToggleButton(
-                                    checked = isGridView,
-                                    onCheckedChange = {
-                                        isGridView = true
-                                        prefs.edit { putBoolean("is_grid_view", true) }
-                                    },
-                                    shapes =
-                                        ButtonGroupDefaults.connectedTrailingButtonShapes()
-
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.GridView,
-                                        contentDescription = strings.cdGridView
-                                    )
-                                }
-                            }
-                        }
-                    )
+    LaunchedEffect(selectedNovels, isGridView, coverUpdateTrigger) {
+        if (selectedNovels.isNotEmpty()) {
+            topBarTitle.value = { Text(strings.novelsSelected(selectedNovels.size)) }
+            topBarNavIcon.value = {
+                IconButton(onClick = { selectedNovels = emptySet() }) {
+                    Icon(Icons.Default.Close, contentDescription = strings.cdCancelSelection)
                 }
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                ) {
-                    if (novelsList.isEmpty()) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(32.dp),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Book,
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = strings.novelsEmptyTitle,
-                                style = MaterialTheme.typography.titleLarge
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = strings.novelsEmptySubtitle,
-                                style = MaterialTheme.typography.bodyMedium,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    } else {
-                        if (isGridView) {
-                            LazyVerticalGrid(
-                                columns = GridCells.Fixed(2),
-                                modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                items(novelsList) { novel ->
-                                    val isSelected = selectedNovels.contains(novel)
-                                    ElevatedCard(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .aspectRatio(0.7f)
-                                            .then(
-                                                if (isSelected) Modifier.border(
-                                                    2.dp,
-                                                    MaterialTheme.colorScheme.primary,
-                                                    CardDefaults.elevatedShape
-                                                ) else Modifier
-                                            ),
-                                        colors = CardDefaults.elevatedCardColors()
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .combinedClickable(
-                                                    onClick = {
-                                                        if (selectedNovels.isNotEmpty()) {
-                                                            selectedNovels =
-                                                                if (isSelected) selectedNovels - novel else selectedNovels + novel
-                                                        } else {
-                                                            moveNovelToTop(novel)
-                                                            onNavigateToDetails(novel)
-                                                        }
-                                                    },
-                                                    onLongClick = {
-                                                        selectedNovels = selectedNovels + novel
-                                                    }
-                                                ),
-                                            contentAlignment = Alignment.BottomCenter
-                                        ) {
-                                            val coverFile = remember(novel, coverUpdateTrigger) {
-                                                NovelRepository.getCoverFile(
-                                                    context,
-                                                    novel
-                                                )
-                                            }
-                                            val hasCover = coverFile.exists()
-
-                                            if (hasCover) {
-                                                AsyncImage(
-                                                    model = remember(novel, coverUpdateTrigger) {
-                                                        coil3.request.ImageRequest.Builder(context)
-                                                            .data(coverFile)
-                                                            .memoryCacheKey("${coverFile.absolutePath}_$coverUpdateTrigger")
-                                                            .build()
-                                                    },
-                                                    contentDescription = null,
-                                                    modifier = Modifier.fillMaxSize(),
-                                                    contentScale = ContentScale.Crop
-                                                )
-                                                // Gradient overlay for text readability - only when there is a cover
-                                                Box(
-                                                    modifier = Modifier
-                                                        .fillMaxSize()
-                                                        .background(
-                                                            androidx.compose.ui.graphics.Brush.verticalGradient(
-                                                                colors = listOf(
-                                                                    Color.Transparent,
-                                                                    Color.Black.copy(alpha = 0.7f)
-                                                                ),
-                                                                startY = 300f // Start gradient near the bottom
-                                                            )
-                                                        )
-                                                )
-                                            } else {
-                                                Box(
-                                                    modifier = Modifier.fillMaxSize(),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Icon(
-                                                        imageVector = Icons.Default.Book,
-                                                        contentDescription = null,
-                                                        modifier = Modifier.size(48.dp),
-                                                        tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary.copy(
-                                                            alpha = 0.4f
-                                                        )
-                                                    )
-                                                }
-                                            }
-
-                                            Row(
-                                                modifier = Modifier
-                                                    .padding(12.dp)
-                                                    .fillMaxWidth(),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.Center
-                                            ) {
-                                                Text(
-                                                    text = if (novel.length > 5) novel.dropLast(5) else novel,
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    textAlign = TextAlign.Center,
-                                                    color = if (hasCover) Color.White else (if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface),
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis,
-                                                    modifier = Modifier.weight(1f, fill = false)
-                                                )
-                                                if (novel.length > 5) {
-                                                    Text(
-                                                        text = novel.takeLast(5),
-                                                        style = MaterialTheme.typography.titleMedium,
-                                                        color = if (hasCover) Color.White else (if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface),
-                                                        maxLines = 1
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+            }
+            topBarActions.value = {
+                if (selectedNovels.size == 1) {
+                    IconButton(onClick = {
+                        val novelName = selectedNovels.first()
+                        val zipFile = NovelRepository.exportNovelToZip(context, novelName)
+                        if (zipFile != null && zipFile.exists()) {
+                            tempZipFileForSharing = zipFile
+                            novelNameBeingShared = novelName
+                            showShareOptionsDialog = true
                         } else {
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                items(novelsList) { novel ->
-                                    val isSelected = selectedNovels.contains(novel)
-                                    ElevatedCard(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        colors = if (isSelected) CardDefaults.elevatedCardColors(
-                                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                                        ) else CardDefaults.elevatedCardColors()
-                                    ) {
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .combinedClickable(
-                                                    onClick = {
-                                                        if (selectedNovels.isNotEmpty()) {
-                                                            selectedNovels =
-                                                                if (isSelected) selectedNovels - novel else selectedNovels + novel
-                                                        } else {
-                                                            moveNovelToTop(novel)
-                                                            onNavigateToDetails(novel)
-                                                        }
-                                                    },
-                                                    onLongClick = {
-                                                        selectedNovels = selectedNovels + novel
+                            Toast.makeText(context, strings.novelEmptyError, Toast.LENGTH_SHORT).show()
+                        }
+                    }) {
+                        Icon(Icons.Default.Share, contentDescription = strings.menuShare)
+                    }
+                    IconButton(onClick = { showEditDialog = true }) {
+                        Icon(Icons.Default.Edit, contentDescription = strings.cdEdit)
+                    }
+                }
+                IconButton(onClick = { showDeleteConfirmationDialog = true }) {
+                    Icon(Icons.Default.Delete, contentDescription = strings.cdDelete)
+                }
+            }
+            topBarColors.value = selectionColors
+        } else {
+            topBarTitle.value = { Text(strings.novelsTitle) }
+            topBarNavIcon.value = {}
+            topBarActions.value = {
+                Row(
+                    Modifier.padding(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+                ) {
+                    ToggleButton(
+                        checked = !isGridView,
+                        onCheckedChange = {
+                            isGridView = false
+                            prefs.edit { putBoolean("is_grid_view", false) }
+                        },
+                        shapes = ButtonGroupDefaults.connectedLeadingButtonShapes()
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.FormatListBulleted,
+                            contentDescription = strings.cdListView
+                        )
+                    }
+                    ToggleButton(
+                        checked = isGridView,
+                        onCheckedChange = {
+                            isGridView = true
+                            prefs.edit { putBoolean("is_grid_view", true) }
+                        },
+                        shapes = ButtonGroupDefaults.connectedTrailingButtonShapes()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.GridView,
+                            contentDescription = strings.cdGridView
+                        )
+                    }
+                }
+            }
+            topBarColors.value = null
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .nestedScroll(nestedScrollConnection)
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                if (novelsList.isEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(32.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Book,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = strings.novelsEmptyTitle,
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = strings.novelsEmptySubtitle,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    if (isGridView) {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            items(novelsList) { novel ->
+                                val isSelected = selectedNovels.contains(novel)
+                                ElevatedCard(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .aspectRatio(0.7f)
+                                        .then(
+                                            if (isSelected) Modifier.border(
+                                                2.dp,
+                                                MaterialTheme.colorScheme.primary,
+                                                CardDefaults.elevatedShape
+                                            ) else Modifier
+                                        ),
+                                    colors = CardDefaults.elevatedCardColors()
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .combinedClickable(
+                                                onClick = {
+                                                    if (selectedNovels.isNotEmpty()) {
+                                                        selectedNovels =
+                                                            if (isSelected) selectedNovels - novel else selectedNovels + novel
+                                                    } else {
+                                                        moveNovelToTop(novel)
+                                                        onNavigateToDetails(novel)
                                                     }
-                                                )
-                                                .padding(16.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            val coverFile = remember(novel, coverUpdateTrigger) {
-                                                NovelRepository.getCoverFile(
-                                                    context,
-                                                    novel
-                                                )
-                                            }
-                                            if (coverFile.exists()) {
-                                                AsyncImage(
-                                                    model = remember(novel, coverUpdateTrigger) {
-                                                        coil3.request.ImageRequest.Builder(context)
-                                                            .data(coverFile)
-                                                            .memoryCacheKey("${coverFile.absolutePath}_$coverUpdateTrigger")
-                                                            .build()
-                                                    },
-                                                    contentDescription = null,
-                                                    modifier = Modifier
-                                                        .size(40.dp)
-                                                        .clip(MaterialTheme.shapes.small),
-                                                    contentScale = ContentScale.Crop
-                                                )
-                                            } else {
+                                                },
+                                                onLongClick = {
+                                                    selectedNovels = selectedNovels + novel
+                                                }
+                                            ),
+                                        contentAlignment = Alignment.BottomCenter
+                                    ) {
+                                        val coverFile = remember(novel, coverUpdateTrigger) {
+                                            NovelRepository.getCoverFile(
+                                                context,
+                                                novel
+                                            )
+                                        }
+                                        val hasCover = coverFile.exists()
+
+                                        if (hasCover) {
+                                            AsyncImage(
+                                                model = remember(novel, coverUpdateTrigger) {
+                                                    coil3.request.ImageRequest.Builder(context)
+                                                        .data(coverFile)
+                                                        .memoryCacheKey("${coverFile.absolutePath}_$coverUpdateTrigger")
+                                                        .build()
+                                                },
+                                                contentDescription = null,
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentScale = ContentScale.Crop
+                                            )
+                                            // Gradient overlay for text readability - only when there is a cover
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .background(
+                                                        androidx.compose.ui.graphics.Brush.verticalGradient(
+                                                            colors = listOf(
+                                                                Color.Transparent,
+                                                                Color.Black.copy(alpha = 0.7f)
+                                                            ),
+                                                            startY = 300f // Start gradient near the bottom
+                                                        )
+                                                    )
+                                            )
+                                        } else {
+                                            Box(
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentAlignment = Alignment.Center
+                                            ) {
                                                 Icon(
                                                     imageVector = Icons.Default.Book,
                                                     contentDescription = null,
-                                                    tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary
+                                                    modifier = Modifier.size(48.dp),
+                                                    tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary.copy(
+                                                        alpha = 0.4f
+                                                    )
                                                 )
                                             }
-                                            Spacer(modifier = Modifier.width(16.dp))
-                                            Row(
-                                                modifier = Modifier.weight(1f),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
+                                        }
+
+                                        Row(
+                                            modifier = Modifier
+                                                .padding(12.dp)
+                                                .fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.Center
+                                        ) {
+                                            Text(
+                                                text = if (novel.length > 5) novel.dropLast(5) else novel,
+                                                style = MaterialTheme.typography.titleMedium,
+                                                textAlign = TextAlign.Center,
+                                                color = if (hasCover) Color.White else (if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                modifier = Modifier.weight(1f, fill = false)
+                                            )
+                                            if (novel.length > 5) {
                                                 Text(
-                                                    text = if (novel.length > 5) novel.dropLast(5) else novel,
+                                                    text = novel.takeLast(5),
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    color = if (hasCover) Color.White else (if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface),
+                                                    maxLines = 1
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(novelsList) { novel ->
+                                val isSelected = selectedNovels.contains(novel)
+                                ElevatedCard(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = if (isSelected) CardDefaults.elevatedCardColors(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                                    ) else CardDefaults.elevatedCardColors()
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .combinedClickable(
+                                                onClick = {
+                                                    if (selectedNovels.isNotEmpty()) {
+                                                        selectedNovels =
+                                                            if (isSelected) selectedNovels - novel else selectedNovels + novel
+                                                    } else {
+                                                        moveNovelToTop(novel)
+                                                        onNavigateToDetails(novel)
+                                                    }
+                                                },
+                                                onLongClick = {
+                                                    selectedNovels = selectedNovels + novel
+                                                }
+                                            )
+                                            .padding(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        val coverFile = remember(novel, coverUpdateTrigger) {
+                                            NovelRepository.getCoverFile(
+                                                context,
+                                                novel
+                                            )
+                                        }
+                                        if (coverFile.exists()) {
+                                            AsyncImage(
+                                                model = remember(novel, coverUpdateTrigger) {
+                                                    coil3.request.ImageRequest.Builder(context)
+                                                        .data(coverFile)
+                                                        .memoryCacheKey("${coverFile.absolutePath}_$coverUpdateTrigger")
+                                                        .build()
+                                                },
+                                                contentDescription = null,
+                                                modifier = Modifier
+                                                    .size(40.dp)
+                                                    .clip(MaterialTheme.shapes.small),
+                                                contentScale = ContentScale.Crop
+                                            )
+                                        } else {
+                                            Icon(
+                                                imageVector = Icons.Default.Book,
+                                                contentDescription = null,
+                                                tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(16.dp))
+                                        Row(
+                                            modifier = Modifier.weight(1f),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = if (novel.length > 5) novel.dropLast(5) else novel,
+                                                style = MaterialTheme.typography.titleMedium,
+                                                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                modifier = Modifier.weight(1f, fill = false)
+                                            )
+                                            if (novel.length > 5) {
+                                                Text(
+                                                    text = novel.takeLast(5),
                                                     style = MaterialTheme.typography.titleMedium,
                                                     color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis,
-                                                    modifier = Modifier.weight(1f, fill = false)
+                                                    maxLines = 1
                                                 )
-                                                if (novel.length > 5) {
-                                                    Text(
-                                                        text = novel.takeLast(5),
-                                                        style = MaterialTheme.typography.titleMedium,
-                                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
-                                                        maxLines = 1
-                                                    )
-                                                }
                                             }
                                         }
                                     }
@@ -883,80 +868,76 @@ fun NovelsScreen(
                             }
                         }
                     }
-
-                    // Close content Box
                 }
-
-                // Close Column
             }
+        }
 
-            if (fabMenuExpanded) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.32f))
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
-                            fabMenuExpanded = false
-                        }
-                )
-            }
-
-            if (selectedNovels.isEmpty()) {
-                AnimatedVisibility(
-                    visible = isFabVisible || fabMenuExpanded,
-                    enter = slideInVertically(initialOffsetY = { it }),
-                    exit = slideOutVertically(targetOffsetY = { it }),
-                    modifier = Modifier.align(Alignment.BottomEnd)
-                ) {
-                    FloatingActionButtonMenu(
-                        expanded = fabMenuExpanded,
-                        button = {
-                            ToggleFloatingActionButton(
-                                containerSize = ToggleFloatingActionButtonDefaults.containerSize(
-                                    80.dp,
-                                    55.dp
-                                ),
-                                checked = fabMenuExpanded,
-                                onCheckedChange = { fabMenuExpanded = it },
-                            ) {
-                                Icon(
-                                    imageVector = if (fabMenuExpanded) Icons.Filled.Close else Icons.Filled.Add,
-                                    tint = if (fabMenuExpanded) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                                    contentDescription = if (fabMenuExpanded) strings.buttonClose else strings.novelsAddTitle
-                                )
-                            }
-                        }
+        if (fabMenuExpanded) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.32f))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
                     ) {
-                        FloatingActionButtonMenuItem(
-                            onClick = {
-                                fabMenuExpanded = false
-                                importLauncher.launch("application/zip")
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Default.DriveFolderUpload,
-                                    contentDescription = null
-                                )
-                            },
-                            text = { Text(strings.menuImport) }
-                        )
-                        FloatingActionButtonMenuItem(
-                            onClick = {
-                                fabMenuExpanded = false
-                                showAddDialog = true
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = null,
-                                )
-                            },
-                            text = { Text(strings.novelsAddTitle) }
-                        )
+                        fabMenuExpanded = false
                     }
+            )
+        }
+
+        if (selectedNovels.isEmpty()) {
+            AnimatedVisibility(
+                visible = isFabVisible || fabMenuExpanded,
+                enter = slideInVertically(initialOffsetY = { it }),
+                exit = slideOutVertically(targetOffsetY = { it }),
+                modifier = Modifier.align(Alignment.BottomEnd)
+            ) {
+                FloatingActionButtonMenu(
+                    expanded = fabMenuExpanded,
+                    button = {
+                        ToggleFloatingActionButton(
+                            containerSize = ToggleFloatingActionButtonDefaults.containerSize(
+                                80.dp,
+                                55.dp
+                            ),
+                            checked = fabMenuExpanded,
+                            onCheckedChange = { fabMenuExpanded = it },
+                        ) {
+                            Icon(
+                                imageVector = if (fabMenuExpanded) Icons.Filled.Close else Icons.Filled.Add,
+                                tint = if (fabMenuExpanded) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                                contentDescription = if (fabMenuExpanded) strings.buttonClose else strings.novelsAddTitle
+                            )
+                        }
+                    }
+                ) {
+                    FloatingActionButtonMenuItem(
+                        onClick = {
+                            fabMenuExpanded = false
+                            importLauncher.launch("application/zip")
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.DriveFolderUpload,
+                                contentDescription = null
+                            )
+                        },
+                        text = { Text(strings.menuImport) }
+                    )
+                    FloatingActionButtonMenuItem(
+                        onClick = {
+                            fabMenuExpanded = false
+                            showAddDialog = true
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                            )
+                        },
+                        text = { Text(strings.novelsAddTitle) }
+                    )
                 }
             }
         }

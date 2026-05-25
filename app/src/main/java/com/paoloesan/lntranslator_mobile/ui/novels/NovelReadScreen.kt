@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -79,7 +80,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ToggleButton
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -109,6 +110,11 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.edit
 import com.paoloesan.lntranslator_mobile.LocalStrings
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarActions
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarNavigationIcon
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
 import com.paoloesan.lntranslator_mobile.ui.overlay.OverlayFontOption
 import com.paoloesan.lntranslator_mobile.ui.overlay.toComposeFontFamily
 import com.paoloesan.lntranslator_mobile.ui.overlay.toLabel
@@ -121,6 +127,13 @@ import kotlinx.coroutines.launch
 fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
     val context = LocalContext.current
     val strings = LocalStrings.current
+
+    val topBarTitle = LocalTopAppBarTitle.current
+    val topBarActions = LocalTopAppBarActions.current
+    val topBarNavIcon = LocalTopAppBarNavigationIcon.current
+    val topBarColors = LocalTopAppBarColors.current
+    val topBarVisible = LocalTopAppBarVisible.current
+
     val prefs = remember { context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE) }
     val coroutineScope = rememberCoroutineScope()
 
@@ -208,6 +221,259 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
 
 
     var showSystemBars by remember { mutableStateOf(true) }
+
+    LaunchedEffect(
+        showSystemBars,
+        isManagingPages,
+        novelName,
+        pages,
+        showImages,
+        isVerticalMode,
+        expandedMenu
+    ) {
+        if (isManagingPages) {
+            topBarVisible.value = true
+        } else {
+            topBarVisible.value = showSystemBars
+            if (showSystemBars) {
+                topBarTitle.value = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = if (novelName.length > 5) novelName.dropLast(5) else novelName,
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                        if (novelName.length > 5) {
+                            Text(
+                                text = novelName.takeLast(5),
+                                style = MaterialTheme.typography.titleMedium,
+                                maxLines = 1
+                            )
+                        }
+                    }
+                }
+                topBarNavIcon.value = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = strings.navBack
+                        )
+                    }
+                }
+                topBarActions.value = {
+                    if (pages.isNotEmpty()) {
+                        Box {
+                            IconButton(onClick = { expandedMenu = true }) {
+                                Icon(
+                                    Icons.Default.MoreVert,
+                                    contentDescription = strings.novelDetailsViewPages
+                                )
+                            }
+                            DropdownMenuPopup(
+                                expanded = expandedMenu,
+                                onDismissRequest = { expandedMenu = false },
+                                modifier = Modifier.width(260.dp)
+                            ) {
+                                DropdownMenuGroup(
+                                    shapes = MenuDefaults.groupShape(0, 1)
+                                ) {
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                strings.novelDetailsGoToPage,
+                                                style = MaterialTheme.typography.bodyLarge
+                                            )
+                                        },
+                                        leadingIcon = {
+                                            Icon(
+                                                Icons.Default.Book,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        onClick = {
+                                            expandedMenu = false
+                                            isManagingPages = true
+                                        }
+                                    )
+
+                                    // Show/Hide Images Switch Row
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                showImages = !showImages
+                                                prefs.edit {
+                                                    putBoolean(
+                                                        "reader_show_images",
+                                                        showImages
+                                                    )
+                                                }
+                                            }
+                                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(
+                                                imageVector = if (showImages) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Text(
+                                                strings.readerShowImages,
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+
+                                        }
+                                        Switch(
+                                            checked = showImages,
+                                            onCheckedChange = { value ->
+                                                showImages = value
+                                                prefs.edit {
+                                                    putBoolean("reader_show_images", value)
+                                                }
+                                            },
+                                            thumbContent = {
+                                                if (showImages) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Check,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(
+                                                            SwitchDefaults.IconSize
+                                                        )
+                                                    )
+                                                }
+                                            }
+                                        )
+                                    }
+
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(
+                                            MenuDefaults.HorizontalDividerPadding
+                                        )
+                                    )
+
+                                    // Reading orientation layout selector
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                                    ) {
+                                        Text(
+                                            text = strings.readerReadingOrientation,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(
+                                                ButtonGroupDefaults.ConnectedSpaceBetween
+                                            )
+                                        ) {
+                                            ToggleButton(
+                                                checked = !isVerticalMode,
+                                                onCheckedChange = {
+                                                    isVerticalMode = false
+                                                    prefs.edit {
+                                                        putBoolean(
+                                                            "reader_vertical_mode",
+                                                            false
+                                                        )
+                                                    }
+                                                },
+                                                shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
+                                                modifier = Modifier.weight(1f)
+                                            ) {
+                                                Row(
+                                                    horizontalArrangement = Arrangement.Center,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.StayCurrentLandscape,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(16.dp)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Text(
+                                                        strings.readerHorizontal,
+                                                        style = MaterialTheme.typography.bodySmall
+                                                    )
+
+                                                }
+                                            }
+                                            ToggleButton(
+                                                checked = isVerticalMode,
+                                                onCheckedChange = {
+                                                    isVerticalMode = true
+                                                    prefs.edit {
+                                                        putBoolean(
+                                                            "reader_vertical_mode",
+                                                            true
+                                                        )
+                                                    }
+                                                },
+                                                shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
+                                                modifier = Modifier.weight(1f)
+                                            ) {
+                                                Row(
+                                                    horizontalArrangement = Arrangement.Center,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.StayCurrentPortrait,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(16.dp)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Text(
+                                                        strings.readerVertical,
+                                                        style = MaterialTheme.typography.bodySmall
+                                                    )
+
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(
+                                            MenuDefaults.HorizontalDividerPadding
+                                        )
+                                    )
+
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                strings.overlayConfig,
+                                                style = MaterialTheme.typography.bodyLarge
+                                            )
+                                        },
+                                        leadingIcon = {
+                                            Icon(
+                                                Icons.Default.Settings,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        onClick = {
+                                            expandedMenu = false
+                                            showConfigDialog = true
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                topBarColors.value = null
+            }
+        }
+    }
 
     var isFirstLoad by remember { mutableStateOf(true) }
     LaunchedEffect(currentPageIndex) {
@@ -334,251 +600,6 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                             )
                         }
                     }
-                }
-
-                // Top Bar Overlay
-                AnimatedVisibility(
-                    visible = showSystemBars,
-                    enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
-                    exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
-                    modifier = Modifier.align(Alignment.TopCenter)
-                ) {
-                    TopAppBar(
-                        title = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = if (novelName.length > 5) novelName.dropLast(5) else novelName,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.weight(1f, fill = false)
-                                )
-                                if (novelName.length > 5) {
-                                    Text(
-                                        text = novelName.takeLast(5),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        maxLines = 1
-                                    )
-                                }
-                            }
-                        },
-                        navigationIcon = {
-                            IconButton(onClick = onBack) {
-                                Icon(
-                                    Icons.AutoMirrored.Rounded.ArrowBack,
-                                    contentDescription = strings.navBack
-                                )
-                            }
-                        },
-                        actions = {
-                            if (pages.isNotEmpty()) {
-                                Box {
-                                    IconButton(onClick = { expandedMenu = true }) {
-                                        Icon(
-                                            Icons.Default.MoreVert,
-                                            contentDescription = strings.novelDetailsViewPages
-                                        )
-                                    }
-                                    DropdownMenuPopup(
-                                        expanded = expandedMenu,
-                                        onDismissRequest = { expandedMenu = false },
-                                        modifier = Modifier.width(260.dp)
-                                    ) {
-                                        DropdownMenuGroup(
-                                            shapes = MenuDefaults.groupShape(0, 1)
-                                        ) {
-                                            DropdownMenuItem(
-                                                text = {
-                                                    Text(
-                                                        strings.novelDetailsGoToPage,
-                                                        style = MaterialTheme.typography.bodyLarge
-                                                    )
-                                                },
-                                                leadingIcon = {
-                                                    Icon(
-                                                        Icons.Default.Book,
-                                                        contentDescription = null
-                                                    )
-                                                },
-                                                onClick = {
-                                                    expandedMenu = false
-                                                    isManagingPages = true
-                                                }
-                                            )
-
-                                            // Show/Hide Images Switch Row
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .clickable {
-                                                        showImages = !showImages
-                                                        prefs.edit {
-                                                            putBoolean(
-                                                                "reader_show_images",
-                                                                showImages
-                                                            )
-                                                        }
-                                                    }
-                                                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.SpaceBetween
-                                            ) {
-                                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                                    Icon(
-                                                        imageVector = if (showImages) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                                        contentDescription = null,
-                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                        modifier = Modifier.size(20.dp)
-                                                    )
-                                                    Spacer(modifier = Modifier.width(12.dp))
-                                                    Text(
-                                                        strings.readerShowImages,
-                                                        style = MaterialTheme.typography.bodyMedium
-                                                    )
-
-                                                }
-                                                Switch(
-                                                    checked = showImages,
-                                                    onCheckedChange = { value ->
-                                                        showImages = value
-                                                        prefs.edit {
-                                                            putBoolean("reader_show_images", value)
-                                                        }
-                                                    },
-                                                    thumbContent = {
-                                                        if (showImages) {
-                                                            Icon(
-                                                                imageVector = Icons.Default.Check,
-                                                                contentDescription = null,
-                                                                modifier = Modifier.size(
-                                                                    SwitchDefaults.IconSize
-                                                                )
-                                                            )
-                                                        }
-                                                    }
-                                                )
-                                            }
-
-                                            HorizontalDivider(
-                                                modifier = Modifier.padding(
-                                                    MenuDefaults.HorizontalDividerPadding
-                                                )
-                                            )
-
-                                            // Reading orientation layout selector
-                                            Column(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                                            ) {
-                                                Text(
-                                                    text = strings.readerReadingOrientation,
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-
-                                                Spacer(modifier = Modifier.height(8.dp))
-                                                Row(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    horizontalArrangement = Arrangement.spacedBy(
-                                                        ButtonGroupDefaults.ConnectedSpaceBetween
-                                                    )
-                                                ) {
-                                                    ToggleButton(
-                                                        checked = !isVerticalMode,
-                                                        onCheckedChange = {
-                                                            isVerticalMode = false
-                                                            prefs.edit {
-                                                                putBoolean(
-                                                                    "reader_vertical_mode",
-                                                                    false
-                                                                )
-                                                            }
-                                                        },
-                                                        shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
-                                                        modifier = Modifier.weight(1f)
-                                                    ) {
-                                                        Row(
-                                                            horizontalArrangement = Arrangement.Center,
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Icon(
-                                                                Icons.Default.StayCurrentLandscape,
-                                                                contentDescription = null,
-                                                                modifier = Modifier.size(16.dp)
-                                                            )
-                                                            Spacer(modifier = Modifier.width(4.dp))
-                                                            Text(
-                                                                strings.readerHorizontal,
-                                                                style = MaterialTheme.typography.bodySmall
-                                                            )
-
-                                                        }
-                                                    }
-                                                    ToggleButton(
-                                                        checked = isVerticalMode,
-                                                        onCheckedChange = {
-                                                            isVerticalMode = true
-                                                            prefs.edit {
-                                                                putBoolean(
-                                                                    "reader_vertical_mode",
-                                                                    true
-                                                                )
-                                                            }
-                                                        },
-                                                        shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
-                                                        modifier = Modifier.weight(1f)
-                                                    ) {
-                                                        Row(
-                                                            horizontalArrangement = Arrangement.Center,
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Icon(
-                                                                Icons.Default.StayCurrentPortrait,
-                                                                contentDescription = null,
-                                                                modifier = Modifier.size(16.dp)
-                                                            )
-                                                            Spacer(modifier = Modifier.width(4.dp))
-                                                            Text(
-                                                                strings.readerVertical,
-                                                                style = MaterialTheme.typography.bodySmall
-                                                            )
-
-                                                        }
-                                                    }
-                                                }
-                                            }
-
-                                            HorizontalDivider(
-                                                modifier = Modifier.padding(
-                                                    MenuDefaults.HorizontalDividerPadding
-                                                )
-                                            )
-
-                                            DropdownMenuItem(
-                                                text = {
-                                                    Text(
-                                                        strings.overlayConfig,
-                                                        style = MaterialTheme.typography.bodyLarge
-                                                    )
-                                                },
-                                                leadingIcon = {
-                                                    Icon(
-                                                        Icons.Default.Settings,
-                                                        contentDescription = null
-                                                    )
-                                                },
-                                                onClick = {
-                                                    expandedMenu = false
-                                                    showConfigDialog = true
-                                                }
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    )
                 }
 
                 // Bottom Floating Navigation Overlay

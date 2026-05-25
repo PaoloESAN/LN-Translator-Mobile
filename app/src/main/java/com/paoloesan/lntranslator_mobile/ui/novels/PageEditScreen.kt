@@ -54,12 +54,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -81,6 +80,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.paoloesan.lntranslator_mobile.LocalStrings
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarActions
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarNavigationIcon
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
 import java.io.File
 import java.io.FileOutputStream
 
@@ -93,6 +97,12 @@ fun PageManagementScreen(
 ) {
     val context = LocalContext.current
     val strings = LocalStrings.current
+
+    val topBarTitle = LocalTopAppBarTitle.current
+    val topBarActions = LocalTopAppBarActions.current
+    val topBarNavIcon = LocalTopAppBarNavigationIcon.current
+    val topBarColors = LocalTopAppBarColors.current
+    val topBarVisible = LocalTopAppBarVisible.current
 
     var pagesList by remember { mutableStateOf(NovelRepository.getPages(context, novelName)) }
     var isEditMode by remember { mutableStateOf(true) }
@@ -113,8 +123,38 @@ fun PageManagementScreen(
     var dialogOnlyImage by remember { mutableStateOf(false) }
     var pageToDeleteIndex by remember { mutableStateOf<Int?>(null) }
 
-
     val lazyListState = rememberLazyListState()
+
+    LaunchedEffect(novelName, pagesList) {
+        topBarVisible.value = true
+        topBarTitle.value = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val titleStart = "${strings.pageManagementTitle} - "
+                Text(
+                    text = titleStart + (if (novelName.length > 5) novelName.dropLast(5) else novelName),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
+                )
+                if (novelName.length > 5) {
+                    Text(
+                        text = novelName.takeLast(5),
+                        maxLines = 1
+                    )
+                }
+            }
+        }
+        topBarNavIcon.value = {
+            IconButton(onClick = onBack) {
+                Icon(
+                    Icons.AutoMirrored.Rounded.ArrowBack,
+                    contentDescription = strings.navBack
+                )
+            }
+        }
+        topBarActions.value = {}
+        topBarColors.value = null
+    }
 
     // Back gesture handling
     BackHandler {
@@ -141,74 +181,8 @@ fun PageManagementScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        val titleStart = "${strings.pageManagementTitle} - "
-                        Text(
-                            text = titleStart + (if (novelName.length > 5) novelName.dropLast(5) else novelName),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false)
-                        )
-                        if (novelName.length > 5) {
-                            Text(
-                                text = novelName.takeLast(5),
-                                maxLines = 1
-                            )
-                        }
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = strings.navBack
-                        )
-                    }
-                }
-            )
-        },
-
-        bottomBar = {
-            if (isEditMode) {
-                BottomAppBar {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Button(
-                            onClick = {
-                                dialogPageId = null
-                                dialogInsertIndex = pagesList.size
-                                dialogTranslatedText = ""
-                                dialogOriginalText = ""
-                                dialogImagePath = null
-                                dialogTitle = strings.pageManagementAddPageTitle
-                                dialogOnlyImage = false
-                                showPageDialog = true
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(strings.pageManagementAddPage)
-                        }
-
-                    }
-                }
-            }
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
             if (pagesList.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -537,6 +511,37 @@ fun PageManagementScreen(
                 }
             }
         }
+
+        if (isEditMode) {
+            BottomAppBar(
+                modifier = Modifier.align(Alignment.BottomCenter)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Button(
+                        onClick = {
+                            dialogPageId = null
+                            dialogInsertIndex = pagesList.size
+                            dialogTranslatedText = ""
+                            dialogOriginalText = ""
+                            dialogImagePath = null
+                            dialogTitle = strings.pageManagementAddPageTitle
+                            dialogOnlyImage = false
+                            showPageDialog = true
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(strings.pageManagementAddPage)
+                    }
+                }
+            }
+        }
     }
 
     // Unified Add/Insert/Edit Dialog
@@ -560,7 +565,7 @@ fun PageManagementScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .verticalScroll(rememberLazyListState().run { rememberScrollState() }) // Scroll in case of small screens
+                        .verticalScroll(rememberScrollState()) // Fixed: removed invalid argument
                 ) {
                     Row(
                         modifier = Modifier

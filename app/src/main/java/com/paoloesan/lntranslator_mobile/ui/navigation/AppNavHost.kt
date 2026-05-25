@@ -34,42 +34,50 @@ fun AppNavHost(
     contexto: AppCompatActivity,
     innerPadding: PaddingValues
 ) {
-    val slideSpec = tween<IntOffset>(durationMillis = 400, easing = FastOutSlowInEasing)
-    val tabFadeSpec = tween<Float>(durationMillis = 150)
+    val slideSpec = tween<IntOffset>(durationMillis = 300, easing = FastOutSlowInEasing)
+    val tabFadeSpec = tween<Float>(durationMillis = 400) // Increased duration
     val rutasPrincipales = listOf("inicio", "novels", "ajustes")
 
     NavHost(
         navController = navController,
         startDestination = "inicio",
         enterTransition = {
-            val isTabTransition = initialState.destination.route in rutasPrincipales &&
-                    targetState.destination.route in rutasPrincipales
-            if (isTabTransition) {
+            val fromMain = initialState.destination.route in rutasPrincipales
+            val toMain = targetState.destination.route in rutasPrincipales
+            
+            if (fromMain && toMain) {
                 fadeIn(animationSpec = tabFadeSpec)
-            } else if (targetState.destination.route !in rutasPrincipales) {
-                slideInHorizontally(initialOffsetX = { it }, animationSpec = slideSpec)
+            } else if (toMain) {
+                // Entering a main route from a sub-route (e.g. going back)
+                fadeIn(animationSpec = tabFadeSpec)
             } else {
-                fadeIn(animationSpec = tabFadeSpec)
+                // Entering a sub-route (e.g. prompts)
+                slideInHorizontally(initialOffsetX = { it }, animationSpec = slideSpec)
             }
         },
         exitTransition = {
-            val isTabTransition = initialState.destination.route in rutasPrincipales &&
-                    targetState.destination.route in rutasPrincipales
-            if (isTabTransition) {
+            val fromMain = initialState.destination.route in rutasPrincipales
+            val toMain = targetState.destination.route in rutasPrincipales
+
+            if (fromMain && toMain) {
                 fadeOut(animationSpec = tabFadeSpec)
-            } else if (targetState.destination.route !in rutasPrincipales) {
+            } else if (fromMain) {
+                // Leaving a main route to a sub-route
+                fadeOut(animationSpec = tabFadeSpec)
+            } else {
+                // Leaving a sub-route
                 slideOutHorizontally(targetOffsetX = { -it / 3 }, animationSpec = slideSpec) +
                         fadeOut(animationSpec = tween(400))
-            } else {
-                fadeOut(animationSpec = tabFadeSpec)
             }
         },
         popEnterTransition = {
-            val isTabTransition = initialState.destination.route in rutasPrincipales &&
-                    targetState.destination.route in rutasPrincipales
-            if (isTabTransition) {
+            val fromMain = initialState.destination.route in rutasPrincipales
+            val toMain = targetState.destination.route in rutasPrincipales
+
+            if (fromMain && toMain) {
                 fadeIn(animationSpec = tabFadeSpec)
-            } else if (initialState.destination.route !in rutasPrincipales) {
+            } else if (toMain) {
+                // Popping back to a main route
                 slideInHorizontally(initialOffsetX = { -it / 3 }, animationSpec = slideSpec) +
                         fadeIn(animationSpec = tween(400))
             } else {
@@ -77,14 +85,17 @@ fun AppNavHost(
             }
         },
         popExitTransition = {
-            val isTabTransition = initialState.destination.route in rutasPrincipales &&
-                    targetState.destination.route in rutasPrincipales
-            if (isTabTransition) {
+            val fromMain = initialState.destination.route in rutasPrincipales
+            val toMain = targetState.destination.route in rutasPrincipales
+
+            if (fromMain && toMain) {
                 fadeOut(animationSpec = tabFadeSpec)
-            } else if (initialState.destination.route !in rutasPrincipales) {
-                slideOutHorizontally(targetOffsetX = { it }, animationSpec = slideSpec)
+            } else if (fromMain) {
+                // Popping out of a main route (unlikely with tab navigation)
+                fadeOut(animationSpec = tabFadeSpec)
             } else {
-                fadeOut(animationSpec = tabFadeSpec)
+                // Popping back from a sub-route
+                slideOutHorizontally(targetOffsetX = { it }, animationSpec = slideSpec)
             }
         },
         modifier = Modifier.padding(innerPadding)
@@ -113,7 +124,8 @@ fun AppNavHost(
         }
         composable(route = "prompts") {
             PromptScreen(
-                contexto
+                context = contexto,
+                onBack = { navController.popBackStack() }
             ) {
                 navController.previousBackStackEntry?.savedStateHandle?.set(
                     "prompt_seleccionado",

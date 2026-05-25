@@ -39,7 +39,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.paoloesan.lntranslator_mobile.LocalStrings
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarActions
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarNavigationIcon
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
 import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
+import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +55,20 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val strings: UiStrings = LocalStrings.current
+
+    val topBarTitle = LocalTopAppBarTitle.current
+    val topBarActions = LocalTopAppBarActions.current
+    val topBarNavIcon = LocalTopAppBarNavigationIcon.current
+    val topBarColors = LocalTopAppBarColors.current
+    val topBarVisible = LocalTopAppBarVisible.current
+
+    LaunchedEffect(Unit) {
+        topBarVisible.value = true
+        topBarTitle.value = { Text(strings.navSettings) }
+        topBarActions.value = {}
+        topBarNavIcon.value = {}
+        topBarColors.value = null
+    }
 
     val secciones = remember(context, strings) {
         listOf(
