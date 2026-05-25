@@ -11,6 +11,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -73,8 +74,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush.Companion.verticalGradient
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -97,6 +100,7 @@ fun HomeScreen(
     onNavigateToPrompts: () -> Unit
 ) {
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
     val strings = LocalStrings.current
     val prefs = context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
     var savedNovelsString by remember { mutableStateOf(prefs.getString("saved_novels", "") ?: "") }
@@ -325,20 +329,42 @@ fun HomeScreen(
         modifier = modifier
             .fillMaxSize()
             .statusBarsPadding()
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = {
+                    focusManager.clearFocus()
+                })
+            }
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        Image(
-            painter = androidx.compose.ui.res.painterResource(id = com.paoloesan.lntranslator_mobile.R.drawable.ln_translator_logo),
-            contentDescription = strings.cdLogo,
-            modifier = Modifier
-                .weight(1f, fill = false)
-                .sizeIn(maxHeight = 200.dp, maxWidth = 200.dp)
-                .aspectRatio(1f)
-                .clip(MaterialShapes.Clover4Leaf.toShape()),
-            contentScale = ContentScale.Crop
-        )
+        val currentNovelCover = remember(selectedNovel) {
+            selectedNovel?.let { NovelRepository.getCoverFile(context, it) }
+        }
+
+        if (currentNovelCover != null && currentNovelCover.exists()) {
+            AsyncImage(
+                model = currentNovelCover,
+                contentDescription = null,
+                modifier = Modifier
+                    .weight(1f, fill = false)
+                    .sizeIn(maxHeight = 200.dp, maxWidth = 200.dp)
+                    .aspectRatio(0.7f)
+                    .clip(MaterialTheme.shapes.medium),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Image(
+                painter = androidx.compose.ui.res.painterResource(id = com.paoloesan.lntranslator_mobile.R.drawable.ln_translator_logo),
+                contentDescription = strings.cdLogo,
+                modifier = Modifier
+                    .weight(1f, fill = false)
+                    .sizeIn(maxHeight = 200.dp, maxWidth = 200.dp)
+                    .aspectRatio(1f)
+                    .clip(MaterialShapes.Clover4Leaf.toShape()),
+                contentScale = ContentScale.Crop
+            )
+        }
 
         Text(
             text = "\"${strings.homeWelcome}\"",
