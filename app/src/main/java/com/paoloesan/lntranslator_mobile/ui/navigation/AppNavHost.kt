@@ -14,11 +14,13 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.paoloesan.lntranslator_mobile.ui.home.HomeScreen
 import com.paoloesan.lntranslator_mobile.ui.prompts.PromptScreen
 import com.paoloesan.lntranslator_mobile.ui.settings.SettingsScreen
@@ -37,6 +39,10 @@ fun AppNavHost(
     val slideSpec = tween<IntOffset>(durationMillis = 300, easing = FastOutSlowInEasing)
     val tabFadeSpec = tween<Float>(durationMillis = 400) // Increased duration
     val rutasPrincipales = listOf("inicio", "novels", "ajustes")
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val rutaActual = navBackStackEntry?.destination?.route
+    val isImmersive = rutaActual?.startsWith("novel_details") == true
 
     NavHost(
         navController = navController,
@@ -98,7 +104,7 @@ fun AppNavHost(
                 slideOutHorizontally(targetOffsetX = { it }, animationSpec = slideSpec)
             }
         },
-        modifier = Modifier.padding(innerPadding)
+        modifier = if (isImmersive) Modifier else Modifier.padding(innerPadding)
     ) {
         composable("inicio") {
             HomeScreen(

@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
@@ -28,6 +29,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -43,12 +45,16 @@ import androidx.compose.material.icons.filled.DriveFolderUpload
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.HighlightOff
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuGroup
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -57,7 +63,10 @@ import androidx.compose.material3.FloatingActionButtonMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SplitButtonDefaults
+import androidx.compose.material3.SplitButtonLayout
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ToggleButton
@@ -77,6 +86,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -225,52 +235,122 @@ fun NovelsScreen(
         AlertDialog(
             onDismissRequest = { showShareOptionsDialog = false },
             title = { Text(strings.shareDialogTitle) },
-            text = { Text(strings.shareDialogMessage) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showShareOptionsDialog = false
-                        createDocumentLauncher.launch("novel_${novelNameBeingShared}.zip")
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text(strings.shareDialogMessage)
+
+                    Button(
+                        onClick = {
+                            showShareOptionsDialog = false
+                            createDocumentLauncher.launch("novel_${novelNameBeingShared}.zip")
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.DriveFolderUpload, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(strings.shareDialogDownload + " (.zip)")
                     }
-                ) {
-                    Text(strings.shareDialogDownload)
+
+                    /*
+                    var isMenuExpanded by remember { mutableStateOf(false) }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentSize(Alignment.Center)
+                    ) {
+                        SplitButtonLayout(
+                            leadingButton = {
+                                SplitButtonDefaults.LeadingButton(
+                                    onClick = {
+                                        showShareOptionsDialog = false
+                                        val file = tempZipFileForSharing
+                                        if (file != null && file.exists()) {
+                                            try {
+                                                val fileUri = FileProvider.getUriForFile(
+                                                    context,
+                                                    "${context.packageName}.fileprovider",
+                                                    file
+                                                )
+                                                val shareIntent =
+                                                    Intent(Intent.ACTION_SEND).apply {
+                                                        type = "application/zip"
+                                                        putExtra(
+                                                            Intent.EXTRA_STREAM,
+                                                            fileUri
+                                                        )
+                                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                    }
+                                                context.startActivity(
+                                                    Intent.createChooser(
+                                                        shareIntent,
+                                                        strings.menuShare
+                                                    )
+                                                )
+                                            } catch (e: Exception) {
+                                                e.printStackTrace()
+                                                Toast.makeText(
+                                                    context,
+                                                    strings.importError,
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
+                                    }
+                                ) {
+                                    Icon(Icons.Default.Share, contentDescription = null)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(strings.menuShare)
+                                }
+                            },
+                            
+                            trailingButton = {
+                                SplitButtonDefaults.TrailingButton(
+                                    checked = isMenuExpanded,
+                                    onCheckedChange = { isMenuExpanded = it },
+                                ) {
+                                    val rotation by animateFloatAsState(
+                                        targetValue = if (isMenuExpanded) 180f else 0f,
+                                        label = "Trailing Icon Rotation"
+                                    )
+                                    Icon(
+                                        Icons.Filled.KeyboardArrowDown,
+                                        modifier = Modifier.graphicsLayer { rotationZ = rotation },
+                                        contentDescription = null
+                                    )
+                                }
+
+                                DropdownMenuPopup(
+                                    expanded = isMenuExpanded,
+                                    onDismissRequest = { isMenuExpanded = false }
+                                ) {
+                                    DropdownMenuGroup(
+                                        shapes = MenuDefaults.groupShape(0, 1)
+                                    ) {
+                                        DropdownMenuItem(
+                                            text = { Text(strings.shareDialogDownload) },
+                                            onClick = {
+                                                isMenuExpanded = false
+                                                showShareOptionsDialog = false
+                                                createDocumentLauncher.launch("novel_${novelNameBeingShared}.zip")
+                                            },
+                                            leadingIcon = {
+                                                Icon(
+                                                    Icons.Default.DriveFolderUpload,
+                                                    contentDescription = null
+                                                )
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        )
+                    }
+                    */
                 }
             },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showShareOptionsDialog = false
-                        val file = tempZipFileForSharing
-                        if (file != null && file.exists()) {
-                            try {
-                                val fileUri = FileProvider.getUriForFile(
-                                    context,
-                                    "${context.packageName}.fileprovider",
-                                    file
-                                )
-                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "application/zip"
-                                    putExtra(Intent.EXTRA_STREAM, fileUri)
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                }
-                                context.startActivity(
-                                    Intent.createChooser(
-                                        shareIntent,
-                                        strings.menuShare
-                                    )
-                                )
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                                Toast.makeText(
-                                    context,
-                                    strings.importError,
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        }
-                    }
-                ) {
-                    Text(strings.shareDialogShare)
+            confirmButton = {
+                TextButton(onClick = { showShareOptionsDialog = false }) {
+                    Text(strings.buttonCancel)
                 }
             }
         )
@@ -567,7 +647,8 @@ fun NovelsScreen(
                             novelNameBeingShared = novelName
                             showShareOptionsDialog = true
                         } else {
-                            Toast.makeText(context, strings.novelEmptyError, Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, strings.novelEmptyError, Toast.LENGTH_SHORT)
+                                .show()
                         }
                     }) {
                         Icon(Icons.Default.Share, contentDescription = strings.menuShare)

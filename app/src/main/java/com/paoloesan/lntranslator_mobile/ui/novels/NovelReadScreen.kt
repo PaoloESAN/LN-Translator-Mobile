@@ -2,6 +2,9 @@ package com.paoloesan.lntranslator_mobile.ui.novels
 
 import android.content.Context
 import android.graphics.BitmapFactory
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -22,7 +25,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -49,15 +51,18 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DriveFolderUpload
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.StayCurrentLandscape
 import androidx.compose.material.icons.filled.StayCurrentPortrait
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Remove
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -80,7 +85,6 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ToggleButton
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -165,6 +169,39 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
         )
     }
     var showConfigDialog by remember { mutableStateOf(false) }
+
+    var showShareOptionsDialog by remember { mutableStateOf(false) }
+    var tempZipFileForSharing by remember { mutableStateOf<java.io.File?>(null) }
+
+    val createDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri ->
+        if (uri != null) {
+            val file = tempZipFileForSharing
+            if (file != null && file.exists()) {
+                coroutineScope.launch {
+                    val success = try {
+                        context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                            java.io.FileInputStream(file).use { inputStream ->
+                                inputStream.copyTo(outputStream)
+                            }
+                        }
+                        true
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        false
+                    }
+                    if (success) {
+                        Toast.makeText(context, strings.shareDialogSaveSuccess, Toast.LENGTH_SHORT)
+                            .show()
+                    } else {
+                        Toast.makeText(context, strings.shareDialogSaveError, Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                }
+            }
+        }
+    }
 
     var pages by remember(novelName) {
         mutableStateOf(
@@ -297,60 +334,6 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                                             isManagingPages = true
                                         }
                                     )
-
-                                    // Show/Hide Images Switch Row
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable {
-                                                showImages = !showImages
-                                                prefs.edit {
-                                                    putBoolean(
-                                                        "reader_show_images",
-                                                        showImages
-                                                    )
-                                                }
-                                            }
-                                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(
-                                                imageVector = if (showImages) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(12.dp))
-                                            Text(
-                                                strings.readerShowImages,
-                                                style = MaterialTheme.typography.bodyMedium
-                                            )
-
-                                        }
-                                        Switch(
-                                            checked = showImages,
-                                            onCheckedChange = { value ->
-                                                showImages = value
-                                                prefs.edit {
-                                                    putBoolean("reader_show_images", value)
-                                                }
-                                            },
-                                            thumbContent = {
-                                                if (showImages) {
-                                                    Icon(
-                                                        imageVector = Icons.Default.Check,
-                                                        contentDescription = null,
-                                                        modifier = Modifier.size(
-                                                            SwitchDefaults.IconSize
-                                                        )
-                                                    )
-                                                }
-                                            }
-                                        )
-                                    }
-
                                     HorizontalDivider(
                                         modifier = Modifier.padding(
                                             MenuDefaults.HorizontalDividerPadding
@@ -446,7 +429,35 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                                             MenuDefaults.HorizontalDividerPadding
                                         )
                                     )
-
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                strings.menuShare,
+                                                style = MaterialTheme.typography.bodyLarge
+                                            )
+                                        },
+                                        leadingIcon = {
+                                            Icon(
+                                                Icons.Default.Share,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        onClick = {
+                                            expandedMenu = false
+                                            val zipFile =
+                                                NovelRepository.exportNovelToZip(context, novelName)
+                                            if (zipFile != null && zipFile.exists()) {
+                                                tempZipFileForSharing = zipFile
+                                                showShareOptionsDialog = true
+                                            } else {
+                                                Toast.makeText(
+                                                    context,
+                                                    strings.novelEmptyError,
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
+                                    )
                                     DropdownMenuItem(
                                         text = {
                                             Text(
@@ -752,6 +763,7 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                 fontSize = readerFontSize,
                 lineSpacing = readerLineSpacing,
                 fontFamily = readerFontFamily,
+                showImages = showImages,
                 onFontSizeChange = { newSize ->
                     readerFontSize = newSize
                     prefs.edit { putInt("reader_font_size", newSize) }
@@ -764,8 +776,41 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                     readerFontFamily = newFontFamily
                     prefs.edit { putString("reader_font_family", newFontFamily.prefValue) }
                 },
+                onShowImagesChange = { value ->
+                    showImages = value
+                    prefs.edit { putBoolean("reader_show_images", value) }
+                },
                 onDismiss = { showConfigDialog = false },
                 strings = strings
+            )
+        }
+
+        if (showShareOptionsDialog) {
+            AlertDialog(
+                onDismissRequest = { showShareOptionsDialog = false },
+                title = { Text(strings.shareDialogTitle) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Text(strings.shareDialogMessage)
+
+                        androidx.compose.material3.Button(
+                            onClick = {
+                                showShareOptionsDialog = false
+                                createDocumentLauncher.launch("novel_${novelName}.zip")
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.DriveFolderUpload, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(strings.shareDialogDownload + " (.zip)")
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showShareOptionsDialog = false }) {
+                        Text(strings.buttonCancel)
+                    }
+                }
             )
         }
 
@@ -1034,9 +1079,11 @@ fun ReaderConfigDialog(
     fontSize: Int,
     lineSpacing: Int,
     fontFamily: OverlayFontOption,
+    showImages: Boolean,
     onFontSizeChange: (Int) -> Unit,
     onLineSpacingChange: (Int) -> Unit,
     onFontFamilyChange: (OverlayFontOption) -> Unit,
+    onShowImagesChange: (Boolean) -> Unit,
     onDismiss: () -> Unit,
     strings: UiStrings
 ) {
@@ -1064,6 +1111,49 @@ fun ReaderConfigDialog(
                     color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.SemiBold
                 )
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                // Show/Hide Images Switch Row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onShowImagesChange(!showImages) }
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = if (showImages) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            strings.readerShowImages,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Switch(
+                        checked = showImages,
+                        onCheckedChange = onShowImagesChange,
+                        thumbContent = {
+                            if (showImages) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        }
+                    )
+                }
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 

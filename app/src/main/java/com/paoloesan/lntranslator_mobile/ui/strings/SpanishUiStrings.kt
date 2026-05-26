@@ -97,7 +97,7 @@ object SpanishUiStrings : UiStrings {
     override val novelDetailsGoToPage = "Editar páginas"
     override val novelDetailsPageNumber = "Página"
     override val novelDetailsPageOf = "de"
-    override val readerShowImages = "Traducir imágenes"
+    override val readerShowImages = "Ver imágenes originales sin traducir"
     override val readerReadingOrientation = "Orientación de lectura"
     override val readerHorizontal = "Horizontal"
     override val readerVertical = "Vertical"
@@ -222,7 +222,7 @@ object SpanishUiStrings : UiStrings {
     override val cdMenuActions = "Acciones de novela"
 
     override val shareDialogTitle = "Compartir Novela"
-    override val shareDialogMessage = "¿Qué deseas hacer con el archivo comprimido (.zip) de la novela?"
+    override val shareDialogMessage = "¿Cómo te gustaría guardar la novela para luego compartirla?"
     override val shareDialogDownload = "Guardar en dispositivo"
     override val shareDialogShare = "Compartir con otras apps"
     override val shareDialogSaveSuccess = "Archivo guardado exitosamente"
