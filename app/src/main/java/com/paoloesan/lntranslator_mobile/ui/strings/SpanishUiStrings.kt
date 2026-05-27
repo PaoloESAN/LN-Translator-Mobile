@@ -97,7 +97,7 @@ object SpanishUiStrings : UiStrings {
     override val novelDetailsGoToPage = "Editar páginas"
     override val novelDetailsPageNumber = "Página"
     override val novelDetailsPageOf = "de"
-    override val readerShowImages = "Ver imágenes originales sin traducir"
+    override val readerShowOriginalContent = "Ver contenido sin traducir"
     override val readerReadingOrientation = "Orientación de lectura"
     override val readerHorizontal = "Horizontal"
     override val readerVertical = "Vertical"

@@ -94,7 +94,7 @@ interface UiStrings {
     val novelDetailsGoToPage: String
     val novelDetailsPageNumber: String
     val novelDetailsPageOf: String
-    val readerShowImages: String
+    val readerShowOriginalContent: String
     val readerReadingOrientation: String
     val readerHorizontal: String
     val readerVertical: String

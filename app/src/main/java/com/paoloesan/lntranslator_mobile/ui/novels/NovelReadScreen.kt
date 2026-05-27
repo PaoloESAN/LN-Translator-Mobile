@@ -146,7 +146,7 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
     var zoomImagePage by remember { mutableStateOf<NovelPage?>(null) }
 
     // Configurable States
-    var showImages by remember { mutableStateOf(prefs.getBoolean("reader_show_images", false)) }
+    var showOriginal by remember { mutableStateOf(prefs.getBoolean("reader_show_original", false)) }
     var isVerticalMode by remember {
         mutableStateOf(
             prefs.getBoolean(
@@ -264,7 +264,7 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
         isManagingPages,
         novelName,
         pages,
-        showImages,
+        showOriginal,
         isVerticalMode,
         expandedMenu
     ) {
@@ -570,7 +570,7 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                             itemsIndexed(pages) { index, page ->
                                 NovelPageItem(
                                     page = page,
-                                    showImages = showImages,
+                                    showOriginal = showOriginal,
                                     isScrollEnabled = false,
                                     readerFontSize = readerFontSize,
                                     readerLineSpacing = readerLineSpacing,
@@ -598,7 +598,7 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                             val page = pages[pageIndex]
                             NovelPageItem(
                                 page = page,
-                                showImages = showImages,
+                                showOriginal = showOriginal,
                                 isScrollEnabled = true,
                                 readerFontSize = readerFontSize,
                                 readerLineSpacing = readerLineSpacing,
@@ -763,7 +763,7 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                 fontSize = readerFontSize,
                 lineSpacing = readerLineSpacing,
                 fontFamily = readerFontFamily,
-                showImages = showImages,
+                showOriginal = showOriginal,
                 onFontSizeChange = { newSize ->
                     readerFontSize = newSize
                     prefs.edit { putInt("reader_font_size", newSize) }
@@ -776,9 +776,9 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                     readerFontFamily = newFontFamily
                     prefs.edit { putString("reader_font_family", newFontFamily.prefValue) }
                 },
-                onShowImagesChange = { value ->
-                    showImages = value
-                    prefs.edit { putBoolean("reader_show_images", value) }
+                onShowOriginalChange = { value ->
+                    showOriginal = value
+                    prefs.edit { putBoolean("reader_show_original", value) }
                 },
                 onDismiss = { showConfigDialog = false },
                 strings = strings
@@ -871,7 +871,7 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
 @Composable
 fun NovelPageItem(
     page: NovelPage,
-    showImages: Boolean,
+    showOriginal: Boolean,
     isScrollEnabled: Boolean,
     readerFontSize: Int,
     readerLineSpacing: Int,
@@ -910,7 +910,7 @@ fun NovelPageItem(
             if (isScrollEnabled) {
                 Spacer(modifier = Modifier.height(72.dp))
             }
-            if ((showImages || isOnlyImage) && page.imagePath != null) {
+            if ((showOriginal || isOnlyImage) && page.imagePath != null) {
                 val bitmap = remember(page.imagePath) {
                     try {
                         BitmapFactory.decodeFile(page.imagePath)
@@ -970,7 +970,7 @@ fun NovelPageItem(
                 }
             }
             if (page.translatedText.isNotBlank()) {
-                if (showImages) {
+                if (showOriginal) {
                     Text(
                         text = strings.readerTranslationHeader,
                         style = MaterialTheme.typography.labelLarge,
@@ -993,7 +993,7 @@ fun NovelPageItem(
                 )
             }
 
-            if (!page.originalText.isNullOrBlank()) {
+            if (!page.originalText.isNullOrBlank() && showOriginal) {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = strings.readerOriginalTextHeader,
@@ -1079,11 +1079,11 @@ fun ReaderConfigDialog(
     fontSize: Int,
     lineSpacing: Int,
     fontFamily: OverlayFontOption,
-    showImages: Boolean,
+    showOriginal: Boolean,
     onFontSizeChange: (Int) -> Unit,
     onLineSpacingChange: (Int) -> Unit,
     onFontFamilyChange: (OverlayFontOption) -> Unit,
-    onShowImagesChange: (Boolean) -> Unit,
+    onShowOriginalChange: (Boolean) -> Unit,
     onDismiss: () -> Unit,
     strings: UiStrings
 ) {
@@ -1114,11 +1114,11 @@ fun ReaderConfigDialog(
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-                // Show/Hide Images Switch Row
+                // Show/Hide Original Content Switch Row
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onShowImagesChange(!showImages) }
+                        .clickable { onShowOriginalChange(!showOriginal) }
                         .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -1128,23 +1128,23 @@ fun ReaderConfigDialog(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = if (showImages) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            imageVector = if (showOriginal) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            strings.readerShowImages,
+                            strings.readerShowOriginalContent,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     Switch(
-                        checked = showImages,
-                        onCheckedChange = onShowImagesChange,
+                        checked = showOriginal,
+                        onCheckedChange = onShowOriginalChange,
                         thumbContent = {
-                            if (showImages) {
+                            if (showOriginal) {
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = null,
