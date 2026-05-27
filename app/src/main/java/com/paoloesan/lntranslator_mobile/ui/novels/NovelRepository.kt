@@ -2,7 +2,13 @@ package com.paoloesan.lntranslator_mobile.ui.novels
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Paint
+import android.graphics.pdf.PdfDocument
 import android.net.Uri
+import android.text.Layout
+import android.text.StaticLayout
+import android.text.TextPaint
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.BufferedInputStream
@@ -273,6 +279,150 @@ object NovelRepository {
         } catch (e: Exception) {
             e.printStackTrace()
             return null
+        }
+    }
+
+    fun exportNovelToPdf(context: Context, novelName: String): File? {
+        val pages = getPages(context, novelName)
+        if (pages.isEmpty()) return null
+
+        val cacheDir = File(context.cacheDir, "shared_novels")
+        if (!cacheDir.exists()) cacheDir.mkdirs()
+        val pdfFile = File(cacheDir, "novel_${novelName}.pdf")
+        if (pdfFile.exists()) pdfFile.delete()
+
+        val pdfDocument = PdfDocument()
+
+        // A4 page size in points (72 points per inch)
+        val pageWidth = 595
+        val pageHeight = 842
+        val margin = 50f
+        val contentWidth = pageWidth - (margin * 2)
+        val maxHeightPerPage = (pageHeight - margin * 2).toInt()
+
+        val textPaint = TextPaint().apply {
+            color = android.graphics.Color.BLACK
+            textSize = 12f
+            isAntiAlias = true
+        }
+
+        var currentPdfPage: PdfDocument.Page? = null
+        var currentY = margin
+
+        fun finishCurrentPage() {
+            currentPdfPage?.let { pdfDocument.finishPage(it) }
+            currentPdfPage = null
+        }
+
+        fun startNewPage() {
+            finishCurrentPage()
+            val pageInfo =
+                PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pdfDocument.pages.size).create()
+            currentPdfPage = pdfDocument.startPage(pageInfo)
+            currentY = margin
+        }
+
+        try {
+            for (page in pages) {
+                val isOnlyImage =
+                    page.translatedText.isBlank() && (page.originalText.isNullOrBlank())
+
+                // 1. Illustration (Image-only page)
+                if (page.imagePath != null && isOnlyImage) {
+                    val bitmap = BitmapFactory.decodeFile(page.imagePath)
+                    if (bitmap != null) {
+                        startNewPage()
+                        val canvas = currentPdfPage!!.canvas
+
+                        val scale = (contentWidth / bitmap.width).coerceAtMost((pageHeight - margin * 2) / bitmap.height)
+                        val drawWidth = bitmap.width * scale
+                        val drawHeight = bitmap.height * scale
+                        val left = (pageWidth - drawWidth) / 2
+                        val top = (pageHeight - drawHeight) / 2
+
+                        canvas.drawBitmap(
+                            bitmap,
+                            null,
+                            android.graphics.RectF(left, top, left + drawWidth, top + drawHeight),
+                            Paint(Paint.FILTER_BITMAP_FLAG)
+                        )
+                        finishCurrentPage()
+                        bitmap.recycle()
+                    }
+                }
+
+                // 2. Text Content (Continuous flow)
+                if (page.translatedText.isNotBlank()) {
+                    val cleanText = page.translatedText
+                        .replace(Regex("\\*\\*(.*?)\\*\\*"), "$1")
+                        .replace(Regex("\\*(.*?)\\*"), "$1")
+                        .replace(Regex("#+\\s+"), "")
+
+                    val staticLayout = StaticLayout.Builder.obtain(
+                        cleanText, 0, cleanText.length, textPaint, contentWidth.toInt()
+                    )
+                        .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                        .setLineSpacing(0f, 1.2f)
+                        .setIncludePad(false)
+                        .build()
+
+                    var currentLine = 0
+                    val totalLines = staticLayout.lineCount
+
+                    while (currentLine < totalLines) {
+                        if (currentPdfPage == null) {
+                            startNewPage()
+                        }
+
+                        val canvas = currentPdfPage!!.canvas
+                        val startLineInThisPage = currentLine
+                        val startYInThisPage = currentY
+
+                        // Determine how many lines fit on the rest of the current page
+                        while (currentLine < totalLines) {
+                            val lineBottom = staticLayout.getLineBottom(currentLine)
+                            val lineTop = staticLayout.getLineTop(startLineInThisPage)
+                            if (currentY + (lineBottom - lineTop) > pageHeight - margin) {
+                                break
+                            }
+                            currentLine++
+                        }
+
+                        if (currentLine > startLineInThisPage) {
+                            // Draw the lines that fit
+                            val clipTop = staticLayout.getLineTop(startLineInThisPage)
+                            val clipBottom = staticLayout.getLineBottom(currentLine - 1)
+                            val heightDrawn = clipBottom - clipTop
+
+                            canvas.save()
+                            canvas.translate(margin, currentY)
+                            canvas.clipRect(0f, 0f, contentWidth, heightDrawn.toFloat())
+                            canvas.translate(0f, -clipTop.toFloat())
+                            staticLayout.draw(canvas)
+                            canvas.restore()
+
+                            currentY += heightDrawn.toFloat()
+                        }
+
+                        // If we didn't finish all lines, it means we reached the bottom of the page
+                        if (currentLine < totalLines) {
+                            startNewPage()
+                        }
+                    }
+                    
+                    // Add a small paragraph spacing between NovelPages
+                    currentY += 12f
+                }
+            }
+
+            finishCurrentPage()
+            pdfDocument.writeTo(FileOutputStream(pdfFile))
+            return pdfFile
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        } finally {
+            pdfDocument.close()
         }
     }
 }

@@ -2,6 +2,7 @@ package com.paoloesan.lntranslator_mobile.ui.novels
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -86,6 +87,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import coil3.compose.AsyncImage
 import com.paoloesan.lntranslator_mobile.LocalStrings
@@ -93,6 +95,7 @@ import com.paoloesan.lntranslator_mobile.LocalTopAppBarActions
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarNavigationIcon
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
+import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
 import kotlinx.coroutines.launch
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -188,159 +191,46 @@ fun NovelsScreen(
     }
 
     var showShareOptionsDialog by remember { mutableStateOf(false) }
-    var tempZipFileForSharing by remember { mutableStateOf<java.io.File?>(null) }
+    var tempFileForSharing by remember { mutableStateOf<java.io.File?>(null) }
     var novelNameBeingShared by remember { mutableStateOf("") }
 
-    val createDocumentLauncher = rememberLauncherForActivityResult(
+    val createZipLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/zip")
     ) { uri ->
-        if (uri != null) {
-            val file = tempZipFileForSharing
-            if (file != null && file.exists()) {
-                scope.launch {
-                    val success = try {
-                        context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                            java.io.FileInputStream(file).use { inputStream ->
-                                inputStream.copyTo(outputStream)
-                            }
-                        }
-                        true
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        false
-                    }
-                    if (success) {
-                        Toast.makeText(context, strings.shareDialogSaveSuccess, Toast.LENGTH_SHORT)
-                            .show()
-                    } else {
-                        Toast.makeText(context, strings.shareDialogSaveError, Toast.LENGTH_SHORT)
-                            .show()
-                    }
-                }
-            }
-        }
+        uri?.let { saveToUri(context, it, tempFileForSharing, scope, strings) }
+    }
+
+    val createPdfLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/pdf")
+    ) { uri ->
+        uri?.let { saveToUri(context, it, tempFileForSharing, scope, strings) }
     }
 
     if (showShareOptionsDialog) {
-        AlertDialog(
-            onDismissRequest = { showShareOptionsDialog = false },
-            title = { Text(strings.shareDialogTitle) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Text(strings.shareDialogMessage)
-
-                    Button(
-                        onClick = {
-                            showShareOptionsDialog = false
-                            createDocumentLauncher.launch("novel_${novelNameBeingShared}.zip")
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Default.DriveFolderUpload, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text(strings.shareDialogDownload + " (.zip)")
-                    }
-
-                    /*
-                    var isMenuExpanded by remember { mutableStateOf(false) }
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentSize(Alignment.Center)
-                    ) {
-                        SplitButtonLayout(
-                            leadingButton = {
-                                SplitButtonDefaults.LeadingButton(
-                                    onClick = {
-                                        showShareOptionsDialog = false
-                                        val file = tempZipFileForSharing
-                                        if (file != null && file.exists()) {
-                                            try {
-                                                val fileUri = FileProvider.getUriForFile(
-                                                    context,
-                                                    "${context.packageName}.fileprovider",
-                                                    file
-                                                )
-                                                val shareIntent =
-                                                    Intent(Intent.ACTION_SEND).apply {
-                                                        type = "application/zip"
-                                                        putExtra(
-                                                            Intent.EXTRA_STREAM,
-                                                            fileUri
-                                                        )
-                                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                                    }
-                                                context.startActivity(
-                                                    Intent.createChooser(
-                                                        shareIntent,
-                                                        strings.menuShare
-                                                    )
-                                                )
-                                            } catch (e: Exception) {
-                                                e.printStackTrace()
-                                                Toast.makeText(
-                                                    context,
-                                                    strings.importError,
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }
-                                        }
-                                    }
-                                ) {
-                                    Icon(Icons.Default.Share, contentDescription = null)
-                                    Spacer(Modifier.width(8.dp))
-                                    Text(strings.menuShare)
-                                }
-                            },
-                            
-                            trailingButton = {
-                                SplitButtonDefaults.TrailingButton(
-                                    checked = isMenuExpanded,
-                                    onCheckedChange = { isMenuExpanded = it },
-                                ) {
-                                    val rotation by animateFloatAsState(
-                                        targetValue = if (isMenuExpanded) 180f else 0f,
-                                        label = "Trailing Icon Rotation"
-                                    )
-                                    Icon(
-                                        Icons.Filled.KeyboardArrowDown,
-                                        modifier = Modifier.graphicsLayer { rotationZ = rotation },
-                                        contentDescription = null
-                                    )
-                                }
-
-                                DropdownMenuPopup(
-                                    expanded = isMenuExpanded,
-                                    onDismissRequest = { isMenuExpanded = false }
-                                ) {
-                                    DropdownMenuGroup(
-                                        shapes = MenuDefaults.groupShape(0, 1)
-                                    ) {
-                                        DropdownMenuItem(
-                                            text = { Text(strings.shareDialogDownload) },
-                                            onClick = {
-                                                isMenuExpanded = false
-                                                showShareOptionsDialog = false
-                                                createDocumentLauncher.launch("novel_${novelNameBeingShared}.zip")
-                                            },
-                                            leadingIcon = {
-                                                Icon(
-                                                    Icons.Default.DriveFolderUpload,
-                                                    contentDescription = null
-                                                )
-                                            }
-                                        )
-                                    }
-                                }
-                            }
-                        )
-                    }
-                    */
+        ShareNovelDialog(
+            novelName = novelNameBeingShared,
+            strings = strings,
+            onDismiss = { showShareOptionsDialog = false },
+            onExportZip = {
+                val zipFile = NovelRepository.exportNovelToZip(context, novelNameBeingShared)
+                if (zipFile != null && zipFile.exists()) {
+                    tempFileForSharing = zipFile
+                    showShareOptionsDialog = false
+                    selectedNovels = emptySet()
+                    createZipLauncher.launch("novel_${novelNameBeingShared}.zip")
+                } else {
+                    Toast.makeText(context, strings.novelEmptyError, Toast.LENGTH_SHORT).show()
                 }
             },
-            confirmButton = {
-                TextButton(onClick = { showShareOptionsDialog = false }) {
-                    Text(strings.buttonCancel)
+            onExportPdf = {
+                val pdfFile = NovelRepository.exportNovelToPdf(context, novelNameBeingShared)
+                if (pdfFile != null && pdfFile.exists()) {
+                    tempFileForSharing = pdfFile
+                    showShareOptionsDialog = false
+                    selectedNovels = emptySet()
+                    createPdfLauncher.launch("novel_${novelNameBeingShared}.pdf")
+                } else {
+                    Toast.makeText(context, strings.novelEmptyError, Toast.LENGTH_SHORT).show()
                 }
             }
         )
@@ -633,7 +523,7 @@ fun NovelsScreen(
                         val novelName = selectedNovels.first()
                         val zipFile = NovelRepository.exportNovelToZip(context, novelName)
                         if (zipFile != null && zipFile.exists()) {
-                            tempZipFileForSharing = zipFile
+                            tempFileForSharing = zipFile
                             novelNameBeingShared = novelName
                             showShareOptionsDialog = true
                         } else {
@@ -1012,6 +902,37 @@ fun NovelsScreen(
                         text = { Text(strings.novelsAddTitle) }
                     )
                 }
+            }
+        }
+    }
+}
+
+private fun saveToUri(
+    context: Context,
+    uri: android.net.Uri,
+    file: java.io.File?,
+    scope: kotlinx.coroutines.CoroutineScope,
+    strings: UiStrings
+) {
+    if (file != null && file.exists()) {
+        scope.launch {
+            val success = try {
+                context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    java.io.FileInputStream(file).use { inputStream ->
+                        inputStream.copyTo(outputStream)
+                    }
+                }
+                true
+            } catch (e: Exception) {
+                e.printStackTrace()
+                false
+            }
+            if (success) {
+                Toast.makeText(context, strings.shareDialogSaveSuccess, Toast.LENGTH_SHORT)
+                    .show()
+            } else {
+                Toast.makeText(context, strings.shareDialogSaveError, Toast.LENGTH_SHORT)
+                    .show()
             }
         }
     }

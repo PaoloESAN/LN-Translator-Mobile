@@ -222,8 +222,10 @@ object EnglishUiStrings : UiStrings {
     override val cdMenuActions = "Novel actions"
 
     override val shareDialogTitle = "Share Novel"
-    override val shareDialogMessage = "What do you want to do with the novel's compressed (.zip) file?"
-    override val shareDialogDownload = "Save to device"
+    override val shareDialogMessage = "How would you like to save the novel for sharing? (.zip files are only compatible with this app)"
+    override val shareDialogDownload = "Save .zip"
+    override val shareDialogPdf = "Save .pdf"
+    override val shareDialogEpub = "Save .epub"
     override val shareDialogShare = "Share with other apps"
     override val shareDialogSaveSuccess = "File saved successfully"
     override val shareDialogSaveError = "Error saving file"

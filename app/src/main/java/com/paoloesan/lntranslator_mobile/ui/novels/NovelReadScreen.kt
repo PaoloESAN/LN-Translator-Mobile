@@ -1,6 +1,7 @@
 package com.paoloesan.lntranslator_mobile.ui.novels
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.BitmapFactory
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -34,6 +35,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -52,6 +54,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DriveFolderUpload
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
@@ -100,6 +103,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -112,6 +116,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import com.paoloesan.lntranslator_mobile.LocalStrings
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarActions
@@ -171,36 +176,18 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
     var showConfigDialog by remember { mutableStateOf(false) }
 
     var showShareOptionsDialog by remember { mutableStateOf(false) }
-    var tempZipFileForSharing by remember { mutableStateOf<java.io.File?>(null) }
+    var tempFileForSharing by remember { mutableStateOf<java.io.File?>(null) }
 
-    val createDocumentLauncher = rememberLauncherForActivityResult(
+    val createZipLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/zip")
     ) { uri ->
-        if (uri != null) {
-            val file = tempZipFileForSharing
-            if (file != null && file.exists()) {
-                coroutineScope.launch {
-                    val success = try {
-                        context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                            java.io.FileInputStream(file).use { inputStream ->
-                                inputStream.copyTo(outputStream)
-                            }
-                        }
-                        true
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        false
-                    }
-                    if (success) {
-                        Toast.makeText(context, strings.shareDialogSaveSuccess, Toast.LENGTH_SHORT)
-                            .show()
-                    } else {
-                        Toast.makeText(context, strings.shareDialogSaveError, Toast.LENGTH_SHORT)
-                            .show()
-                    }
-                }
-            }
-        }
+        uri?.let { saveToUri(context, it, tempFileForSharing, coroutineScope, strings) }
+    }
+
+    val createPdfLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/pdf")
+    ) { uri ->
+        uri?.let { saveToUri(context, it, tempFileForSharing, coroutineScope, strings) }
     }
 
     var pages by remember(novelName) {
@@ -447,7 +434,7 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                                             val zipFile =
                                                 NovelRepository.exportNovelToZip(context, novelName)
                                             if (zipFile != null && zipFile.exists()) {
-                                                tempZipFileForSharing = zipFile
+                                                tempFileForSharing = zipFile
                                                 showShareOptionsDialog = true
                                             } else {
                                                 Toast.makeText(
@@ -785,34 +772,33 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
             )
         }
 
-        if (showShareOptionsDialog) {
-            AlertDialog(
-                onDismissRequest = { showShareOptionsDialog = false },
-                title = { Text(strings.shareDialogTitle) },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Text(strings.shareDialogMessage)
-
-                        androidx.compose.material3.Button(
-                            onClick = {
-                                showShareOptionsDialog = false
-                                createDocumentLauncher.launch("novel_${novelName}.zip")
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.DriveFolderUpload, contentDescription = null)
-                            Spacer(Modifier.width(8.dp))
-                            Text(strings.shareDialogDownload + " (.zip)")
-                        }
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = { showShareOptionsDialog = false }) {
-                        Text(strings.buttonCancel)
-                    }
+    if (showShareOptionsDialog) {
+        ShareNovelDialog(
+            novelName = novelName,
+            strings = strings,
+            onDismiss = { showShareOptionsDialog = false },
+            onExportZip = {
+                val zipFile = NovelRepository.exportNovelToZip(context, novelName)
+                if (zipFile != null && zipFile.exists()) {
+                    tempFileForSharing = zipFile
+                    showShareOptionsDialog = false
+                    createZipLauncher.launch("novel_${novelName}.zip")
+                } else {
+                    Toast.makeText(context, strings.novelEmptyError, Toast.LENGTH_SHORT).show()
                 }
-            )
-        }
+            },
+            onExportPdf = {
+                val pdfFile = NovelRepository.exportNovelToPdf(context, novelName)
+                if (pdfFile != null && pdfFile.exists()) {
+                    tempFileForSharing = pdfFile
+                    showShareOptionsDialog = false
+                    createPdfLauncher.launch("novel_${novelName}.pdf")
+                } else {
+                    Toast.makeText(context, strings.novelEmptyError, Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
+    }
 
         // Pinch-to-zoom full screen dialog
         if (showZoomDialog && zoomImagePage?.imagePath != null) {
@@ -867,6 +853,8 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
         }
     }
 }
+
+
 
 @Composable
 fun NovelPageItem(
@@ -1040,6 +1028,8 @@ fun NovelPageItem(
 }
 
 
+
+
 @Composable
 fun EmptyNovelState(padding: PaddingValues) {
     val strings = LocalStrings.current
@@ -1072,6 +1062,8 @@ fun EmptyNovelState(padding: PaddingValues) {
         )
     }
 }
+
+
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -1392,3 +1384,35 @@ fun ReaderConfigDialog(
         }
     }
 }
+
+private fun saveToUri(
+    context: Context,
+    uri: android.net.Uri,
+    file: java.io.File?,
+    scope: kotlinx.coroutines.CoroutineScope,
+    strings: UiStrings
+) {
+    if (file != null && file.exists()) {
+        scope.launch {
+            val success = try {
+                context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    java.io.FileInputStream(file).use { inputStream ->
+                        inputStream.copyTo(outputStream)
+                    }
+                }
+                true
+            } catch (e: Exception) {
+                e.printStackTrace()
+                false
+            }
+            if (success) {
+                Toast.makeText(context, strings.shareDialogSaveSuccess, Toast.LENGTH_SHORT)
+                    .show()
+            } else {
+                Toast.makeText(context, strings.shareDialogSaveError, Toast.LENGTH_SHORT)
+                    .show()
+            }
+        }
+    }
+}
+

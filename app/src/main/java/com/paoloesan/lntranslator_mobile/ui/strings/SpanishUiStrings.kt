@@ -222,8 +222,10 @@ object SpanishUiStrings : UiStrings {
     override val cdMenuActions = "Acciones de novela"
 
     override val shareDialogTitle = "Compartir Novela"
-    override val shareDialogMessage = "¿Cómo te gustaría guardar la novela para luego compartirla?"
-    override val shareDialogDownload = "Guardar en dispositivo"
+    override val shareDialogMessage = "¿Cómo quieres guardar la novela para compartirla? (El formato .zip solo funciona para esta app)"
+    override val shareDialogDownload = "Guardar .zip"
+    override val shareDialogPdf = "Guardar .pdf"
+    override val shareDialogEpub = "Guardar .epub"
     override val shareDialogShare = "Compartir con otras apps"
     override val shareDialogSaveSuccess = "Archivo guardado exitosamente"
     override val shareDialogSaveError = "Error al guardar el archivo"

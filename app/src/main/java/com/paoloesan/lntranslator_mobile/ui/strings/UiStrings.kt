@@ -212,6 +212,8 @@ interface UiStrings {
     val shareDialogTitle: String
     val shareDialogMessage: String
     val shareDialogDownload: String
+    val shareDialogPdf: String
+    val shareDialogEpub: String
     val shareDialogShare: String
     val shareDialogSaveSuccess: String
     val shareDialogSaveError: String
