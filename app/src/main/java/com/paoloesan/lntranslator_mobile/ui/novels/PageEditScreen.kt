@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -284,15 +285,15 @@ fun PageManagementScreen(
                                                                 itemHeights[pagesList[nextIndex].id]
                                                                     ?: currentHeight
                                                             if (dragOffsetY > nextHeight * 0.7f) {
-                                                                    val listCopy =
-                                                                        pagesList.toMutableList()
-                                                                    val item = listCopy.removeAt(
-                                                                        currentIndex
-                                                                    )
-                                                                    listCopy.add(nextIndex, item)
-                                                                    pagesList = listCopy
-                                                                    activeDragIndex = nextIndex
-                                                                    dragOffsetY -= nextHeight
+                                                                val listCopy =
+                                                                    pagesList.toMutableList()
+                                                                val item = listCopy.removeAt(
+                                                                    currentIndex
+                                                                )
+                                                                listCopy.add(nextIndex, item)
+                                                                pagesList = listCopy
+                                                                activeDragIndex = nextIndex
+                                                                dragOffsetY -= nextHeight
                                                             }
                                                         }
                                                     } else if (dragOffsetY < 0f) {
@@ -302,15 +303,15 @@ fun PageManagementScreen(
                                                                 itemHeights[pagesList[prevIndex].id]
                                                                     ?: currentHeight
                                                             if (dragOffsetY < -prevHeight * 0.7f) {
-                                                                    val listCopy =
-                                                                        pagesList.toMutableList()
-                                                                    val item = listCopy.removeAt(
-                                                                        currentIndex
-                                                                    )
-                                                                    listCopy.add(prevIndex, item)
-                                                                    pagesList = listCopy
-                                                                    activeDragIndex = prevIndex
-                                                                    dragOffsetY += prevHeight
+                                                                val listCopy =
+                                                                    pagesList.toMutableList()
+                                                                val item = listCopy.removeAt(
+                                                                    currentIndex
+                                                                )
+                                                                listCopy.add(prevIndex, item)
+                                                                pagesList = listCopy
+                                                                activeDragIndex = prevIndex
+                                                                dragOffsetY += prevHeight
                                                             }
                                                         }
                                                     }
@@ -341,7 +342,10 @@ fun PageManagementScreen(
                                     Icon(
                                         imageVector = Icons.Default.Reorder,
                                         contentDescription = strings.pageManagementDragToReorder,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp),
+                                        modifier = Modifier.padding(
+                                            horizontal = 8.dp,
+                                            vertical = 16.dp
+                                        ),
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
@@ -476,7 +480,8 @@ fun PageManagementScreen(
                                                         dialogTranslatedText = page.translatedText
                                                         dialogOriginalText = page.originalText ?: ""
                                                         dialogImagePath = page.imagePath
-                                                        dialogTitle = strings.pageManagementEditPageTitle
+                                                        dialogTitle =
+                                                            strings.pageManagementEditPageTitle
                                                         dialogOnlyImage =
                                                             page.translatedText.isBlank() && (page.originalText.isNullOrBlank()) && page.imagePath != null
                                                         showPageDialog = true
@@ -637,20 +642,24 @@ fun PageManagementScreen(
                                         modifier = Modifier.fillMaxSize(),
                                         contentScale = ContentScale.Crop
                                     )
-                                    IconButton(
-                                        onClick = { dialogImagePath = null },
+                                    Box(
                                         modifier = Modifier
                                             .align(Alignment.TopEnd)
                                             .padding(8.dp)
+                                            .size(28.dp)
                                             .background(
                                                 color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                                                shape = RoundedCornerShape(4.dp)
+                                                shape = CircleShape
                                             )
+                                            .clip(CircleShape)
+                                            .clickable { dialogImagePath = null },
+                                        contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Close,
                                             contentDescription = strings.pageManagementRemoveImage,
-                                            tint = MaterialTheme.colorScheme.error
+                                            tint = MaterialTheme.colorScheme.error,
+                                            modifier = Modifier.size(18.dp)
                                         )
                                     }
                                 }
