@@ -295,7 +295,7 @@ fun NovelsScreen(
                                         Icon(
                                             imageVector = Icons.Default.Close,
                                             contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.error,
+                                            tint = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier.size(18.dp)
                                         )
                                     }
@@ -313,6 +313,7 @@ fun NovelsScreen(
             },
             confirmButton = {
                 Button(
+                    enabled = newNovelName.trim().isNotEmpty(),
                     onClick = {
                         val trimmed = newNovelName.trim()
                         if (trimmed.isNotBlank() && !novelsList.contains(trimmed)) {
@@ -439,7 +440,7 @@ fun NovelsScreen(
                                         Icon(
                                             imageVector = Icons.Default.Close,
                                             contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.error,
+                                            tint = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier.size(18.dp)
                                         )
                                     }
@@ -457,6 +458,7 @@ fun NovelsScreen(
             },
             confirmButton = {
                 Button(
+                    enabled = editName.trim().isNotEmpty(),
                     onClick = {
                         val trimmed = editName.trim()
                         if (trimmed.isNotBlank()) {
