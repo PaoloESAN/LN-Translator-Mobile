@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -93,9 +92,22 @@ import com.paoloesan.lntranslator_mobile.LocalTopAppBarNavigationIcon
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
 import com.paoloesan.lntranslator_mobile.ui.novels.components.NovelPage
+import com.paoloesan.lntranslator_mobile.ui.novels.components.PageEditDialog
+import android.graphics.Bitmap
 import com.paoloesan.lntranslator_mobile.ui.novels.components.NovelRepository
 import java.io.File
 import java.io.FileOutputStream
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.material.icons.rounded.Crop
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -224,14 +236,18 @@ fun PageManagementScreen(
                     }
                 }
             } else {
-                val navigationBarsPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                val navigationBarsPadding =
+                    WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
                 LazyColumn(
                     state = lazyListState,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp + navigationBarsPadding)
+                    contentPadding = PaddingValues(
+                        top = 8.dp,
+                        bottom = 80.dp + navigationBarsPadding
+                    )
                 ) {
                     items(pagesList.size, key = { index -> pagesList[index].id }) { index ->
                         val page = pagesList[index]
@@ -594,190 +610,53 @@ fun PageManagementScreen(
 
     // Unified Add/Insert/Edit Dialog
     if (showPageDialog) {
-        val pickImageLauncher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.GetContent()
-        ) { uri: Uri? ->
-            if (uri != null) {
-                val imagePath = saveImageUri(uri)
-                if (imagePath != null) {
-                    dialogImagePath = imagePath
-                }
-            }
-        }
-
-        AlertDialog(
-            onDismissRequest = { showPageDialog = false },
-            title = { Text(dialogTitle) },
-            text = {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState()) // Fixed: removed invalid argument
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { dialogOnlyImage = !dialogOnlyImage }
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = strings.pageManagementOnlyImage,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        Switch(
-                            checked = dialogOnlyImage,
-                            onCheckedChange = { dialogOnlyImage = it }
-                        )
-                    }
-
-                    if (!dialogOnlyImage) {
-                        OutlinedTextField(
-                            value = dialogTranslatedText,
-                            onValueChange = { dialogTranslatedText = it },
-                            label = { Text(strings.pageManagementTranslatedTextLabel) },
-                            modifier = Modifier.fillMaxWidth(),
-                            minLines = 3
-                        )
-                        OutlinedTextField(
-                            value = dialogOriginalText,
-                            onValueChange = { dialogOriginalText = it },
-                            label = { Text(strings.pageManagementOriginalTextLabel) },
-                            modifier = Modifier.fillMaxWidth(),
-                            minLines = 2
-                        )
-                    }
-
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp)
-                    ) {
-                        Text(
-                            text = strings.pageManagementPageImageLabel,
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        if (dialogImagePath != null) {
-                            val bitmap = remember(dialogImagePath) {
-                                try {
-                                    BitmapFactory.decodeFile(dialogImagePath)
-                                } catch (_: Exception) {
-                                    null
-                                }
-                            }
-                            bitmap?.let {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(150.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(Color.LightGray)
-                                ) {
-                                    Image(
-                                        bitmap = it.asImageBitmap(),
-                                        contentDescription = null,
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                    Box(
-                                        modifier = Modifier
-                                            .align(Alignment.TopEnd)
-                                            .padding(8.dp)
-                                            .size(28.dp)
-                                            .background(
-                                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                                                shape = CircleShape
-                                            )
-                                            .clip(CircleShape)
-                                            .clickable { dialogImagePath = null },
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Close,
-                                            contentDescription = strings.pageManagementRemoveImage,
-                                            tint = MaterialTheme.colorScheme.error,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
-                                }
-                            }
-                        } else {
-                            OutlinedButton(
-                                onClick = { pickImageLauncher.launch("image/*") },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(Icons.Default.Image, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(strings.pageManagementSelectImage)
+        PageEditDialog(
+            novelName = novelName,
+            dialogTitle = dialogTitle,
+            initialTranslatedText = dialogTranslatedText,
+            initialOriginalText = dialogOriginalText,
+            initialImagePath = dialogImagePath,
+            initialOnlyImage = dialogOnlyImage,
+            onDismiss = { showPageDialog = false },
+            onSave = { translatedText, originalText, imagePath, onlyImage ->
+                val listCopy = pagesList.toMutableList()
+                if (dialogPageId != null) {
+                    // Editing existing page
+                    val index = listCopy.indexOfFirst { it.id == dialogPageId }
+                    if (index != -1) {
+                        val oldPage = listCopy[index]
+                        if (oldPage.imagePath != null && oldPage.imagePath != imagePath) {
+                            try {
+                                File(oldPage.imagePath).delete()
+                            } catch (e: Exception) {
+                                e.printStackTrace()
                             }
                         }
+                        listCopy[index] = oldPage.copy(
+                            translatedText = translatedText,
+                            originalText = originalText.takeIf { it.isNotBlank() },
+                            imagePath = imagePath
+                        )
                     }
-
+                } else {
+                    // Inserting/Adding new page
+                    val newPage = NovelPage(
+                        translatedText = translatedText,
+                        originalText = originalText.takeIf { it.isNotBlank() },
+                        imagePath = imagePath
+                    )
+                    if (dialogInsertIndex in 0..listCopy.size) {
+                        listCopy.add(dialogInsertIndex, newPage)
+                    } else {
+                        listCopy.add(newPage)
+                    }
                 }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val textToSave = if (dialogOnlyImage) "" else dialogTranslatedText
-                        val originalToSave = if (dialogOnlyImage) "" else dialogOriginalText
-                        if (textToSave.isNotBlank() || dialogImagePath != null) {
-                            val listCopy = pagesList.toMutableList()
-                            if (dialogPageId != null) {
-                                // Editing existing page
-                                val index = listCopy.indexOfFirst { it.id == dialogPageId }
-                                if (index != -1) {
-                                    val oldPage = listCopy[index]
-                                    if (oldPage.imagePath != null && oldPage.imagePath != dialogImagePath) {
-                                        try {
-                                            File(oldPage.imagePath).delete()
-                                        } catch (e: Exception) {
-                                            e.printStackTrace()
-                                        }
-                                    }
-                                    listCopy[index] = oldPage.copy(
-                                        translatedText = textToSave,
-                                        originalText = originalToSave.takeIf { it.isNotBlank() },
-                                        imagePath = dialogImagePath
-                                    )
-                                }
-                            } else {
-                                // Inserting/Adding new page
-                                val newPage = NovelPage(
-                                    translatedText = textToSave,
-                                    originalText = originalToSave.takeIf { it.isNotBlank() },
-                                    imagePath = dialogImagePath
-                                )
-                                if (dialogInsertIndex in 0..listCopy.size) {
-                                    listCopy.add(dialogInsertIndex, newPage)
-                                } else {
-                                    listCopy.add(newPage)
-                                }
-                            }
-                            pagesList = listCopy
-                            NovelRepository.savePages(context, novelName, listCopy)
-                            showPageDialog = false
-                        }
-                    },
-                    enabled = if (dialogOnlyImage) dialogImagePath != null else (dialogTranslatedText.isNotBlank() || dialogImagePath != null)
-                ) {
-                    Text(strings.buttonSave)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showPageDialog = false }) {
-                    Text(strings.buttonCancel)
-                }
+                pagesList = listCopy
+                NovelRepository.savePages(context, novelName, listCopy)
+                showPageDialog = false
             }
-
         )
     }
-
     if (pageToDeleteIndex != null) {
         AlertDialog(
             onDismissRequest = { pageToDeleteIndex = null },
@@ -818,3 +697,5 @@ fun PageManagementScreen(
         )
     }
 }
+
+

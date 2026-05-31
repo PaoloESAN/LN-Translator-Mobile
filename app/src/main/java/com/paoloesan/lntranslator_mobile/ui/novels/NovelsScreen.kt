@@ -94,6 +94,7 @@ import com.paoloesan.lntranslator_mobile.LocalTopAppBarActions
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarNavigationIcon
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
 import com.paoloesan.lntranslator_mobile.ui.novels.components.NovelRepository
 import com.paoloesan.lntranslator_mobile.ui.novels.components.ShareNovelDialog
 import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
@@ -113,6 +114,7 @@ fun NovelsScreen(
     val topBarActions = LocalTopAppBarActions.current
     val topBarNavIcon = LocalTopAppBarNavigationIcon.current
     val topBarColors = LocalTopAppBarColors.current
+    val topBarVisible = LocalTopAppBarVisible.current
     val currentRoute = LocalCurrentRoute.current
 
     var savedNovelsString by remember { mutableStateOf(prefs.getString("saved_novels", "") ?: "") }
@@ -545,6 +547,7 @@ fun NovelsScreen(
 
     LaunchedEffect(selectedNovels, isGridView, coverUpdateTrigger, currentRoute) {
         if (currentRoute == "novels") {
+            topBarVisible.value = true
             if (selectedNovels.isNotEmpty()) {
                 topBarTitle.value = { Text(strings.novelsSelected(selectedNovels.size)) }
                 topBarNavIcon.value = {

@@ -59,6 +59,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.StayCurrentLandscape
 import androidx.compose.material.icons.filled.StayCurrentPortrait
+import androidx.compose.material.icons.rounded.Crop
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -79,6 +80,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.ToggleButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -113,6 +115,7 @@ import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarNavigationIcon
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
+import com.paoloesan.lntranslator_mobile.ui.novels.components.ImageCropDialog
 import com.paoloesan.lntranslator_mobile.ui.novels.components.NovelPage
 import com.paoloesan.lntranslator_mobile.ui.novels.components.NovelRepository
 import com.paoloesan.lntranslator_mobile.ui.novels.components.ReaderConfigDialog
@@ -130,11 +133,20 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
     val context = LocalContext.current
     val strings = LocalStrings.current
 
+    // Cropper States
+    var showCropDialog by remember { mutableStateOf(false) }
+
     val topBarTitle = LocalTopAppBarTitle.current
     val topBarActions = LocalTopAppBarActions.current
     val topBarNavIcon = LocalTopAppBarNavigationIcon.current
     val topBarColors = LocalTopAppBarColors.current
     val topBarVisible = LocalTopAppBarVisible.current
+
+    DisposableEffect(Unit) {
+        onDispose {
+            topBarVisible.value = true
+        }
+    }
 
     val prefs = remember { context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE) }
     val coroutineScope = rememberCoroutineScope()
@@ -1081,10 +1093,71 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                                 }
                             }
                         }
+
+                        AnimatedVisibility(
+                            visible = isUiVisible,
+                            enter = fadeIn(animationSpec = tween(150)),
+                            exit = fadeOut(animationSpec = tween(150)),
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(16.dp)
+                                .statusBarsPadding()
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(percent = 50),
+                                color = Color.Black.copy(alpha = 0.5f),
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                IconButton(onClick = {
+                                    showCropDialog = true
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Crop,
+                                        contentDescription = "Recortar",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
+    }
+
+    // Fullscreen Crop Dialog
+    if (showCropDialog && zoomImagePage?.imagePath != null) {
+        ImageCropDialog(
+            novelName = novelName,
+            imagePath = zoomImagePage!!.imagePath!!,
+            onDismiss = { showCropDialog = false },
+            onConfirm = { croppedPath ->
+                // Update the page in database and state list
+                if (zoomImagePage!!.id == "cover_page") {
+                    val coverFile = NovelRepository.getCoverFile(context, novelName)
+                    val tempFile = java.io.File(croppedPath)
+                    tempFile.copyTo(coverFile, overwrite = true)
+                    tempFile.delete()
+                } else {
+                    val updatedPages = pages.map { page ->
+                        if (page.id == zoomImagePage!!.id) {
+                            page.copy(imagePath = croppedPath)
+                        } else {
+                            page
+                        }
+                    }
+                    NovelRepository.savePages(context, novelName, updatedPages)
+                }
+
+                // Reload pages to trigger UI state update
+                pages = NovelRepository.getPages(context, novelName)
+
+                // Update zoomImagePage local state to show the new cropped image!
+                zoomImagePage = pages.firstOrNull { it.id == zoomImagePage!!.id }
+                showCropDialog = false
+            }
+        )
     }
 }
 
