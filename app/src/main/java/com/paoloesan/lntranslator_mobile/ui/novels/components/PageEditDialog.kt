@@ -124,9 +124,12 @@ fun PageEditDialog(
 
 
 
+    var isLaunchingPicker by remember { mutableStateOf(false) }
+
     val pickImageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
+        isLaunchingPicker = false
         if (uri != null) {
             val imagePath = saveImageUri(uri)
             if (imagePath != null) {
@@ -264,7 +267,12 @@ fun PageEditDialog(
                         }
                     } else {
                         OutlinedButton(
-                            onClick = { pickImageLauncher.launch("image/*") },
+                            onClick = {
+                                if (!isLaunchingPicker) {
+                                    isLaunchingPicker = true
+                                    pickImageLauncher.launch("image/*")
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Icon(Icons.Outlined.Crop, contentDescription = null)

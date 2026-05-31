@@ -131,9 +131,11 @@ fun NovelsScreen(
     var coverUpdateTrigger by remember { mutableIntStateOf(0) }
 
     var novelCoverUri by remember { mutableStateOf<Uri?>(null) }
+    var isLaunchingPicker by remember { mutableStateOf(false) }
     val coverPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
+        isLaunchingPicker = false
         novelCoverUri = uri
     }
 
@@ -272,7 +274,12 @@ fun NovelsScreen(
                                 .aspectRatio(0.7f)
                                 .clip(MaterialTheme.shapes.medium)
                                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                                .clickable { coverPickerLauncher.launch("image/*") },
+                                .clickable {
+                                    if (!isLaunchingPicker) {
+                                        isLaunchingPicker = true
+                                        coverPickerLauncher.launch("image/*")
+                                    }
+                                },
                             contentAlignment = Alignment.Center
                         ) {
                             if (novelCoverUri != null) {
@@ -380,7 +387,12 @@ fun NovelsScreen(
                                 .aspectRatio(0.7f)
                                 .clip(MaterialTheme.shapes.medium)
                                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                                .clickable { coverPickerLauncher.launch("image/*") },
+                                .clickable {
+                                    if (!isLaunchingPicker) {
+                                        isLaunchingPicker = true
+                                        coverPickerLauncher.launch("image/*")
+                                    }
+                                },
                             contentAlignment = Alignment.Center
                         ) {
                             val coverFile =
