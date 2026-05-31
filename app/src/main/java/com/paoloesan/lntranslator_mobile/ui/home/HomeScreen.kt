@@ -7,8 +7,11 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,11 +31,14 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -51,11 +57,13 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.toShape
@@ -80,6 +88,8 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.navigation.NavController
@@ -94,6 +104,7 @@ import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
 import com.paoloesan.lntranslator_mobile.service.OverlayService
 import com.paoloesan.lntranslator_mobile.service.ScreenCaptureService
 import com.paoloesan.lntranslator_mobile.ui.novels.components.NovelRepository
+import com.paoloesan.lntranslator_mobile.ui.novels.components.SwipeDismissZoomImage
 import com.paoloesan.lntranslator_mobile.ui.prompts.PromptDialog
 import kotlinx.coroutines.delay
 
@@ -162,10 +173,13 @@ fun HomeScreen(
     var showAddNovelDialog by remember { mutableStateOf(false) }
     var newNovelName by remember { mutableStateOf("") }
     var novelCoverUri by remember { mutableStateOf<Uri?>(null) }
+    var isLaunchingPicker by remember { mutableStateOf(false) }
+    var showFullImage by remember { mutableStateOf(false) }
 
     val coverPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
+        isLaunchingPicker = false
         novelCoverUri = uri
     }
     val puedeGuardarPrompt = textPrompt.trim().isNotBlank()
@@ -280,7 +294,12 @@ fun HomeScreen(
                                 .aspectRatio(0.7f)
                                 .clip(MaterialTheme.shapes.medium)
                                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                                .clickable { coverPickerLauncher.launch("image/*") },
+                                .clickable {
+                                    if (!isLaunchingPicker) {
+                                        isLaunchingPicker = true
+                                        coverPickerLauncher.launch("image/*")
+                                    }
+                                },
                             contentAlignment = Alignment.Center
                         ) {
                             if (novelCoverUri != null) {
@@ -387,7 +406,8 @@ fun HomeScreen(
                     modifier = Modifier
                         .sizeIn(maxHeight = 200.dp, maxWidth = 200.dp)
                         .aspectRatio(0.7f)
-                        .clip(MaterialTheme.shapes.medium),
+                        .clip(MaterialTheme.shapes.medium)
+                        .clickable { showFullImage = true },
                     contentScale = ContentScale.Crop
                 )
             } else {
@@ -400,6 +420,56 @@ fun HomeScreen(
                         .clip(MaterialShapes.Clover4Leaf.toShape()),
                     contentScale = ContentScale.Crop
                 )
+            }
+        }
+
+        // Fullscreen Image Viewer for the cover
+        if (showFullImage && currentNovelCover?.exists() == true) {
+            var isUiVisible by remember { mutableStateOf(true) }
+            Dialog(
+                onDismissRequest = { showFullImage = false },
+                properties = DialogProperties(usePlatformDefaultWidth = false)
+            ) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = Color.Transparent
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        SwipeDismissZoomImage(
+                            imageUrl = currentNovelCover,
+                            onDismiss = { showFullImage = false },
+                            onClick = { isUiVisible = !isUiVisible },
+                            onZoomedChanged = { zoomed ->
+                                isUiVisible = !zoomed
+                            }
+                        )
+
+                        this@Column.AnimatedVisibility(
+                            visible = isUiVisible,
+                            enter = fadeIn(animationSpec = tween(150)),
+                            exit = fadeOut(animationSpec = tween(150)),
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .padding(16.dp)
+                                .statusBarsPadding()
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(percent = 50),
+                                color = Color.Black.copy(alpha = 0.5f),
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                IconButton(onClick = { showFullImage = false }) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                        contentDescription = "Cerrar",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
