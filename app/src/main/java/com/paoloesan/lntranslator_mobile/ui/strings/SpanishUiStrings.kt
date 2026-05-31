@@ -133,6 +133,7 @@ object SpanishUiStrings : UiStrings {
     override val pageManagementCoverPage = "Portada"
     override val readerSearchPlaceholder = "Buscar en la novela..."
     override val readerSearchNoResults = "No se encontraron resultados"
+    override val readerInvertNavigation = "Invertir navegación horizontal"
 
     override val deleteNovelConfirmationTitle = "¿Eliminar novela?"
     override val deleteNovelConfirmationMessage: (Int) -> String = { count ->

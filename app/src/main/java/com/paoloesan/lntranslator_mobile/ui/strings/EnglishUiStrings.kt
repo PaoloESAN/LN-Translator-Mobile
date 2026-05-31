@@ -133,6 +133,7 @@ object EnglishUiStrings : UiStrings {
     override val pageManagementCoverPage = "Cover"
     override val readerSearchPlaceholder = "Search in novel..."
     override val readerSearchNoResults = "No results found"
+    override val readerInvertNavigation = "Invert horizontal navigation"
 
     override val deleteNovelConfirmationTitle = "Delete novel?"
     override val deleteNovelConfirmationMessage: (Int) -> String = { count ->

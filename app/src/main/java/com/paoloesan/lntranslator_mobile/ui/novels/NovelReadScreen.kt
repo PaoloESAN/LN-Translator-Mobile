@@ -59,6 +59,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.StayCurrentLandscape
 import androidx.compose.material.icons.filled.StayCurrentPortrait
 import androidx.compose.material.icons.filled.Visibility
@@ -152,6 +153,7 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
 
     // Configurable States
     var showOriginal by remember { mutableStateOf(prefs.getBoolean("reader_show_original", false)) }
+    var invertHorizontalNav by remember { mutableStateOf(prefs.getBoolean("reader_invert_horizontal_nav", false)) }
     var isVerticalMode by remember {
         mutableStateOf(
             prefs.getBoolean(
@@ -271,12 +273,22 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
             if (showSystemBars) {
                 if (isSearchActive) {
                     topBarTitle.value = {
+                        val focusRequester = remember { FocusRequester() }
+                        val keyboardController = LocalSoftwareKeyboardController.current
+                        LaunchedEffect(Unit) {
+                            try {
+                                focusRequester.requestFocus()
+                                keyboardController?.show()
+                            } catch (_: Exception) {}
+                        }
                         TextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
                             placeholder = { Text(strings.readerSearchPlaceholder) },
                             singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(focusRequester),
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = Color.Transparent,
                                 unfocusedContainerColor = Color.Transparent,
@@ -643,7 +655,8 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                         HorizontalPager(
                             state = pagerState,
                             modifier = Modifier.fillMaxSize(),
-                            beyondViewportPageCount = 1
+                            beyondViewportPageCount = 1,
+                            reverseLayout = invertHorizontalNav
                         ) { pageIndex ->
                             val page = pages[pageIndex]
                             NovelPageItem(
@@ -978,6 +991,11 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                     showOriginal = value
                     prefs.edit { putBoolean("reader_show_original", value) }
                 },
+                invertHorizontalNav = invertHorizontalNav,
+                onInvertHorizontalNavChange = { value ->
+                    invertHorizontalNav = value
+                    prefs.edit { putBoolean("reader_invert_horizontal_nav", value) }
+                },
                 onDismiss = { showConfigDialog = false },
                 strings = strings
             )
@@ -1283,6 +1301,8 @@ fun ReaderConfigDialog(
     onLineSpacingChange: (Int) -> Unit,
     onFontFamilyChange: (OverlayFontOption) -> Unit,
     onShowOriginalChange: (Boolean) -> Unit,
+    invertHorizontalNav: Boolean,
+    onInvertHorizontalNavChange: (Boolean) -> Unit,
     onDismiss: () -> Unit,
     strings: UiStrings
 ) {
@@ -1310,50 +1330,6 @@ fun ReaderConfigDialog(
                     color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.SemiBold
                 )
-
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-                // Show/Hide Original Content Switch Row
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onShowOriginalChange(!showOriginal) }
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = if (showOriginal) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            strings.readerShowOriginalContent,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    Switch(
-                        checked = showOriginal,
-                        onCheckedChange = onShowOriginalChange,
-                        thumbContent = {
-                            if (showOriginal) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                                )
-                            }
-                        }
-                    )
-                }
-
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
                 Text(
@@ -1573,6 +1549,90 @@ fun ReaderConfigDialog(
                             )
                         }
                     }
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                // Show/Hide Original Content Switch Row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onShowOriginalChange(!showOriginal) }
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = if (showOriginal) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            strings.readerShowOriginalContent,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Switch(
+                        checked = showOriginal,
+                        onCheckedChange = onShowOriginalChange,
+                        thumbContent = {
+                            if (showOriginal) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        }
+                    )
+                }
+
+                // Invert Horizontal Navigation Switch Row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onInvertHorizontalNavChange(!invertHorizontalNav) }
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SwapHoriz,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            strings.readerInvertNavigation,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Switch(
+                        checked = invertHorizontalNav,
+                        onCheckedChange = onInvertHorizontalNavChange,
+                        thumbContent = {
+                            if (invertHorizontalNav) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        }
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))

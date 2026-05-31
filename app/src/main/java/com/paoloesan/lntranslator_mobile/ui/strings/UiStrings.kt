@@ -130,6 +130,7 @@ interface UiStrings {
     val pageManagementCoverPage: String
     val readerSearchPlaceholder: String
     val readerSearchNoResults: String
+    val readerInvertNavigation: String
 
     val deleteNovelConfirmationTitle: String
     val deleteNovelConfirmationMessage: (Int) -> String
