@@ -190,6 +190,10 @@ object EnglishUiStrings : UiStrings {
     override val configSideTouchMarginLabel = "Side touch space"
     override val configBack = "Back"
     override val configClose = "Close Overlay"
+    override val configSaveIllustration = "Save current screen"
+    override val configIllustrationSavedSuccess = "Illustration saved successfully"
+    override val configIllustrationSavedError = "Error: no active novel selected"
+    override val configSavedLabel = "Saved"
 
     // Notifications
     override val notifTitle = "Translator Active"

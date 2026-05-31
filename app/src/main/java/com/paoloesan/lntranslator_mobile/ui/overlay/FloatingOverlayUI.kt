@@ -67,7 +67,8 @@ fun FloatingOverlayUI(
     onPreload: () -> Unit = {},
     uiState: TranslationUiState = TranslationUiState(),
     onAnterior: () -> Unit = {},
-    onSiguiente: () -> Unit = {}
+    onSiguiente: () -> Unit = {},
+    onSaveIllustration: () -> Unit = {}
 ) {
     val logTag = "OverlayDiag"
     val strings = LocalStrings.current
@@ -309,6 +310,10 @@ fun FloatingOverlayUI(
                             currentFontFamily = newFontFamily
                             prefs.edit { putString("overlay_font_family", newFontFamily.prefValue) }
                         },
+                        hasActiveNovel = uiState.selectedNovel != null,
+                        isSavingIllustration = uiState.isSavingIllustration,
+                        showIllustrationSavedCheck = uiState.showIllustrationSavedCheck,
+                        onSaveIllustration = onSaveIllustration,
                         onClose = onClose,
                         onBack = { configOpen = false }
                     )

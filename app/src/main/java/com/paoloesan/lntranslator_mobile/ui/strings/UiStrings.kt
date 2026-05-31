@@ -179,6 +179,10 @@ interface UiStrings {
     val configSideTouchMarginLabel: String
     val configBack: String
     val configClose: String
+    val configSaveIllustration: String
+    val configIllustrationSavedSuccess: String
+    val configIllustrationSavedError: String
+    val configSavedLabel: String
 
     // Notifications
     val notifTitle: String

@@ -16,7 +16,9 @@ data class TranslationUiState(
     val indiceActual: Int = -1,
     val isLoading: Boolean = false,
     val error: String? = null,
-    val selectedNovel: String? = null
+    val selectedNovel: String? = null,
+    val isSavingIllustration: Boolean = false,
+    val showIllustrationSavedCheck: Boolean = false
 ) {
     val textoActual: String?
         get() = if (indiceActual >= 0 && indiceActual < traducciones.size) {
@@ -116,6 +118,31 @@ class TranslationController(
             _uiState.value = _uiState.value.copy(
                 indiceActual = _uiState.value.indiceActual + 1
             )
+        }
+    }
+
+    fun setSavingIllustration(saving: Boolean) {
+        _uiState.value = _uiState.value.copy(isSavingIllustration = saving)
+    }
+
+    fun guardarIlustracion(bitmap: Bitmap, scope: LifecycleCoroutineScope, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val novelName = _uiState.value.selectedNovel
+        if (novelName == null) {
+            onError("Error: selectedNovel is null")
+            return
+        }
+        scope.launch {
+            try {
+                NovelRepository.saveTranslation(context, novelName, "", bitmap = bitmap)
+                onSuccess()
+                _uiState.value = _uiState.value.copy(showIllustrationSavedCheck = true)
+                scope.launch {
+                    kotlinx.coroutines.delay(2000)
+                    _uiState.value = _uiState.value.copy(showIllustrationSavedCheck = false)
+                }
+            } catch (e: Exception) {
+                onError(e.localizedMessage ?: "Error")
+            }
         }
     }
 

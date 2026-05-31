@@ -205,7 +205,10 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
                             },
                             uiState = uiState,
                             onAnterior = { controller.irAnterior() },
-                            onSiguiente = { controller.irSiguiente() }
+                            onSiguiente = { controller.irSiguiente() },
+                            onSaveIllustration = {
+                                processSaveIllustration()
+                            }
                         )
                     }
                 }
@@ -219,6 +222,50 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
         captureScreen { bitmap ->
             bitmap?.let {
                 controller.traducirCaptura(it, lifecycleScope)
+            }
+        }
+    }
+
+    private fun processSaveIllustration() {
+        controller.setSavingIllustration(true)
+        captureScreen { bitmap ->
+            if (bitmap != null) {
+                val novelName = controller.uiState.value.selectedNovel
+                val strings = StringsProvider.getStrings(getSharedPreferences("settings_prefs", MODE_PRIVATE).getString("idioma_app", null))
+                if (novelName == null) {
+                    controller.setSavingIllustration(false)
+                    android.widget.Toast.makeText(
+                        this@OverlayService,
+                        strings.configIllustrationSavedError,
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    controller.guardarIlustracion(bitmap, lifecycleScope,
+                        onSuccess = {
+                            controller.setSavingIllustration(false)
+                            android.widget.Toast.makeText(
+                                this@OverlayService,
+                                strings.configIllustrationSavedSuccess,
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        },
+                        onError = { err ->
+                            controller.setSavingIllustration(false)
+                            android.widget.Toast.makeText(
+                                this@OverlayService,
+                                err,
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    )
+                }
+            } else {
+                controller.setSavingIllustration(false)
+                android.widget.Toast.makeText(
+                    this@OverlayService,
+                    "Error al capturar pantalla",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
