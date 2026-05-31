@@ -261,7 +261,7 @@ fun PageManagementScreen(
                                         Modifier
                                     } else {
                                         Modifier.clickable {
-                                            onPageSelected(index)
+                                            expandedItemMenu = true
                                         }
                                     }
                                 ),
