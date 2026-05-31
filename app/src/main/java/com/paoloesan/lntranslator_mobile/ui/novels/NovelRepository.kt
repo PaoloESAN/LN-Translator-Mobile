@@ -71,16 +71,18 @@ object NovelRepository {
         )
         pages.add(newPage)
 
+        val pagesToSave = pages.filter { it.id != "cover_page" }
         try {
-            getNovelFile(context, novelName).writeText(gson.toJson(pages))
+            getNovelFile(context, novelName).writeText(gson.toJson(pagesToSave))
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
     fun savePages(context: Context, novelName: String, pages: List<NovelPage>) {
+        val pagesToSave = pages.filter { it.id != "cover_page" }
         try {
-            getNovelFile(context, novelName).writeText(gson.toJson(pages))
+            getNovelFile(context, novelName).writeText(gson.toJson(pagesToSave))
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -88,14 +90,30 @@ object NovelRepository {
 
     fun getPages(context: Context, novelName: String): List<NovelPage> {
         val file = getNovelFile(context, novelName)
-        if (!file.exists()) return emptyList()
-
-        return try {
-            val json = file.readText()
-            val type = object : TypeToken<List<NovelPage>>() {}.type
-            gson.fromJson(json, type) ?: emptyList()
-        } catch (e: Exception) {
+        val pages = if (!file.exists()) {
             emptyList()
+        } else {
+            try {
+                val json = file.readText()
+                val type = object : TypeToken<List<NovelPage>>() {}.type
+                gson.fromJson<List<NovelPage>>(json, type) ?: emptyList()
+            } catch (e: Exception) {
+                emptyList()
+            }
+        }
+
+        val coverFile = getCoverFile(context, novelName)
+        return if (coverFile.exists()) {
+            listOf(
+                NovelPage(
+                    id = "cover_page",
+                    translatedText = "",
+                    originalText = "",
+                    imagePath = coverFile.absolutePath
+                )
+            ) + pages
+        } else {
+            pages
         }
     }
 
@@ -173,14 +191,16 @@ object NovelRepository {
         try {
             ZipOutputStream(FileOutputStream(zipFile)).use { zos ->
                 // 1. Add modified pages JSON with relative paths
-                val modifiedPages = pages.map { page ->
-                    if (page.imagePath != null) {
-                        val fileName = File(page.imagePath).name
-                        page.copy(imagePath = "images/$fileName")
-                    } else {
-                        page
+                val modifiedPages = pages
+                    .filter { it.id != "cover_page" }
+                    .map { page ->
+                        if (page.imagePath != null) {
+                            val fileName = File(page.imagePath).name
+                            page.copy(imagePath = "images/$fileName")
+                        } else {
+                            page
+                        }
                     }
-                }
                 val jsonContent = gson.toJson(modifiedPages)
                 zos.putNextEntry(ZipEntry("novel_${novelName}.json"))
                 zos.write(jsonContent.toByteArray())

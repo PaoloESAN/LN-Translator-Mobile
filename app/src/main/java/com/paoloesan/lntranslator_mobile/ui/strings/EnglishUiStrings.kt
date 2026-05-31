@@ -130,6 +130,7 @@ object EnglishUiStrings : UiStrings {
     override val pageManagementRemoveImage = "Remove image"
     override val pageManagementSelectImage = "Select image"
     override val pageManagementOnlyImage = "Only image"
+    override val pageManagementCoverPage = "Cover"
 
     override val deleteNovelConfirmationTitle = "Delete novel?"
     override val deleteNovelConfirmationMessage: (Int) -> String = { count ->

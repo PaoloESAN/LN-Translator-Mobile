@@ -18,8 +18,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -70,6 +72,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -183,7 +186,12 @@ fun PageManagementScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .padding(top = 64.dp)
+        ) {
             if (pagesList.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -224,12 +232,14 @@ fun PageManagementScreen(
                         val isDragging = activeDragIndex == index
 
                         val offsetModifier = if (isDragging) {
-                            Modifier.graphicsLayer {
-                                translationY = dragOffsetY
-                                shadowElevation = 8f
-                                scaleX = 1.02f
-                                scaleY = 1.02f
-                            }
+                            Modifier
+                                .zIndex(1f)
+                                .graphicsLayer {
+                                    translationY = dragOffsetY
+                                    shadowElevation = 8f
+                                    scaleX = 1.02f
+                                    scaleY = 1.02f
+                                }
                         } else {
                             Modifier
                         }
@@ -245,7 +255,9 @@ fun PageManagementScreen(
                                 .then(offsetModifier)
                                 .animateItem()
                                 .then(
-                                    if (isEditMode) {
+                                    if (page.id == "cover_page") {
+                                        Modifier
+                                    } else if (isEditMode) {
                                         Modifier.pointerInput(page.id) {
                                             detectDragGestures(
                                                 onDragStart = {
@@ -275,6 +287,7 @@ fun PageManagementScreen(
 
                                                     val currentIndex = activeDragIndex
                                                         ?: return@detectDragGestures
+                                                    if (currentIndex == 0) return@detectDragGestures
                                                     val currentHeight =
                                                         itemHeights[page.id] ?: 150f
 
@@ -298,7 +311,7 @@ fun PageManagementScreen(
                                                         }
                                                     } else if (dragOffsetY < 0f) {
                                                         val prevIndex = currentIndex - 1
-                                                        if (prevIndex >= 0) {
+                                                        if (prevIndex >= 1) {
                                                             val prevHeight =
                                                                 itemHeights[pagesList[prevIndex].id]
                                                                     ?: currentHeight
@@ -339,15 +352,19 @@ fun PageManagementScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 if (isEditMode) {
-                                    Icon(
-                                        imageVector = Icons.Default.Reorder,
-                                        contentDescription = strings.pageManagementDragToReorder,
-                                        modifier = Modifier.padding(
-                                            horizontal = 8.dp,
-                                            vertical = 16.dp
-                                        ),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    if (page.id != "cover_page") {
+                                        Icon(
+                                            imageVector = Icons.Default.Reorder,
+                                            contentDescription = strings.pageManagementDragToReorder,
+                                            modifier = Modifier.padding(
+                                                horizontal = 8.dp,
+                                                vertical = 16.dp
+                                            ),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    } else {
+                                        Spacer(modifier = Modifier.width(40.dp))
+                                    }
                                 }
 
                                 // Image Preview if any
@@ -379,8 +396,15 @@ fun PageManagementScreen(
                                         .weight(1f)
                                         .padding(vertical = 4.dp)
                                 ) {
+                                    val isCoverFirst = pagesList.firstOrNull()?.id == "cover_page"
+                                    val itemTitle = if (page.id == "cover_page") {
+                                        strings.pageManagementCoverPage
+                                    } else {
+                                        val displayIndex = if (isCoverFirst) index else index + 1
+                                        strings.pageManagementPageNumber(displayIndex)
+                                    }
                                     Text(
-                                        text = strings.pageManagementPageNumber(index + 1),
+                                        text = itemTitle,
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -400,7 +424,7 @@ fun PageManagementScreen(
 
                                 }
 
-                                if (isEditMode) {
+                                if (isEditMode && page.id != "cover_page") {
                                     // Menu Actions
                                     Box {
                                         IconButton(onClick = { expandedItemMenu = true }) {
@@ -519,7 +543,9 @@ fun PageManagementScreen(
 
         if (isEditMode) {
             BottomAppBar(
-                modifier = Modifier.align(Alignment.BottomCenter)
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
             ) {
                 Row(
                     modifier = Modifier

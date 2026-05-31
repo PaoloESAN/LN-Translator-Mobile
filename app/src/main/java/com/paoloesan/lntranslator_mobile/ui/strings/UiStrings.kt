@@ -127,6 +127,7 @@ interface UiStrings {
     val pageManagementRemoveImage: String
     val pageManagementSelectImage: String
     val pageManagementOnlyImage: String
+    val pageManagementCoverPage: String
 
     val deleteNovelConfirmationTitle: String
     val deleteNovelConfirmationMessage: (Int) -> String
