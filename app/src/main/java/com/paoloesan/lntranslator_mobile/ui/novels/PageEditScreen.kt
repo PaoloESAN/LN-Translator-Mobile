@@ -255,82 +255,8 @@ fun PageManagementScreen(
                                 .then(offsetModifier)
                                 .animateItem()
                                 .then(
-                                    if (page.id == "cover_page") {
+                                    if (page.id == "cover_page" || isEditMode) {
                                         Modifier
-                                    } else if (isEditMode) {
-                                        Modifier.pointerInput(page.id) {
-                                            detectDragGestures(
-                                                onDragStart = {
-                                                    val currIndex =
-                                                        pagesList.indexOfFirst { it.id == page.id }
-                                                    if (currIndex != -1) {
-                                                        activeDragIndex = currIndex
-                                                        dragOffsetY = 0f
-                                                    }
-                                                },
-                                                onDragEnd = {
-                                                    activeDragIndex = null
-                                                    dragOffsetY = 0f
-                                                    NovelRepository.savePages(
-                                                        context,
-                                                        novelName,
-                                                        pagesList
-                                                    )
-                                                },
-                                                onDragCancel = {
-                                                    activeDragIndex = null
-                                                    dragOffsetY = 0f
-                                                },
-                                                onDrag = { change, dragAmount ->
-                                                    change.consume()
-                                                    dragOffsetY += dragAmount.y
-
-                                                    val currentIndex = activeDragIndex
-                                                        ?: return@detectDragGestures
-                                                    if (currentIndex == 0) return@detectDragGestures
-                                                    val currentHeight =
-                                                        itemHeights[page.id] ?: 150f
-
-                                                    if (dragOffsetY > 0f) {
-                                                        val nextIndex = currentIndex + 1
-                                                        if (nextIndex < pagesList.size) {
-                                                            val nextHeight =
-                                                                itemHeights[pagesList[nextIndex].id]
-                                                                    ?: currentHeight
-                                                            if (dragOffsetY > nextHeight * 0.7f) {
-                                                                val listCopy =
-                                                                    pagesList.toMutableList()
-                                                                val item = listCopy.removeAt(
-                                                                    currentIndex
-                                                                )
-                                                                listCopy.add(nextIndex, item)
-                                                                pagesList = listCopy
-                                                                activeDragIndex = nextIndex
-                                                                dragOffsetY -= nextHeight
-                                                            }
-                                                        }
-                                                    } else if (dragOffsetY < 0f) {
-                                                        val prevIndex = currentIndex - 1
-                                                        if (prevIndex >= 1) {
-                                                            val prevHeight =
-                                                                itemHeights[pagesList[prevIndex].id]
-                                                                    ?: currentHeight
-                                                            if (dragOffsetY < -prevHeight * 0.7f) {
-                                                                val listCopy =
-                                                                    pagesList.toMutableList()
-                                                                val item = listCopy.removeAt(
-                                                                    currentIndex
-                                                                )
-                                                                listCopy.add(prevIndex, item)
-                                                                pagesList = listCopy
-                                                                activeDragIndex = prevIndex
-                                                                dragOffsetY += prevHeight
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            )
-                                        }
                                     } else {
                                         Modifier.clickable {
                                             onPageSelected(index)
@@ -356,10 +282,84 @@ fun PageManagementScreen(
                                         Icon(
                                             imageVector = Icons.Default.Reorder,
                                             contentDescription = strings.pageManagementDragToReorder,
-                                            modifier = Modifier.padding(
-                                                horizontal = 8.dp,
-                                                vertical = 16.dp
-                                            ),
+                                            modifier = Modifier
+                                                .padding(
+                                                    horizontal = 8.dp,
+                                                    vertical = 16.dp
+                                                )
+                                                .pointerInput(page.id) {
+                                                    detectDragGestures(
+                                                        onDragStart = {
+                                                            val currIndex =
+                                                                pagesList.indexOfFirst { it.id == page.id }
+                                                            if (currIndex != -1) {
+                                                                activeDragIndex = currIndex
+                                                                dragOffsetY = 0f
+                                                            }
+                                                        },
+                                                        onDragEnd = {
+                                                            activeDragIndex = null
+                                                            dragOffsetY = 0f
+                                                            NovelRepository.savePages(
+                                                                context,
+                                                                novelName,
+                                                                pagesList
+                                                            )
+                                                        },
+                                                        onDragCancel = {
+                                                            activeDragIndex = null
+                                                            dragOffsetY = 0f
+                                                        },
+                                                        onDrag = { change, dragAmount ->
+                                                            change.consume()
+                                                            dragOffsetY += dragAmount.y
+
+                                                            val currentIndex = activeDragIndex
+                                                                ?: return@detectDragGestures
+                                                            if (currentIndex == 0) return@detectDragGestures
+                                                            val currentHeight =
+                                                                itemHeights[page.id] ?: 150f
+
+                                                            if (dragOffsetY > 0f) {
+                                                                val nextIndex = currentIndex + 1
+                                                                if (nextIndex < pagesList.size) {
+                                                                    val nextHeight =
+                                                                        itemHeights[pagesList[nextIndex].id]
+                                                                            ?: currentHeight
+                                                                    if (dragOffsetY > nextHeight * 0.7f) {
+                                                                        val listCopy =
+                                                                            pagesList.toMutableList()
+                                                                        val item = listCopy.removeAt(
+                                                                            currentIndex
+                                                                        )
+                                                                        listCopy.add(nextIndex, item)
+                                                                        pagesList = listCopy
+                                                                        activeDragIndex = nextIndex
+                                                                        dragOffsetY -= nextHeight
+                                                                    }
+                                                                }
+                                                            } else if (dragOffsetY < 0f) {
+                                                                val prevIndex = currentIndex - 1
+                                                                if (prevIndex >= 1) {
+                                                                    val prevHeight =
+                                                                        itemHeights[pagesList[prevIndex].id]
+                                                                            ?: currentHeight
+                                                                    if (dragOffsetY < -prevHeight * 0.7f) {
+                                                                        val listCopy =
+                                                                            pagesList.toMutableList()
+                                                                        val item = listCopy.removeAt(
+                                                                            currentIndex
+                                                                        )
+                                                                        listCopy.add(prevIndex, item)
+                                                                        pagesList = listCopy
+                                                                        activeDragIndex = prevIndex
+                                                                        dragOffsetY += prevHeight
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    )
+                                                },
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     } else {
