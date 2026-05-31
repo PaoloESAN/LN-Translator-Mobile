@@ -1,9 +1,9 @@
 package com.paoloesan.lntranslator_mobile.ui.novels
 
 import android.content.Context
-import android.content.Intent
 import android.graphics.BitmapFactory
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
@@ -30,12 +30,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -53,10 +53,10 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.DriveFolderUpload
-import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.StayCurrentLandscape
@@ -65,7 +65,6 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Remove
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -87,6 +86,8 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.ToggleButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -103,7 +104,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -116,7 +116,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.core.content.FileProvider
+import androidx.compose.ui.zIndex
 import androidx.core.content.edit
 import com.paoloesan.lntranslator_mobile.LocalStrings
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarActions
@@ -199,6 +199,13 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
         )
     }
     var isManagingPages by remember { mutableStateOf(false) }
+    var isSearchActive by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+
+    BackHandler(enabled = isSearchActive) {
+        isSearchActive = false
+        searchQuery = ""
+    }
 
     val savedLastPage = remember(novelName, pages) {
         prefs.getInt("last_page_$novelName", 0).coerceIn(0, (pages.size - 1).coerceAtLeast(0))
@@ -253,216 +260,264 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
         pages,
         showOriginal,
         isVerticalMode,
-        expandedMenu
+        expandedMenu,
+        isSearchActive,
+        searchQuery
     ) {
         if (isManagingPages) {
             topBarVisible.value = true
         } else {
             topBarVisible.value = showSystemBars
             if (showSystemBars) {
-                topBarTitle.value = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = if (novelName.length > 5) novelName.dropLast(5) else novelName,
-                            style = MaterialTheme.typography.titleMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false)
+                if (isSearchActive) {
+                    topBarTitle.value = {
+                        TextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            placeholder = { Text(strings.readerSearchPlaceholder) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            ),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            trailingIcon = {
+                                if (searchQuery.isNotEmpty()) {
+                                    IconButton(onClick = { searchQuery = "" }) {
+                                        Icon(Icons.Default.Close, contentDescription = null)
+                                    }
+                                }
+                            }
                         )
-                        if (novelName.length > 5) {
-                            Text(
-                                text = novelName.takeLast(5),
-                                style = MaterialTheme.typography.titleMedium,
-                                maxLines = 1
+                    }
+                    topBarNavIcon.value = {
+                        IconButton(onClick = {
+                            isSearchActive = false
+                            searchQuery = ""
+                        }) {
+                            Icon(
+                                Icons.AutoMirrored.Rounded.ArrowBack,
+                                contentDescription = strings.navBack
                             )
                         }
                     }
-                }
-                topBarNavIcon.value = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = strings.navBack
-                        )
-                    }
-                }
-                topBarActions.value = {
-                    if (pages.isNotEmpty()) {
-                        Box {
-                            IconButton(onClick = { expandedMenu = true }) {
-                                Icon(
-                                    Icons.Default.MoreVert,
-                                    contentDescription = strings.novelDetailsViewPages
+                    topBarActions.value = {}
+                } else {
+                    topBarTitle.value = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = if (novelName.length > 5) novelName.dropLast(5) else novelName,
+                                style = MaterialTheme.typography.titleMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                            if (novelName.length > 5) {
+                                Text(
+                                    text = novelName.takeLast(5),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    maxLines = 1
                                 )
                             }
-                            DropdownMenuPopup(
-                                expanded = expandedMenu,
-                                onDismissRequest = { expandedMenu = false },
-                                modifier = Modifier.width(260.dp)
-                            ) {
-                                DropdownMenuGroup(
-                                    shapes = MenuDefaults.groupShape(0, 1)
-                                ) {
-                                    DropdownMenuItem(
-                                        text = {
-                                            Text(
-                                                strings.novelDetailsGoToPage,
-                                                style = MaterialTheme.typography.bodyLarge
-                                            )
-                                        },
-                                        leadingIcon = {
-                                            Icon(
-                                                Icons.Default.Book,
-                                                contentDescription = null
-                                            )
-                                        },
-                                        onClick = {
-                                            expandedMenu = false
-                                            isManagingPages = true
-                                        }
-                                    )
-                                    HorizontalDivider(
-                                        modifier = Modifier.padding(
-                                            MenuDefaults.HorizontalDividerPadding
+                        }
+                    }
+                    topBarNavIcon.value = {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                Icons.AutoMirrored.Rounded.ArrowBack,
+                                contentDescription = strings.navBack
+                            )
+                        }
+                    }
+                    topBarActions.value = {
+                        if (pages.isNotEmpty()) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(onClick = { isSearchActive = true }) {
+                                    Icon(Icons.Default.Search, contentDescription = null)
+                                }
+                                Box {
+                                    IconButton(onClick = { expandedMenu = true }) {
+                                        Icon(
+                                            Icons.Default.MoreVert,
+                                            contentDescription = strings.novelDetailsViewPages
                                         )
-                                    )
-
-                                    // Reading orientation layout selector
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                                    }
+                                    DropdownMenuPopup(
+                                        expanded = expandedMenu,
+                                        onDismissRequest = { expandedMenu = false },
+                                        modifier = Modifier.width(260.dp)
                                     ) {
-                                        Text(
-                                            text = strings.readerReadingOrientation,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.spacedBy(
-                                                ButtonGroupDefaults.ConnectedSpaceBetween
-                                            )
+                                        DropdownMenuGroup(
+                                            shapes = MenuDefaults.groupShape(0, 1)
                                         ) {
-                                            ToggleButton(
-                                                checked = !isVerticalMode,
-                                                onCheckedChange = {
-                                                    isVerticalMode = false
-                                                    prefs.edit {
-                                                        putBoolean(
-                                                            "reader_vertical_mode",
-                                                            false
-                                                        )
-                                                    }
-                                                },
-                                                shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
-                                                modifier = Modifier.weight(1f)
-                                            ) {
-                                                Row(
-                                                    horizontalArrangement = Arrangement.Center,
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Icon(
-                                                        Icons.Default.StayCurrentLandscape,
-                                                        contentDescription = null,
-                                                        modifier = Modifier.size(16.dp)
-                                                    )
-                                                    Spacer(modifier = Modifier.width(4.dp))
+                                            DropdownMenuItem(
+                                                text = {
                                                     Text(
-                                                        strings.readerHorizontal,
-                                                        style = MaterialTheme.typography.bodySmall
+                                                        strings.novelDetailsGoToPage,
+                                                        style = MaterialTheme.typography.bodyLarge
                                                     )
+                                                },
+                                                leadingIcon = {
+                                                    Icon(
+                                                        Icons.Default.Book,
+                                                        contentDescription = null
+                                                    )
+                                                },
+                                                onClick = {
+                                                    expandedMenu = false
+                                                    isManagingPages = true
+                                                }
+                                            )
+                                            HorizontalDivider(
+                                                modifier = Modifier.padding(
+                                                    MenuDefaults.HorizontalDividerPadding
+                                                )
+                                            )
 
+                                            // Reading orientation layout selector
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                                            ) {
+                                                Text(
+                                                    text = strings.readerReadingOrientation,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.spacedBy(
+                                                        ButtonGroupDefaults.ConnectedSpaceBetween
+                                                    )
+                                                ) {
+                                                    ToggleButton(
+                                                        checked = !isVerticalMode,
+                                                        onCheckedChange = {
+                                                            isVerticalMode = false
+                                                            prefs.edit {
+                                                                putBoolean(
+                                                                    "reader_vertical_mode",
+                                                                    false
+                                                                )
+                                                            }
+                                                        },
+                                                        shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
+                                                        modifier = Modifier.weight(1f)
+                                                    ) {
+                                                        Row(
+                                                            horizontalArrangement = Arrangement.Center,
+                                                            verticalAlignment = Alignment.CenterVertically
+                                                        ) {
+                                                            Icon(
+                                                                Icons.Default.StayCurrentLandscape,
+                                                                contentDescription = null,
+                                                                modifier = Modifier.size(16.dp)
+                                                            )
+                                                            Spacer(modifier = Modifier.width(4.dp))
+                                                            Text(
+                                                                strings.readerHorizontal,
+                                                                style = MaterialTheme.typography.bodySmall
+                                                            )
+
+                                                        }
+                                                    }
+                                                    ToggleButton(
+                                                        checked = isVerticalMode,
+                                                        onCheckedChange = {
+                                                            isVerticalMode = true
+                                                            prefs.edit {
+                                                                putBoolean(
+                                                                    "reader_vertical_mode",
+                                                                    true
+                                                                )
+                                                            }
+                                                        },
+                                                        shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
+                                                        modifier = Modifier.weight(1f)
+                                                    ) {
+                                                        Row(
+                                                            horizontalArrangement = Arrangement.Center,
+                                                            verticalAlignment = Alignment.CenterVertically
+                                                        ) {
+                                                            Icon(
+                                                                Icons.Default.StayCurrentPortrait,
+                                                                contentDescription = null,
+                                                                modifier = Modifier.size(16.dp)
+                                                            )
+                                                            Spacer(modifier = Modifier.width(4.dp))
+                                                            Text(
+                                                                strings.readerVertical,
+                                                                style = MaterialTheme.typography.bodySmall
+                                                            )
+
+                                                        }
+                                                    }
                                                 }
                                             }
-                                            ToggleButton(
-                                                checked = isVerticalMode,
-                                                onCheckedChange = {
-                                                    isVerticalMode = true
-                                                    prefs.edit {
-                                                        putBoolean(
-                                                            "reader_vertical_mode",
-                                                            true
-                                                        )
-                                                    }
-                                                },
-                                                shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
-                                                modifier = Modifier.weight(1f)
-                                            ) {
-                                                Row(
-                                                    horizontalArrangement = Arrangement.Center,
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Icon(
-                                                        Icons.Default.StayCurrentPortrait,
-                                                        contentDescription = null,
-                                                        modifier = Modifier.size(16.dp)
-                                                    )
-                                                    Spacer(modifier = Modifier.width(4.dp))
-                                                    Text(
-                                                        strings.readerVertical,
-                                                        style = MaterialTheme.typography.bodySmall
-                                                    )
 
+                                            HorizontalDivider(
+                                                modifier = Modifier.padding(
+                                                    MenuDefaults.HorizontalDividerPadding
+                                                )
+                                            )
+                                            DropdownMenuItem(
+                                                text = {
+                                                    Text(
+                                                        strings.menuShare,
+                                                        style = MaterialTheme.typography.bodyLarge
+                                                    )
+                                                },
+                                                leadingIcon = {
+                                                    Icon(
+                                                        Icons.Default.Share,
+                                                        contentDescription = null
+                                                    )
+                                                },
+                                                onClick = {
+                                                    expandedMenu = false
+                                                    val zipFile =
+                                                        NovelRepository.exportNovelToZip(
+                                                            context,
+                                                            novelName
+                                                        )
+                                                    if (zipFile != null && zipFile.exists()) {
+                                                        tempFileForSharing = zipFile
+                                                        showShareOptionsDialog = true
+                                                    } else {
+                                                        Toast.makeText(
+                                                            context,
+                                                            strings.novelEmptyError,
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
+                                                    }
                                                 }
-                                            }
+                                            )
+                                            DropdownMenuItem(
+                                                text = {
+                                                    Text(
+                                                        strings.overlayConfig,
+                                                        style = MaterialTheme.typography.bodyLarge
+                                                    )
+                                                },
+                                                leadingIcon = {
+                                                    Icon(
+                                                        Icons.Default.Settings,
+                                                        contentDescription = null
+                                                    )
+                                                },
+                                                onClick = {
+                                                    expandedMenu = false
+                                                    showConfigDialog = true
+                                                }
+                                            )
                                         }
                                     }
-
-                                    HorizontalDivider(
-                                        modifier = Modifier.padding(
-                                            MenuDefaults.HorizontalDividerPadding
-                                        )
-                                    )
-                                    DropdownMenuItem(
-                                        text = {
-                                            Text(
-                                                strings.menuShare,
-                                                style = MaterialTheme.typography.bodyLarge
-                                            )
-                                        },
-                                        leadingIcon = {
-                                            Icon(
-                                                Icons.Default.Share,
-                                                contentDescription = null
-                                            )
-                                        },
-                                        onClick = {
-                                            expandedMenu = false
-                                            val zipFile =
-                                                NovelRepository.exportNovelToZip(context, novelName)
-                                            if (zipFile != null && zipFile.exists()) {
-                                                tempFileForSharing = zipFile
-                                                showShareOptionsDialog = true
-                                            } else {
-                                                Toast.makeText(
-                                                    context,
-                                                    strings.novelEmptyError,
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }
-                                        }
-                                    )
-                                    DropdownMenuItem(
-                                        text = {
-                                            Text(
-                                                strings.overlayConfig,
-                                                style = MaterialTheme.typography.bodyLarge
-                                            )
-                                        },
-                                        leadingIcon = {
-                                            Icon(
-                                                Icons.Default.Settings,
-                                                contentDescription = null
-                                            )
-                                        },
-                                        onClick = {
-                                            expandedMenu = false
-                                            showConfigDialog = true
-                                        }
-                                    )
                                 }
                             }
                         }
@@ -531,7 +586,15 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                 }
             )
         } else {
-            var pageInputText by remember(currentPageIndex) { mutableStateOf((currentPageIndex + 1).toString()) }
+            val isCoverFirst = remember(pages) { pages.firstOrNull()?.id == "cover_page" }
+            val displayPageNumber = if (isCoverFirst) {
+                if (currentPageIndex == 0) 0 else currentPageIndex
+            } else {
+                currentPageIndex + 1
+            }
+            var pageInputText by remember(currentPageIndex) {
+                mutableStateOf(if (displayPageNumber == 0) "" else displayPageNumber.toString())
+            }
 
             Box(
                 modifier = Modifier
@@ -624,7 +687,7 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                     // Sync pageInputText and request focus when expanded state changes
                     LaunchedEffect(isExpanded) {
                         if (!isExpanded) {
-                            pageInputText = (currentPageIndex + 1).toString()
+                            pageInputText = if (displayPageNumber == 0) "" else displayPageNumber.toString()
                         } else {
                             pageInputText = ""
                             try {
@@ -641,25 +704,32 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                             IconButton(
                                 onClick = {
                                     val target = pageInputText.toIntOrNull()
-                                    if (target != null && target in 1..pages.size) {
+                                    val maxPage = if (isCoverFirst) pages.size - 1 else pages.size
+                                    if (target != null && target in 1..maxPage) {
                                         coroutineScope.launch {
+                                            val targetIndex = if (isCoverFirst) target else target - 1
                                             if (isVerticalMode) {
-                                                listState.scrollToItem(target - 1)
+                                                listState.scrollToItem(targetIndex)
                                             } else {
-                                                pagerState?.scrollToPage(target - 1)
+                                                pagerState?.scrollToPage(targetIndex)
                                             }
                                             isExpanded = false
                                             showSystemBars = false
                                         }
                                     }
                                 },
-                                enabled = pageInputText.toIntOrNull() in 1..pages.size
+                                enabled = pageInputText.toIntOrNull()?.let { target ->
+                                    val maxPage = if (isCoverFirst) pages.size - 1 else pages.size
+                                    target in 1..maxPage
+                                } == true
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
                                     contentDescription = strings.buttonGo,
-                                    tint = if (pageInputText.toIntOrNull() in 1..pages.size) {
-
+                                    tint = if (pageInputText.toIntOrNull()?.let { target ->
+                                            val maxPage = if (isCoverFirst) pages.size - 1 else pages.size
+                                            target in 1..maxPage
+                                        } == true) {
                                         MaterialTheme.colorScheme.primary
                                     } else {
                                         MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
@@ -668,17 +738,35 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                             }
                         },
                         trailingContent = {
+                            val pageDisplayText = if (isCoverFirst) {
+                                if (currentPageIndex == 0) {
+                                    strings.pageManagementCoverPage
+                                } else {
+                                    "$currentPageIndex ${strings.novelDetailsPageOf} ${pages.size - 1}"
+                                }
+                            } else {
+                                "${currentPageIndex + 1} ${strings.novelDetailsPageOf} ${pages.size}"
+                            }
                             Text(
-                                text = "${currentPageIndex + 1} ${strings.novelDetailsPageOf} ${pages.size}",
+                                text = pageDisplayText,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(8.dp)
                             )
                         },
                         content = {
+                            val pageDisplayText = if (isCoverFirst) {
+                                if (currentPageIndex == 0) {
+                                    strings.pageManagementCoverPage
+                                } else {
+                                    "$currentPageIndex ${strings.novelDetailsPageOf} ${pages.size - 1}"
+                                }
+                            } else {
+                                "${currentPageIndex + 1} ${strings.novelDetailsPageOf} ${pages.size}"
+                            }
                             if (!isExpanded) {
                                 Text(
-                                    text = "${currentPageIndex + 1} ${strings.novelDetailsPageOf} ${pages.size}",
+                                    text = pageDisplayText,
                                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                                     color = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier
@@ -712,12 +800,14 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                                     keyboardActions = KeyboardActions(
                                         onGo = {
                                             val target = pageInputText.toIntOrNull()
-                                            if (target != null && target in 1..pages.size) {
+                                            val maxPage = if (isCoverFirst) pages.size - 1 else pages.size
+                                            if (target != null && target in 1..maxPage) {
                                                 coroutineScope.launch {
+                                                    val targetIndex = if (isCoverFirst) target else target - 1
                                                     if (isVerticalMode) {
-                                                        listState.scrollToItem(target - 1)
+                                                        listState.scrollToItem(targetIndex)
                                                     } else {
-                                                        pagerState?.scrollToPage(target - 1)
+                                                        pagerState?.scrollToPage(targetIndex)
                                                     }
                                                     isExpanded = false
                                                     showSystemBars = false
@@ -740,6 +830,127 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                             }
                         }
                     )
+                }
+                // Search Results Overlay
+                if (isSearchActive && searchQuery.isNotBlank()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.4f))
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) {
+                                isSearchActive = false
+                                searchQuery = ""
+                            }
+                            .statusBarsPadding()
+                            .padding(top = 64.dp)
+                            .zIndex(2f) // Sit on top of floating toolbar
+                    ) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .align(Alignment.TopCenter)
+                                .clickable(enabled = false) {}, // Prevent clicks on backdrop
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surface
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                        ) {
+                            val filteredPages = remember(pages, searchQuery) {
+                                pages.mapIndexed { index, page -> index to page }
+                                    .filter { (_, page) ->
+                                        page.translatedText.contains(
+                                            searchQuery,
+                                            ignoreCase = true
+                                        ) ||
+                                                (page.originalText?.contains(
+                                                    searchQuery,
+                                                    ignoreCase = true
+                                                ) == true)
+                                    }
+                            }
+
+                            if (filteredPages.isEmpty()) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(24.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = strings.readerSearchNoResults,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            } else {
+                                LazyColumn(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(max = 400.dp)
+                                ) {
+                                    itemsIndexed(filteredPages) { itemIndex, (index, page) ->
+                                        val isCover = page.id == "cover_page"
+                                        val displayTitle = if (isCover) {
+                                            strings.pageManagementCoverPage
+                                        } else {
+                                            val isCoverFirst =
+                                                pages.firstOrNull()?.id == "cover_page"
+                                            val displayIndex =
+                                                if (isCoverFirst) index else index + 1
+                                            strings.novelDetailsPageNumber + " $displayIndex"
+                                        }
+
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    coroutineScope.launch {
+                                                        if (isVerticalMode) {
+                                                            listState.scrollToItem(index)
+                                                        } else {
+                                                            pagerState?.scrollToPage(index)
+                                                        }
+                                                    }
+                                                    isSearchActive = false
+                                                    searchQuery = ""
+                                                    showSystemBars = false
+                                                }
+                                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                                        ) {
+                                            Text(
+                                                text = displayTitle,
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            val textContent =
+                                                page.translatedText.ifBlank {
+                                                    page.originalText ?: ""
+                                                }
+                                            val snippet = getSearchSnippet(textContent, searchQuery)
+                                            Text(
+                                                text = snippet,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        if (itemIndex < filteredPages.size - 1) {
+                                            HorizontalDivider(
+                                                color = MaterialTheme.colorScheme.outlineVariant.copy(
+                                                    alpha = 0.5f
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -772,33 +983,33 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
             )
         }
 
-    if (showShareOptionsDialog) {
-        ShareNovelDialog(
-            novelName = novelName,
-            strings = strings,
-            onDismiss = { showShareOptionsDialog = false },
-            onExportZip = {
-                val zipFile = NovelRepository.exportNovelToZip(context, novelName)
-                if (zipFile != null && zipFile.exists()) {
-                    tempFileForSharing = zipFile
-                    showShareOptionsDialog = false
-                    createZipLauncher.launch("novel_${novelName}.zip")
-                } else {
-                    Toast.makeText(context, strings.novelEmptyError, Toast.LENGTH_SHORT).show()
+        if (showShareOptionsDialog) {
+            ShareNovelDialog(
+                novelName = novelName,
+                strings = strings,
+                onDismiss = { showShareOptionsDialog = false },
+                onExportZip = {
+                    val zipFile = NovelRepository.exportNovelToZip(context, novelName)
+                    if (zipFile != null && zipFile.exists()) {
+                        tempFileForSharing = zipFile
+                        showShareOptionsDialog = false
+                        createZipLauncher.launch("novel_${novelName}.zip")
+                    } else {
+                        Toast.makeText(context, strings.novelEmptyError, Toast.LENGTH_SHORT).show()
+                    }
+                },
+                onExportPdf = {
+                    val pdfFile = NovelRepository.exportNovelToPdf(context, novelName)
+                    if (pdfFile != null && pdfFile.exists()) {
+                        tempFileForSharing = pdfFile
+                        showShareOptionsDialog = false
+                        createPdfLauncher.launch("novel_${novelName}.pdf")
+                    } else {
+                        Toast.makeText(context, strings.novelEmptyError, Toast.LENGTH_SHORT).show()
+                    }
                 }
-            },
-            onExportPdf = {
-                val pdfFile = NovelRepository.exportNovelToPdf(context, novelName)
-                if (pdfFile != null && pdfFile.exists()) {
-                    tempFileForSharing = pdfFile
-                    showShareOptionsDialog = false
-                    createPdfLauncher.launch("novel_${novelName}.pdf")
-                } else {
-                    Toast.makeText(context, strings.novelEmptyError, Toast.LENGTH_SHORT).show()
-                }
-            }
-        )
-    }
+            )
+        }
 
         // Pinch-to-zoom full screen dialog
         if (showZoomDialog && zoomImagePage?.imagePath != null) {
@@ -853,7 +1064,6 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
         }
     }
 }
-
 
 
 @Composable
@@ -1028,8 +1238,6 @@ fun NovelPageItem(
 }
 
 
-
-
 @Composable
 fun EmptyNovelState(padding: PaddingValues) {
     val strings = LocalStrings.current
@@ -1062,7 +1270,6 @@ fun EmptyNovelState(padding: PaddingValues) {
         )
     }
 }
-
 
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -1414,5 +1621,23 @@ private fun saveToUri(
             }
         }
     }
+}
+
+private fun getSearchSnippet(text: String, query: String): String {
+    val cleanText = text
+        .replace(Regex("\\*\\*(.*?)\\*\\*"), "$1")
+        .replace(Regex("\\*(.*?)\\*"), "$1")
+        .replace(Regex("#+\\s+"), "")
+        .replace('\n', ' ')
+        .trim()
+
+    val index = cleanText.indexOf(query, ignoreCase = true)
+    if (index == -1) return if (cleanText.length > 80) cleanText.take(80) + "..." else cleanText
+
+    val start = (index - 35).coerceAtLeast(0)
+    val end = (index + query.length + 35).coerceAtMost(cleanText.length)
+    val prefix = if (start > 0) "..." else ""
+    val suffix = if (end < cleanText.length) "..." else ""
+    return prefix + cleanText.substring(start, end) + suffix
 }
 

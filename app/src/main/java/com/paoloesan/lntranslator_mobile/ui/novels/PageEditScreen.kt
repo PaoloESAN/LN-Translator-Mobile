@@ -255,7 +255,7 @@ fun PageManagementScreen(
                                 .then(offsetModifier)
                                 .animateItem()
                                 .then(
-                                    if (page.id == "cover_page" || isEditMode) {
+                                    if (page.id == "cover_page") {
                                         Modifier
                                     } else {
                                         Modifier.clickable {

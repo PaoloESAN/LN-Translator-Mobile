@@ -128,6 +128,8 @@ interface UiStrings {
     val pageManagementSelectImage: String
     val pageManagementOnlyImage: String
     val pageManagementCoverPage: String
+    val readerSearchPlaceholder: String
+    val readerSearchNoResults: String
 
     val deleteNovelConfirmationTitle: String
     val deleteNovelConfirmationMessage: (Int) -> String
