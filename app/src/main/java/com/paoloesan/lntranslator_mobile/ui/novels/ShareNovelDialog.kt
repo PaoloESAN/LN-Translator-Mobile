@@ -60,15 +60,15 @@ fun ShareNovelDialog(
                         leadingButton = {
                             SplitButtonDefaults.LeadingButton(
                                 onClick = {
-                                    onExportZip()
+                                    onExportPdf()
                                 }
                             ) {
                                 Icon(
-                                    Icons.Default.DriveFolderUpload,
+                                    Icons.Default.Book,
                                     contentDescription = null
                                 )
                                 Spacer(Modifier.width(8.dp))
-                                Text(strings.shareDialogDownload)
+                                Text(strings.shareDialogPdf)
                             }
                         },
                         trailingButton = {
@@ -96,14 +96,14 @@ fun ShareNovelDialog(
                                     shapes = MenuDefaults.groupShape(0, 1)
                                 ) {
                                     DropdownMenuItem(
-                                        text = { Text(strings.shareDialogPdf) },
+                                        text = { Text(strings.shareDialogDownload) },
                                         onClick = {
                                             isMenuExpanded = false
-                                            onExportPdf()
+                                            onExportZip()
                                         },
                                         leadingIcon = {
                                             Icon(
-                                                Icons.Default.Book,
+                                                Icons.Default.DriveFolderUpload,
                                                 contentDescription = null
                                             )
                                         }
