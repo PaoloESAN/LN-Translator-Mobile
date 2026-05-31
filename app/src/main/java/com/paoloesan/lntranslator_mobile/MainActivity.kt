@@ -48,6 +48,8 @@ import com.paoloesan.lntranslator_mobile.ui.theme.LNTranslatormobileTheme
 // CompositionLocal para acceder a los strings en cualquier parte de la app
 val LocalStrings = staticCompositionLocalOf<UiStrings> { SpanishUiStrings }
 
+val LocalCurrentRoute = staticCompositionLocalOf<String?> { null }
+
 // New CompositionLocals for TopAppBar control
 val LocalTopAppBarActions =
     staticCompositionLocalOf<MutableState<@Composable RowScope.() -> Unit>> {
@@ -259,6 +261,10 @@ fun MainContent(navController: NavHostController, contexto: AppCompatActivity) {
         },
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
-        AppNavHost(navController, contexto, innerPadding)
+        CompositionLocalProvider(
+            LocalCurrentRoute provides rutaActual
+        ) {
+            AppNavHost(navController, contexto, innerPadding)
+        }
     }
 }

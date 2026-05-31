@@ -84,6 +84,7 @@ import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.paoloesan.lntranslator_mobile.LocalCurrentRoute
 import com.paoloesan.lntranslator_mobile.LocalStrings
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarActions
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
@@ -112,13 +113,16 @@ fun HomeScreen(
     val topBarNavIcon = LocalTopAppBarNavigationIcon.current
     val topBarColors = LocalTopAppBarColors.current
     val topBarVisible = LocalTopAppBarVisible.current
+    val currentRoute = LocalCurrentRoute.current
 
-    LaunchedEffect(Unit) {
-        topBarVisible.value = true
-        topBarTitle.value = { Text(strings.appName) }
-        topBarActions.value = {}
-        topBarNavIcon.value = {}
-        topBarColors.value = null
+    LaunchedEffect(currentRoute) {
+        if (currentRoute == "inicio") {
+            topBarVisible.value = true
+            topBarTitle.value = { Text(strings.appName) }
+            topBarActions.value = {}
+            topBarNavIcon.value = {}
+            topBarColors.value = null
+        }
     }
 
     val prefs = context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)

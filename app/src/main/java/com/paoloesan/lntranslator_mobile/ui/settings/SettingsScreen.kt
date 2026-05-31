@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.paoloesan.lntranslator_mobile.LocalCurrentRoute
 import com.paoloesan.lntranslator_mobile.LocalStrings
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarActions
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
@@ -61,13 +62,16 @@ fun SettingsScreen(
     val topBarNavIcon = LocalTopAppBarNavigationIcon.current
     val topBarColors = LocalTopAppBarColors.current
     val topBarVisible = LocalTopAppBarVisible.current
+    val currentRoute = LocalCurrentRoute.current
 
-    LaunchedEffect(Unit) {
-        topBarVisible.value = true
-        topBarTitle.value = { Text(strings.navSettings) }
-        topBarActions.value = {}
-        topBarNavIcon.value = {}
-        topBarColors.value = null
+    LaunchedEffect(currentRoute) {
+        if (currentRoute == "ajustes") {
+            topBarVisible.value = true
+            topBarTitle.value = { Text(strings.navSettings) }
+            topBarActions.value = {}
+            topBarNavIcon.value = {}
+            topBarColors.value = null
+        }
     }
 
     val secciones = remember(context, strings) {

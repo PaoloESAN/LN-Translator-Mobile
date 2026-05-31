@@ -88,6 +88,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import coil3.compose.AsyncImage
+import com.paoloesan.lntranslator_mobile.LocalCurrentRoute
 import com.paoloesan.lntranslator_mobile.LocalStrings
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarActions
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
@@ -112,6 +113,7 @@ fun NovelsScreen(
     val topBarActions = LocalTopAppBarActions.current
     val topBarNavIcon = LocalTopAppBarNavigationIcon.current
     val topBarColors = LocalTopAppBarColors.current
+    val currentRoute = LocalCurrentRoute.current
 
     var savedNovelsString by remember { mutableStateOf(prefs.getString("saved_novels", "") ?: "") }
     val novelsList =
@@ -541,76 +543,78 @@ fun NovelsScreen(
         containerColor = MaterialTheme.colorScheme.surfaceVariant
     )
 
-    LaunchedEffect(selectedNovels, isGridView, coverUpdateTrigger) {
-        if (selectedNovels.isNotEmpty()) {
-            topBarTitle.value = { Text(strings.novelsSelected(selectedNovels.size)) }
-            topBarNavIcon.value = {
-                IconButton(onClick = { selectedNovels = emptySet() }) {
-                    Icon(Icons.Default.Close, contentDescription = strings.cdCancelSelection)
+    LaunchedEffect(selectedNovels, isGridView, coverUpdateTrigger, currentRoute) {
+        if (currentRoute == "novels") {
+            if (selectedNovels.isNotEmpty()) {
+                topBarTitle.value = { Text(strings.novelsSelected(selectedNovels.size)) }
+                topBarNavIcon.value = {
+                    IconButton(onClick = { selectedNovels = emptySet() }) {
+                        Icon(Icons.Default.Close, contentDescription = strings.cdCancelSelection)
+                    }
                 }
-            }
-            topBarActions.value = {
-                if (selectedNovels.size == 1) {
-                    IconButton(onClick = {
-                        val novelName = selectedNovels.first()
-                        val zipFile = NovelRepository.exportNovelToZip(context, novelName)
-                        if (zipFile != null && zipFile.exists()) {
-                            tempFileForSharing = zipFile
-                            novelNameBeingShared = novelName
-                            showShareOptionsDialog = true
-                        } else {
-                            Toast.makeText(context, strings.novelEmptyError, Toast.LENGTH_SHORT)
-                                .show()
+                topBarActions.value = {
+                    if (selectedNovels.size == 1) {
+                        IconButton(onClick = {
+                            val novelName = selectedNovels.first()
+                            val zipFile = NovelRepository.exportNovelToZip(context, novelName)
+                            if (zipFile != null && zipFile.exists()) {
+                                tempFileForSharing = zipFile
+                                novelNameBeingShared = novelName
+                                showShareOptionsDialog = true
+                            } else {
+                                Toast.makeText(context, strings.novelEmptyError, Toast.LENGTH_SHORT)
+                                    .show()
+                            }
+                        }) {
+                            Icon(Icons.Default.Share, contentDescription = strings.menuShare)
                         }
-                    }) {
-                        Icon(Icons.Default.Share, contentDescription = strings.menuShare)
+                        IconButton(onClick = { showEditDialog = true }) {
+                            Icon(Icons.Default.Edit, contentDescription = strings.cdEdit)
+                        }
                     }
-                    IconButton(onClick = { showEditDialog = true }) {
-                        Icon(Icons.Default.Edit, contentDescription = strings.cdEdit)
+                    IconButton(onClick = { showDeleteConfirmationDialog = true }) {
+                        Icon(Icons.Default.Delete, contentDescription = strings.cdDelete)
                     }
                 }
-                IconButton(onClick = { showDeleteConfirmationDialog = true }) {
-                    Icon(Icons.Default.Delete, contentDescription = strings.cdDelete)
-                }
-            }
-            topBarColors.value = selectionColors
-        } else {
-            topBarTitle.value = { Text(strings.novelsTitle) }
-            topBarNavIcon.value = {}
-            topBarActions.value = {
-                Row(
-                    Modifier.padding(horizontal = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
-                ) {
-                    ToggleButton(
-                        checked = !isGridView,
-                        onCheckedChange = {
-                            isGridView = false
-                            prefs.edit { putBoolean("is_grid_view", false) }
-                        },
-                        shapes = ButtonGroupDefaults.connectedLeadingButtonShapes()
+                topBarColors.value = selectionColors
+            } else {
+                topBarTitle.value = { Text(strings.novelsTitle) }
+                topBarNavIcon.value = {}
+                topBarActions.value = {
+                    Row(
+                        Modifier.padding(horizontal = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
                     ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.FormatListBulleted,
-                            contentDescription = strings.cdListView
-                        )
-                    }
-                    ToggleButton(
-                        checked = isGridView,
-                        onCheckedChange = {
-                            isGridView = true
-                            prefs.edit { putBoolean("is_grid_view", true) }
-                        },
-                        shapes = ButtonGroupDefaults.connectedTrailingButtonShapes()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.GridView,
-                            contentDescription = strings.cdGridView
-                        )
+                        ToggleButton(
+                            checked = !isGridView,
+                            onCheckedChange = {
+                                isGridView = false
+                                prefs.edit { putBoolean("is_grid_view", false) }
+                            },
+                            shapes = ButtonGroupDefaults.connectedLeadingButtonShapes()
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Outlined.FormatListBulleted,
+                                contentDescription = strings.cdListView
+                            )
+                        }
+                        ToggleButton(
+                            checked = isGridView,
+                            onCheckedChange = {
+                                isGridView = true
+                                prefs.edit { putBoolean("is_grid_view", true) }
+                            },
+                            shapes = ButtonGroupDefaults.connectedTrailingButtonShapes()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.GridView,
+                                contentDescription = strings.cdGridView
+                            )
+                        }
                     }
                 }
+                topBarColors.value = null
             }
-            topBarColors.value = null
         }
     }
 
