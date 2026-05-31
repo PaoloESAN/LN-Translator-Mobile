@@ -42,7 +42,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -52,20 +51,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.filled.Book
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.StayCurrentLandscape
 import androidx.compose.material.icons.filled.StayCurrentPortrait
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -74,19 +67,14 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.ToggleButton
@@ -125,9 +113,13 @@ import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarNavigationIcon
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
+import com.paoloesan.lntranslator_mobile.ui.novels.components.NovelPage
+import com.paoloesan.lntranslator_mobile.ui.novels.components.NovelRepository
+import com.paoloesan.lntranslator_mobile.ui.novels.components.ReaderConfigDialog
+import com.paoloesan.lntranslator_mobile.ui.novels.components.ShareNovelDialog
+import com.paoloesan.lntranslator_mobile.ui.novels.components.SwipeDismissZoomImage
 import com.paoloesan.lntranslator_mobile.ui.overlay.OverlayFontOption
 import com.paoloesan.lntranslator_mobile.ui.overlay.toComposeFontFamily
-import com.paoloesan.lntranslator_mobile.ui.overlay.toLabel
 import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
 import dev.jeziellago.compose.markdowntext.MarkdownText
 import kotlinx.coroutines.launch
@@ -153,7 +145,14 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
 
     // Configurable States
     var showOriginal by remember { mutableStateOf(prefs.getBoolean("reader_show_original", false)) }
-    var invertHorizontalNav by remember { mutableStateOf(prefs.getBoolean("reader_invert_horizontal_nav", false)) }
+    var invertHorizontalNav by remember {
+        mutableStateOf(
+            prefs.getBoolean(
+                "reader_invert_horizontal_nav",
+                false
+            )
+        )
+    }
     var isVerticalMode by remember {
         mutableStateOf(
             prefs.getBoolean(
@@ -279,7 +278,8 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                             try {
                                 focusRequester.requestFocus()
                                 keyboardController?.show()
-                            } catch (_: Exception) {}
+                            } catch (_: Exception) {
+                            }
                         }
                         TextField(
                             value = searchQuery,
@@ -700,7 +700,8 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                     // Sync pageInputText and request focus when expanded state changes
                     LaunchedEffect(isExpanded) {
                         if (!isExpanded) {
-                            pageInputText = if (displayPageNumber == 0) "" else displayPageNumber.toString()
+                            pageInputText =
+                                if (displayPageNumber == 0) "" else displayPageNumber.toString()
                         } else {
                             pageInputText = ""
                             try {
@@ -720,7 +721,8 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                                     val maxPage = if (isCoverFirst) pages.size - 1 else pages.size
                                     if (target != null && target in 1..maxPage) {
                                         coroutineScope.launch {
-                                            val targetIndex = if (isCoverFirst) target else target - 1
+                                            val targetIndex =
+                                                if (isCoverFirst) target else target - 1
                                             if (isVerticalMode) {
                                                 listState.scrollToItem(targetIndex)
                                             } else {
@@ -740,7 +742,8 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                                     imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
                                     contentDescription = strings.buttonGo,
                                     tint = if (pageInputText.toIntOrNull()?.let { target ->
-                                            val maxPage = if (isCoverFirst) pages.size - 1 else pages.size
+                                            val maxPage =
+                                                if (isCoverFirst) pages.size - 1 else pages.size
                                             target in 1..maxPage
                                         } == true) {
                                         MaterialTheme.colorScheme.primary
@@ -813,10 +816,12 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                                     keyboardActions = KeyboardActions(
                                         onGo = {
                                             val target = pageInputText.toIntOrNull()
-                                            val maxPage = if (isCoverFirst) pages.size - 1 else pages.size
+                                            val maxPage =
+                                                if (isCoverFirst) pages.size - 1 else pages.size
                                             if (target != null && target in 1..maxPage) {
                                                 coroutineScope.launch {
-                                                    val targetIndex = if (isCoverFirst) target else target - 1
+                                                    val targetIndex =
+                                                        if (isCoverFirst) target else target - 1
                                                     if (isVerticalMode) {
                                                         listState.scrollToItem(targetIndex)
                                                     } else {
@@ -1042,7 +1047,7 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                     color = Color.Transparent
                 ) {
                     Box(modifier = Modifier.fillMaxSize()) {
-                        TelephotoSwipeDismissImage(
+                        SwipeDismissZoomImage(
                             imageUrl = java.io.File(zoomImagePage!!.imagePath!!),
                             onDismiss = { showZoomDialog = false },
                             onClick = { isUiVisible = !isUiVisible },
@@ -1289,368 +1294,6 @@ fun EmptyNovelState(padding: PaddingValues) {
     }
 }
 
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun ReaderConfigDialog(
-    fontSize: Int,
-    lineSpacing: Int,
-    fontFamily: OverlayFontOption,
-    showOriginal: Boolean,
-    onFontSizeChange: (Int) -> Unit,
-    onLineSpacingChange: (Int) -> Unit,
-    onFontFamilyChange: (OverlayFontOption) -> Unit,
-    onShowOriginalChange: (Boolean) -> Unit,
-    invertHorizontalNav: Boolean,
-    onInvertHorizontalNavChange: (Boolean) -> Unit,
-    onDismiss: () -> Unit,
-    strings: UiStrings
-) {
-    var showFontFamilyOptions by remember { mutableStateOf(false) }
-
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-            )
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(24.dp)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(
-                    text = strings.overlayConfig,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.SemiBold
-                )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-                Text(
-                    text = strings.configPreviewText,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = fontSize.sp,
-                    lineHeight = (fontSize + lineSpacing).sp,
-                    fontFamily = fontFamily.toComposeFontFamily(),
-                    textAlign = TextAlign.Start,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                )
-
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { showFontFamilyOptions = true }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = strings.configFontFamilyLabel,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-
-                        Text(
-                            text = fontFamily.toLabel(strings),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-
-                    DropdownMenuPopup(
-                        expanded = showFontFamilyOptions,
-                        onDismissRequest = { showFontFamilyOptions = false },
-                        modifier = Modifier.width(200.dp)
-                    ) {
-                        DropdownMenuGroup(
-                            shapes = MenuDefaults.groupShape(0, 1)
-                        ) {
-                            OverlayFontOption.entries.forEachIndexed { index, option ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            text = option.toLabel(strings),
-                                            style = MaterialTheme.typography.bodyMedium
-                                        )
-                                    },
-                                    onClick = {
-                                        onFontFamilyChange(option)
-                                        showFontFamilyOptions = false
-                                    },
-                                    selected = option == fontFamily,
-                                    selectedLeadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Default.Check,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Default.Check,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp),
-                                            tint = Color.Transparent
-                                        )
-                                    },
-                                    shapes = MenuDefaults.itemShape(
-                                        index,
-                                        OverlayFontOption.entries.size
-                                    ),
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = strings.configFontSizeLabel,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        FilledIconButton(
-                            shape = CircleShape,
-                            onClick = {
-                                if (fontSize > 10) {
-                                    onFontSizeChange(fontSize - 1)
-                                }
-                            },
-                            enabled = fontSize > 10,
-                            modifier = Modifier.size(36.dp),
-                            colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        ) {
-                            Icon(
-                                Icons.Rounded.Remove,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-
-                        Text(
-                            text = "$fontSize",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.width(32.dp),
-                            textAlign = TextAlign.Center
-                        )
-
-                        FilledIconButton(
-                            shape = CircleShape,
-                            onClick = {
-                                if (fontSize < 30) {
-                                    onFontSizeChange(fontSize + 1)
-                                }
-                            },
-                            enabled = fontSize < 30,
-                            modifier = Modifier.size(36.dp),
-                            colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        ) {
-                            Icon(
-                                Icons.Rounded.Add,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = strings.configLineSpacingLabel,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        FilledIconButton(
-                            shape = CircleShape,
-                            onClick = {
-                                if (lineSpacing > 0) {
-                                    onLineSpacingChange(lineSpacing - 1)
-                                }
-                            },
-                            enabled = lineSpacing > 0,
-                            modifier = Modifier.size(36.dp),
-                            colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        ) {
-                            Icon(
-                                Icons.Rounded.Remove,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-
-                        Text(
-                            text = "$lineSpacing",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.width(32.dp),
-                            textAlign = TextAlign.Center
-                        )
-
-                        FilledIconButton(
-                            shape = CircleShape,
-                            onClick = {
-                                if (lineSpacing < 20) {
-                                    onLineSpacingChange(lineSpacing + 1)
-                                }
-                            },
-                            enabled = lineSpacing < 20,
-                            modifier = Modifier.size(36.dp),
-                            colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        ) {
-                            Icon(
-                                Icons.Rounded.Add,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
-                }
-
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-                // Show/Hide Original Content Switch Row
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onShowOriginalChange(!showOriginal) }
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = if (showOriginal) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            strings.readerShowOriginalContent,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    Switch(
-                        checked = showOriginal,
-                        onCheckedChange = onShowOriginalChange,
-                        thumbContent = {
-                            if (showOriginal) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                                )
-                            }
-                        }
-                    )
-                }
-
-                // Invert Horizontal Navigation Switch Row
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onInvertHorizontalNavChange(!invertHorizontalNav) }
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.SwapHoriz,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            strings.readerInvertNavigation,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    Switch(
-                        checked = invertHorizontalNav,
-                        onCheckedChange = onInvertHorizontalNavChange,
-                        thumbContent = {
-                            if (invertHorizontalNav) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                                )
-                            }
-                        }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                TextButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.align(Alignment.End)
-                ) {
-                    Text(
-                        text = strings.buttonClose,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-        }
-    }
-}
 
 private fun saveToUri(
     context: Context,

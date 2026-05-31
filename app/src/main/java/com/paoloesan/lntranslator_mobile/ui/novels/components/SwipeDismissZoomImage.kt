@@ -1,14 +1,14 @@
-package com.paoloesan.lntranslator_mobile.ui.novels
+package com.paoloesan.lntranslator_mobile.ui.novels.components
 
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -35,7 +35,7 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @Composable
-fun TelephotoSwipeDismissImage(
+fun SwipeDismissZoomImage(
     imageUrl: Any,
     onDismiss: () -> Unit,
     onClick: () -> Unit = {},

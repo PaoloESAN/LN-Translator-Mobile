@@ -6,7 +6,7 @@ import android.graphics.Bitmap
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.paoloesan.lntranslator_mobile.translation.TranslationResult
 import com.paoloesan.lntranslator_mobile.translation.TranslationService
-import com.paoloesan.lntranslator_mobile.ui.novels.NovelRepository
+import com.paoloesan.lntranslator_mobile.ui.novels.components.NovelRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -29,7 +29,10 @@ data class TranslationUiState(
     val puedeIrSiguiente: Boolean get() = indiceActual < traducciones.size - 1
 }
 
-class TranslationController(private val translationService: TranslationService, private val context: Context) {
+class TranslationController(
+    private val translationService: TranslationService,
+    private val context: Context
+) {
     private val _uiState = MutableStateFlow(TranslationUiState())
     val uiState = _uiState.asStateFlow()
 

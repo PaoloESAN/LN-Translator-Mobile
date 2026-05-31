@@ -1,4 +1,4 @@
-package com.paoloesan.lntranslator_mobile.ui.novels
+package com.paoloesan.lntranslator_mobile.ui.novels.components
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -49,7 +49,7 @@ object NovelRepository {
         bitmap: Bitmap? = null
     ) {
         val pages = getPages(context, novelName).toMutableList()
-        
+
         var imagePath: String? = null
         if (bitmap != null) {
             val fileName = "img_${System.currentTimeMillis()}.jpg"
@@ -167,7 +167,12 @@ object NovelRepository {
                 val pages: List<NovelPage> = gson.fromJson(json, type) ?: emptyList()
                 val updatedPages = pages.map { page ->
                     if (page.imagePath != null && page.imagePath.contains("images_$oldName")) {
-                        page.copy(imagePath = page.imagePath.replace("images_$oldName", "images_$newName"))
+                        page.copy(
+                            imagePath = page.imagePath.replace(
+                                "images_$oldName",
+                                "images_$newName"
+                            )
+                        )
                     } else {
                         page
                     }
@@ -240,7 +245,8 @@ object NovelRepository {
                     while (entry != null) {
                         val name = entry.name
                         if (name.startsWith("novel_") && name.endsWith(".json")) {
-                            importedNovelName = name.substringAfter("novel_").substringBeforeLast(".json")
+                            importedNovelName =
+                                name.substringAfter("novel_").substringBeforeLast(".json")
                             pagesJson = zis.bufferedReader().readText()
                         } else if (name.startsWith("images/") && !entry.isDirectory) {
                             val fileName = File(name).name
@@ -354,7 +360,8 @@ object NovelRepository {
                         startNewPage()
                         val canvas = currentPdfPage!!.canvas
 
-                        val scale = (contentWidth / bitmap.width).coerceAtMost((pageHeight - margin * 2) / bitmap.height)
+                        val scale =
+                            (contentWidth / bitmap.width).coerceAtMost((pageHeight - margin * 2) / bitmap.height)
                         val drawWidth = bitmap.width * scale
                         val drawHeight = bitmap.height * scale
                         val left = (pageWidth - drawWidth) / 2
@@ -429,7 +436,7 @@ object NovelRepository {
                             startNewPage()
                         }
                     }
-                    
+
                     // Add a small paragraph spacing between NovelPages
                     currentY += 12f
                 }

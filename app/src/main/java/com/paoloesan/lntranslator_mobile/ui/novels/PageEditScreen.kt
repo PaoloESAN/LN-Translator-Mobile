@@ -89,6 +89,8 @@ import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarNavigationIcon
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
+import com.paoloesan.lntranslator_mobile.ui.novels.components.NovelPage
+import com.paoloesan.lntranslator_mobile.ui.novels.components.NovelRepository
 import java.io.File
 import java.io.FileOutputStream
 
@@ -329,10 +331,14 @@ fun PageManagementScreen(
                                                                     if (dragOffsetY > nextHeight * 0.7f) {
                                                                         val listCopy =
                                                                             pagesList.toMutableList()
-                                                                        val item = listCopy.removeAt(
-                                                                            currentIndex
+                                                                        val item =
+                                                                            listCopy.removeAt(
+                                                                                currentIndex
+                                                                            )
+                                                                        listCopy.add(
+                                                                            nextIndex,
+                                                                            item
                                                                         )
-                                                                        listCopy.add(nextIndex, item)
                                                                         pagesList = listCopy
                                                                         activeDragIndex = nextIndex
                                                                         dragOffsetY -= nextHeight
@@ -347,10 +353,14 @@ fun PageManagementScreen(
                                                                     if (dragOffsetY < -prevHeight * 0.7f) {
                                                                         val listCopy =
                                                                             pagesList.toMutableList()
-                                                                        val item = listCopy.removeAt(
-                                                                            currentIndex
+                                                                        val item =
+                                                                            listCopy.removeAt(
+                                                                                currentIndex
+                                                                            )
+                                                                        listCopy.add(
+                                                                            prevIndex,
+                                                                            item
                                                                         )
-                                                                        listCopy.add(prevIndex, item)
                                                                         pagesList = listCopy
                                                                         activeDragIndex = prevIndex
                                                                         dragOffsetY += prevHeight

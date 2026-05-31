@@ -2,7 +2,6 @@ package com.paoloesan.lntranslator_mobile.ui.novels
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -43,7 +42,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DriveFolderUpload
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.HighlightOff
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.GridView
@@ -88,7 +86,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import coil3.compose.AsyncImage
 import com.paoloesan.lntranslator_mobile.LocalStrings
@@ -96,6 +93,8 @@ import com.paoloesan.lntranslator_mobile.LocalTopAppBarActions
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarNavigationIcon
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
+import com.paoloesan.lntranslator_mobile.ui.novels.components.NovelRepository
+import com.paoloesan.lntranslator_mobile.ui.novels.components.ShareNovelDialog
 import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
 import kotlinx.coroutines.launch
 

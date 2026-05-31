@@ -1,4 +1,4 @@
-package com.paoloesan.lntranslator_mobile.ui.novels
+package com.paoloesan.lntranslator_mobile.ui.novels.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
