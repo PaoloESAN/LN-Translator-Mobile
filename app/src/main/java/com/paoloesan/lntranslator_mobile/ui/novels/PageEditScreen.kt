@@ -72,7 +72,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -83,6 +82,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.paoloesan.lntranslator_mobile.LocalStrings
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarActions
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
@@ -443,6 +443,7 @@ fun PageManagementScreen(
                                                 shapes = MenuDefaults.groupShape(0, 2)
                                             ) {
                                                 DropdownMenuItem(
+                                                    shape = MenuDefaults.itemShape(0, 2).shape,
                                                     text = { Text(strings.pageManagementInsertAbove) },
                                                     leadingIcon = {
                                                         Icon(
@@ -464,6 +465,7 @@ fun PageManagementScreen(
                                                     }
                                                 )
                                                 DropdownMenuItem(
+                                                    shape = MenuDefaults.itemShape(1, 2).shape,
                                                     text = { Text(strings.pageManagementInsertBelow) },
                                                     leadingIcon = {
                                                         Icon(
@@ -490,6 +492,7 @@ fun PageManagementScreen(
                                                 shapes = MenuDefaults.groupShape(1, 2)
                                             ) {
                                                 DropdownMenuItem(
+                                                    shape = MenuDefaults.itemShape(0, 2).shape,
                                                     text = { Text(strings.pageManagementEditPage) },
                                                     leadingIcon = {
                                                         Icon(
@@ -512,6 +515,7 @@ fun PageManagementScreen(
                                                     }
                                                 )
                                                 DropdownMenuItem(
+                                                    shape = MenuDefaults.itemShape(1, 2).shape,
                                                     text = {
                                                         Text(
                                                             strings.pageManagementDeletePage,
