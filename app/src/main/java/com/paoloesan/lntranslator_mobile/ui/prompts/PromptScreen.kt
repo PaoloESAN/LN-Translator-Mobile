@@ -21,7 +21,7 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalIconButton
@@ -288,16 +288,14 @@ fun PromptScreen(
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(3.dp)
+            verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             itemsIndexed(promptsList) { index, prompt ->
                 val shape = listItemShape(index, promptsList.size)
-                Card(
+                ElevatedCard(
                     onClick = { onPromptSelected(prompt.descripcion) },
                     shape = shape,
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer
-                    ),
+                    colors = CardDefaults.elevatedCardColors(),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
