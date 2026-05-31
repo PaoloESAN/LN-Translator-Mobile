@@ -561,7 +561,13 @@ fun NovelsScreen(
         if (currentRoute == "novels") {
             topBarVisible.value = true
             if (selectedNovels.isNotEmpty()) {
-                topBarTitle.value = { Text(strings.novelsSelected(selectedNovels.size)) }
+                topBarTitle.value = {
+                    Text(
+                        text = strings.novelsSelected(selectedNovels.size),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
                 topBarNavIcon.value = {
                     IconButton(onClick = { selectedNovels = emptySet() }) {
                         Icon(Icons.Default.Close, contentDescription = strings.cdCancelSelection)
@@ -593,7 +599,13 @@ fun NovelsScreen(
                 }
                 topBarColors.value = selectionColors
             } else {
-                topBarTitle.value = { Text(strings.novelsTitle) }
+                topBarTitle.value = {
+                    Text(
+                        text = strings.novelsTitle,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
                 topBarNavIcon.value = {}
                 topBarActions.value = {
                     Row(
