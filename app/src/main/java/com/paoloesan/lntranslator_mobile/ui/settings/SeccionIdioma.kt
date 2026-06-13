@@ -19,7 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import androidx.core.content.edit
+import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import com.paoloesan.lntranslator_mobile.translation.prompts.TranslationPrompts
 import java.util.Locale
 
@@ -30,10 +30,8 @@ class SeccionIdioma(
     override val contexto: Context
 ) : Seccion {
 
-    private val prefs = contexto.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
-
     private var seleccionActual by mutableStateOf(
-        prefs.getString("idioma_app", null) ?: getSystemLanguage()
+        DataStoreManager.getString(contexto, "idioma_app", null) ?: getSystemLanguage()
     )
 
     private fun getSystemLanguage(): String {
@@ -44,14 +42,14 @@ class SeccionIdioma(
     private fun seleccionarIdioma(idioma: String): Boolean {
         if (seleccionActual == idioma) return false
         seleccionActual = idioma
-        prefs.edit { putString("idioma_app", idioma) }
+        DataStoreManager.putStringSync(contexto, "idioma_app", idioma)
         return true
     }
 
     @Composable
     override fun ContenidoModal(solicitarCierre: (() -> Unit)?) {
         androidx.compose.runtime.LaunchedEffect(Unit) {
-            seleccionActual = prefs.getString("idioma_app", null) ?: getSystemLanguage()
+            seleccionActual = DataStoreManager.getString(contexto, "idioma_app", null) ?: getSystemLanguage()
         }
 
         Column(

@@ -1,7 +1,6 @@
 package com.paoloesan.lntranslator_mobile.service
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.graphics.Bitmap
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.paoloesan.lntranslator_mobile.translation.TranslationResult
@@ -10,6 +9,11 @@ import com.paoloesan.lntranslator_mobile.ui.novels.components.NovelRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 
 data class TranslationUiState(
     val traducciones: List<String> = emptyList(),
@@ -38,22 +42,18 @@ class TranslationController(
     private val _uiState = MutableStateFlow(TranslationUiState())
     val uiState = _uiState.asStateFlow()
 
-    private val prefs = context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
-    private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { p, key ->
-        if (key == "selected_novel") {
-            val selected = p.getString(key, null)
-            _uiState.value = _uiState.value.copy(selectedNovel = selected)
+    private val controllerScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+
+    init {
+        controllerScope.launch {
+            DataStoreManager.getStringFlow(context, "selected_novel").collect { selected ->
+                _uiState.value = _uiState.value.copy(selectedNovel = selected)
+            }
         }
     }
 
-    init {
-        val selected = prefs.getString("selected_novel", null)
-        _uiState.value = _uiState.value.copy(selectedNovel = selected)
-        prefs.registerOnSharedPreferenceChangeListener(prefListener)
-    }
-
     fun release() {
-        prefs.unregisterOnSharedPreferenceChangeListener(prefListener)
+        controllerScope.cancel()
     }
 
     fun traducirCaptura(bitmap: Bitmap, scope: LifecycleCoroutineScope) {

@@ -34,6 +34,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
+import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -79,25 +81,8 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
 
         setContent {
-            val prefs = remember { getSharedPreferences("settings_prefs", Context.MODE_PRIVATE) }
-
-            var idiomaActual by remember {
-                mutableStateOf(prefs.getString("idioma_app", null))
-            }
-
-            DisposableEffect(prefs) {
-                val listener =
-                    android.content.SharedPreferences.OnSharedPreferenceChangeListener { p, key ->
-                        if (key == "idioma_app") {
-                            idiomaActual = p.getString(key, null)
-                        }
-                    }
-                prefs.registerOnSharedPreferenceChangeListener(listener)
-
-                onDispose {
-                    prefs.unregisterOnSharedPreferenceChangeListener(listener)
-                }
-            }
+            val idiomaActual by DataStoreManager.getStringFlow(this, "idioma_app")
+                .collectAsState(initial = DataStoreManager.getString(this, "idioma_app"))
 
             val strings = StringsProvider.getStrings(idiomaActual)
 
@@ -126,8 +111,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun configurarTema() {
-        val prefs = getSharedPreferences("settings_prefs", MODE_PRIVATE)
-        val tema = prefs.getString("tema_app", "Predeterminado del sistema")
+        val tema = DataStoreManager.getString(this, "tema_app", "Predeterminado del sistema")
 
         val modo = when (tema) {
             "Claro" -> AppCompatDelegate.MODE_NIGHT_NO

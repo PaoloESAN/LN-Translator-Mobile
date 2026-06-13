@@ -47,7 +47,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.edit
+import androidx.compose.runtime.collectAsState
+import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import com.paoloesan.lntranslator_mobile.LocalStrings
 import com.paoloesan.lntranslator_mobile.R
 import com.paoloesan.lntranslator_mobile.service.TranslationUiState
@@ -73,52 +74,23 @@ fun FloatingOverlayUI(
     val logTag = "OverlayDiag"
     val strings = LocalStrings.current
     val context = LocalContext.current
-    val prefs = remember {
-        context.getSharedPreferences(
-            "settings_prefs",
-            Context.MODE_PRIVATE
-        )
-    }
-    var currentFontSize by remember {
-        mutableIntStateOf(
-            prefs.getInt(
-                "overlay_font_size",
-                18
-            )
-        )
-    }
-    var currentLineSpacing by remember {
-        mutableIntStateOf(
-            prefs.getInt(
-                "overlay_line_spacing",
-                5
-            )
-        )
-    }
-    var currentFontFamily by remember {
-        mutableStateOf(
-            OverlayFontOption.fromPref(
-                prefs.getString("overlay_font_family", OverlayFontOption.ROBOTO.prefValue)
-            )
-        )
+    val currentFontSize by DataStoreManager.getIntFlow(context, "overlay_font_size", 18)
+        .collectAsState(initial = DataStoreManager.getInt(context, "overlay_font_size", 18))
+    val currentLineSpacing by DataStoreManager.getIntFlow(context, "overlay_line_spacing", 5)
+        .collectAsState(initial = DataStoreManager.getInt(context, "overlay_line_spacing", 5))
+    val currentFontFamilyPref by DataStoreManager.getStringFlow(context, "overlay_font_family", OverlayFontOption.ROBOTO.prefValue)
+        .collectAsState(initial = DataStoreManager.getString(context, "overlay_font_family", OverlayFontOption.ROBOTO.prefValue))
+    val currentFontFamily = remember(currentFontFamilyPref) {
+        OverlayFontOption.fromPref(currentFontFamilyPref)
     }
     var menuOpen by remember { mutableStateOf(false) }
     var configOpen by remember { mutableStateOf(false) }
-    var invertGestures by remember {
-        mutableStateOf(
-            prefs.getBoolean("overlay_invert_gestures", false)
-        )
-    }
-    var bottomPassThroughEnabled by remember {
-        mutableStateOf(
-            prefs.getBoolean("overlay_bottom_pass_through", false)
-        )
-    }
-    var currentSideMarginDp by remember {
-        mutableIntStateOf(
-            prefs.getInt("overlay_side_margin_dp", 12)
-        )
-    }
+    val invertGestures by DataStoreManager.getBooleanFlow(context, "overlay_invert_gestures", false)
+        .collectAsState(initial = DataStoreManager.getBoolean(context, "overlay_invert_gestures", false))
+    val bottomPassThroughEnabled by DataStoreManager.getBooleanFlow(context, "overlay_bottom_pass_through", false)
+        .collectAsState(initial = DataStoreManager.getBoolean(context, "overlay_bottom_pass_through", false))
+    val currentSideMarginDp by DataStoreManager.getIntFlow(context, "overlay_side_margin_dp", 12)
+        .collectAsState(initial = DataStoreManager.getInt(context, "overlay_side_margin_dp", 12))
     var showErrorDetails by remember { mutableStateOf(false) }
     val scrollState = key(uiState.indiceActual) { rememberScrollState() }
 
@@ -280,35 +252,29 @@ fun FloatingOverlayUI(
                         currentSideMarginDp = currentSideMarginDp,
                         currentFontFamily = currentFontFamily,
                         onFontSizeChange = { newSize ->
-                            currentFontSize = newSize
-                            prefs.edit { putInt("overlay_font_size", newSize) }
+                            DataStoreManager.putIntSync(context, "overlay_font_size", newSize)
                         },
                         onLineSpacingChange = { newSpacing ->
-                            currentLineSpacing = newSpacing
-                            prefs.edit { putInt("overlay_line_spacing", newSpacing) }
+                            DataStoreManager.putIntSync(context, "overlay_line_spacing", newSpacing)
                         },
                         onInvertGesturesChange = { inverted ->
-                            invertGestures = inverted
-                            prefs.edit { putBoolean("overlay_invert_gestures", inverted) }
+                            DataStoreManager.putBooleanSync(context, "overlay_invert_gestures", inverted)
                         },
                         onBottomPassThroughChange = { enabled ->
                             Log.d(
                                 logTag,
                                 "UI toggle switch old=$bottomPassThroughEnabled new=$enabled configOpen=$configOpen"
                             )
-                            bottomPassThroughEnabled = enabled
-                            prefs.edit { putBoolean("overlay_bottom_pass_through", enabled) }
+                            DataStoreManager.putBooleanSync(context, "overlay_bottom_pass_through", enabled)
                             onBottomPassThroughChange(enabled)
                         },
                         onSideMarginDpChange = { newMarginDp ->
                             val clamped = newMarginDp.coerceIn(0, 32)
-                            currentSideMarginDp = clamped
-                            prefs.edit { putInt("overlay_side_margin_dp", clamped) }
+                            DataStoreManager.putIntSync(context, "overlay_side_margin_dp", clamped)
                             onSideMarginDpChange(clamped)
                         },
                         onFontFamilyChange = { newFontFamily ->
-                            currentFontFamily = newFontFamily
-                            prefs.edit { putString("overlay_font_family", newFontFamily.prefValue) }
+                            DataStoreManager.putStringSync(context, "overlay_font_family", newFontFamily.prefValue)
                         },
                         hasActiveNovel = uiState.selectedNovel != null,
                         isSavingIllustration = uiState.isSavingIllustration,

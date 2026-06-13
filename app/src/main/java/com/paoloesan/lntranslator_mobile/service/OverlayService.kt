@@ -2,7 +2,7 @@ package com.paoloesan.lntranslator_mobile.service
 
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
+import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import android.graphics.Bitmap
 import android.graphics.PixelFormat
 import android.os.Build
@@ -79,8 +79,7 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
     }
 
     private fun createNotification(): android.app.Notification {
-        val prefs = getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
-        val idiomaActual = prefs.getString("idioma_app", null)
+        val idiomaActual = DataStoreManager.getString(this, "idioma_app", null)
         val strings = StringsProvider.getStrings(idiomaActual)
 
         return androidx.core.app.NotificationCompat.Builder(this, CHANNEL_ID)
@@ -108,9 +107,8 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
         ) 
     }
     private fun showOverlay() {
-        val prefs = getSharedPreferences("settings_prefs", MODE_PRIVATE)
-        bottomPassThroughEnabled = prefs.getBoolean(PREF_BOTTOM_PASS_THROUGH, false)
-        sideMarginDp = prefs.getInt(PREF_SIDE_MARGIN_DP, DEFAULT_SIDE_MARGIN_DP).coerceIn(0, 32)
+        bottomPassThroughEnabled = DataStoreManager.getBoolean(this, PREF_BOTTOM_PASS_THROUGH, false)
+        sideMarginDp = DataStoreManager.getInt(this, PREF_SIDE_MARGIN_DP, DEFAULT_SIDE_MARGIN_DP).coerceIn(0, 32)
         Log.d(
             TAG,
             "PREF init bottomPassThroughEnabled=$bottomPassThroughEnabled sideMarginDp=$sideMarginDp"
@@ -136,27 +134,10 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
             })
 
             setContent {
-                val prefs = remember { getSharedPreferences("settings_prefs", MODE_PRIVATE) }
-                var idiomaActual by remember { mutableStateOf(prefs.getString("idioma_app", null)) }
-                var temaActual by remember {
-                    mutableStateOf(
-                        prefs.getString(
-                            "tema_app",
-                            "Predeterminado del sistema"
-                        )
-                    )
-                }
-
-                LaunchedEffect(Unit) {
-                    val listener = SharedPreferences.OnSharedPreferenceChangeListener { p, key ->
-                        when (key) {
-                            "idioma_app" -> idiomaActual = p.getString(key, null)
-                            "tema_app" -> temaActual =
-                                p.getString(key, "Predeterminado del sistema")
-                        }
-                    }
-                    prefs.registerOnSharedPreferenceChangeListener(listener)
-                }
+                val idiomaActual by DataStoreManager.getStringFlow(this@OverlayService, "idioma_app")
+                    .collectAsState(initial = DataStoreManager.getString(this@OverlayService, "idioma_app"))
+                val temaActual by DataStoreManager.getStringFlow(this@OverlayService, "tema_app", "Predeterminado del sistema")
+                    .collectAsState(initial = DataStoreManager.getString(this@OverlayService, "tema_app", "Predeterminado del sistema"))
 
                 val strings = StringsProvider.getStrings(idiomaActual)
                 val isDarkTheme = when (temaActual) {
@@ -231,7 +212,7 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
         captureScreen { bitmap ->
             if (bitmap != null) {
                 val novelName = controller.uiState.value.selectedNovel
-                val strings = StringsProvider.getStrings(getSharedPreferences("settings_prefs", MODE_PRIVATE).getString("idioma_app", null))
+                val strings = StringsProvider.getStrings(DataStoreManager.getString(this@OverlayService, "idioma_app", null))
                 if (novelName == null) {
                     controller.setSavingIllustration(false)
                     android.widget.Toast.makeText(

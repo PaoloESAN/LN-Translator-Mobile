@@ -3,14 +3,13 @@ package com.paoloesan.lntranslator_mobile.translation
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
-import androidx.core.content.edit
 import com.paoloesan.lntranslator_mobile.translation.providers.ProviderFactory
+import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import com.paoloesan.lntranslator_mobile.ui.strings.StringsProvider
 import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
 
 class TranslationService(private val context: Context) {
 
-    private val prefs = context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
     private val providerFactory = ProviderFactory(context)
 
     companion object {
@@ -20,17 +19,17 @@ class TranslationService(private val context: Context) {
     }
 
     private val strings: UiStrings
-        get() = StringsProvider.getStrings(prefs.getString("idioma_app", null))
+        get() = StringsProvider.getStrings(DataStoreManager.getString(context, "idioma_app", null))
 
     fun getActiveProvider(): TranslationProvider? {
-        val providerId = prefs.getString(PREF_ACTIVE_PROVIDER, DEFAULT_PROVIDER) ?: DEFAULT_PROVIDER
+        val providerId = DataStoreManager.getString(context, PREF_ACTIVE_PROVIDER, DEFAULT_PROVIDER) ?: DEFAULT_PROVIDER
         return providerFactory.getProvider(providerId)
     }
 
     fun setActiveProvider(providerId: String): Boolean {
         val provider = providerFactory.getProvider(providerId)
         return if (provider != null) {
-            prefs.edit { putString(PREF_ACTIVE_PROVIDER, providerId) }
+            DataStoreManager.putStringSync(context, PREF_ACTIVE_PROVIDER, providerId)
             Log.d(TAG, "Proveedor cambiado a: ${provider.displayName}")
             true
         } else {
@@ -62,7 +61,7 @@ class TranslationService(private val context: Context) {
             )
         }
 
-        val userPrompt = prefs.getString("prompt_app", "") ?: ""
+        val userPrompt = DataStoreManager.getString(context, "prompt_app", "") ?: ""
 
         val request = ImageTranslationRequest(
             bitmap = bitmap,

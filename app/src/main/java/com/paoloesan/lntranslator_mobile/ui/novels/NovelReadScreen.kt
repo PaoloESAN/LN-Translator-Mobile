@@ -89,6 +89,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
+import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -148,7 +150,6 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
         }
     }
 
-    val prefs = remember { context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE) }
     val coroutineScope = rememberCoroutineScope()
 
     var expandedMenu by remember { mutableStateOf(false) }
@@ -156,35 +157,20 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
     var zoomImagePage by remember { mutableStateOf<NovelPage?>(null) }
 
     // Configurable States
-    var showOriginal by remember { mutableStateOf(prefs.getBoolean("reader_show_original", false)) }
-    var invertHorizontalNav by remember {
-        mutableStateOf(
-            prefs.getBoolean(
-                "reader_invert_horizontal_nav",
-                false
-            )
-        )
-    }
-    var isVerticalMode by remember {
-        mutableStateOf(
-            prefs.getBoolean(
-                "reader_vertical_mode",
-                false
-            )
-        )
-    }
-    var readerFontSize by remember {
-        mutableIntStateOf(prefs.getInt("reader_font_size", 18))
-    }
-    var readerLineSpacing by remember {
-        mutableIntStateOf(prefs.getInt("reader_line_spacing", 5))
-    }
-    var readerFontFamily by remember {
-        mutableStateOf(
-            OverlayFontOption.fromPref(
-                prefs.getString("reader_font_family", OverlayFontOption.ROBOTO.prefValue)
-            )
-        )
+    val showOriginal by DataStoreManager.getBooleanFlow(context, "reader_show_original", false)
+        .collectAsState(initial = DataStoreManager.getBoolean(context, "reader_show_original", false))
+    val invertHorizontalNav by DataStoreManager.getBooleanFlow(context, "reader_invert_horizontal_nav", false)
+        .collectAsState(initial = DataStoreManager.getBoolean(context, "reader_invert_horizontal_nav", false))
+    val isVerticalMode by DataStoreManager.getBooleanFlow(context, "reader_vertical_mode", false)
+        .collectAsState(initial = DataStoreManager.getBoolean(context, "reader_vertical_mode", false))
+    val readerFontSize by DataStoreManager.getIntFlow(context, "reader_font_size", 18)
+        .collectAsState(initial = DataStoreManager.getInt(context, "reader_font_size", 18))
+    val readerLineSpacing by DataStoreManager.getIntFlow(context, "reader_line_spacing", 5)
+        .collectAsState(initial = DataStoreManager.getInt(context, "reader_line_spacing", 5))
+    val readerFontFamilyPref by DataStoreManager.getStringFlow(context, "reader_font_family", OverlayFontOption.ROBOTO.prefValue)
+        .collectAsState(initial = DataStoreManager.getString(context, "reader_font_family", OverlayFontOption.ROBOTO.prefValue))
+    val readerFontFamily = remember(readerFontFamilyPref) {
+        OverlayFontOption.fromPref(readerFontFamilyPref)
     }
     var showConfigDialog by remember { mutableStateOf(false) }
 
@@ -221,7 +207,7 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
     }
 
     val savedLastPage = remember(novelName, pages) {
-        prefs.getInt("last_page_$novelName", 0).coerceIn(0, (pages.size - 1).coerceAtLeast(0))
+        DataStoreManager.getInt(context, "last_page_$novelName", 0).coerceIn(0, (pages.size - 1).coerceAtLeast(0))
     }
 
     // Navigation and Page Synchronization
@@ -423,13 +409,7 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                                                     ToggleButton(
                                                         checked = !isVerticalMode,
                                                         onCheckedChange = {
-                                                            isVerticalMode = false
-                                                            prefs.edit {
-                                                                putBoolean(
-                                                                    "reader_vertical_mode",
-                                                                    false
-                                                                )
-                                                            }
+                                                            DataStoreManager.putBooleanSync(context, "reader_vertical_mode", false)
                                                         },
                                                         shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
                                                         modifier = Modifier.weight(1f)
@@ -454,13 +434,7 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                                                     ToggleButton(
                                                         checked = isVerticalMode,
                                                         onCheckedChange = {
-                                                            isVerticalMode = true
-                                                            prefs.edit {
-                                                                putBoolean(
-                                                                    "reader_vertical_mode",
-                                                                    true
-                                                                )
-                                                            }
+                                                            DataStoreManager.putBooleanSync(context, "reader_vertical_mode", true)
                                                         },
                                                         shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
                                                         modifier = Modifier.weight(1f)
@@ -555,7 +529,7 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
     var isFirstLoad by remember { mutableStateOf(true) }
     LaunchedEffect(currentPageIndex) {
         if (pages.isNotEmpty()) {
-            prefs.edit { putInt("last_page_$novelName", currentPageIndex) }
+            DataStoreManager.putIntSync(context, "last_page_$novelName", currentPageIndex)
         }
         if (isFirstLoad) {
             isFirstLoad = false
@@ -993,25 +967,20 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                 fontFamily = readerFontFamily,
                 showOriginal = showOriginal,
                 onFontSizeChange = { newSize ->
-                    readerFontSize = newSize
-                    prefs.edit { putInt("reader_font_size", newSize) }
+                    DataStoreManager.putIntSync(context, "reader_font_size", newSize)
                 },
                 onLineSpacingChange = { newSpacing ->
-                    readerLineSpacing = newSpacing
-                    prefs.edit { putInt("reader_line_spacing", newSpacing) }
+                    DataStoreManager.putIntSync(context, "reader_line_spacing", newSpacing)
                 },
                 onFontFamilyChange = { newFontFamily ->
-                    readerFontFamily = newFontFamily
-                    prefs.edit { putString("reader_font_family", newFontFamily.prefValue) }
+                    DataStoreManager.putStringSync(context, "reader_font_family", newFontFamily.prefValue)
                 },
                 onShowOriginalChange = { value ->
-                    showOriginal = value
-                    prefs.edit { putBoolean("reader_show_original", value) }
+                    DataStoreManager.putBooleanSync(context, "reader_show_original", value)
                 },
                 invertHorizontalNav = invertHorizontalNav,
                 onInvertHorizontalNavChange = { value ->
-                    invertHorizontalNav = value
-                    prefs.edit { putBoolean("reader_invert_horizontal_nav", value) }
+                    DataStoreManager.putBooleanSync(context, "reader_invert_horizontal_nav", value)
                 },
                 onDismiss = { showConfigDialog = false },
                 strings = strings

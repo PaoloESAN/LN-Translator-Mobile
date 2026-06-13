@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.compose.markdown)
     implementation(libs.coil.compose)
     implementation(libs.telephoto.zoomable.image.coil3)
+    implementation(libs.androidx.datastore.preferences)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -3,6 +3,7 @@ package com.paoloesan.lntranslator_mobile.translation.prompts
 import android.content.Context
 import com.paoloesan.lntranslator_mobile.translation.prompts.languages.EnglishPrompt
 import com.paoloesan.lntranslator_mobile.translation.prompts.languages.SpanishPrompt
+import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import java.util.Locale
 
 object TranslationPrompts {
@@ -43,8 +44,7 @@ object TranslationPrompts {
     }
 
     private fun getSelectedLanguage(context: Context): String {
-        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        val saved = prefs.getString(PREF_LANGUAGE, null)
+        val saved = DataStoreManager.getString(context, PREF_LANGUAGE, null)
 
         if (saved != null) return saved
 

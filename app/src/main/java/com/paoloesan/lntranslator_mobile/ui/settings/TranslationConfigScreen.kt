@@ -66,7 +66,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
-import androidx.core.content.edit
+import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.paoloesan.lntranslator_mobile.LocalStrings
@@ -175,11 +175,10 @@ fun TranslationConfigScreen(
     val topBarVisible = LocalTopAppBarVisible.current
     val topBarLarge = LocalTopAppBarLarge.current
 
-    val prefs = remember { context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE) }
     val providerFactory = remember { ProviderFactory(context) }
 
     val initialProviderId = remember {
-        prefs.getString("active_translation_provider", "gemini_31_flash") ?: "gemini_31_flash"
+        DataStoreManager.getString(context, "active_translation_provider", "gemini_31_flash") ?: "gemini_31_flash"
     }
     var useOcr by remember { mutableStateOf(initialProviderId.startsWith("ocr_")) }
     var selectedModelId by remember { mutableStateOf(initialProviderId.removePrefix("ocr_")) }
@@ -214,7 +213,7 @@ fun TranslationConfigScreen(
         topBarActions.value = {}
         topBarColors.value = null
 
-        val jsonString = prefs.getString("api_keys_list", null)
+        val jsonString = DataStoreManager.getString(context, "api_keys_list", null)
         if (!jsonString.isNullOrEmpty()) {
             try {
                 val type = object : TypeToken<List<String>>() {}.type
@@ -234,15 +233,13 @@ fun TranslationConfigScreen(
 
     LaunchedEffect(useOcr, selectedModelId) {
         val finalProviderId = if (useOcr) "ocr_$selectedModelId" else selectedModelId
-        prefs.edit { putString("active_translation_provider", finalProviderId) }
+        DataStoreManager.putStringSync(context, "active_translation_provider", finalProviderId)
     }
 
     fun saveApiKeys() {
         val validKeys = apiKeys.filter { it.isNotBlank() }
-        prefs.edit {
-            putString("api_keys_list", Gson().toJson(validKeys))
-            putInt("api_key_index", 0)
-        }
+        DataStoreManager.putStringSync(context, "api_keys_list", Gson().toJson(validKeys))
+        DataStoreManager.putIntSync(context, "api_key_index", 0)
     }
 
     Column(

@@ -1,7 +1,6 @@
 package com.paoloesan.lntranslator_mobile.ui.home
 
 import android.app.Activity
-import android.content.Context
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -69,6 +68,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -85,12 +85,12 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
@@ -101,12 +101,15 @@ import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarNavigationIcon
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
+import com.paoloesan.lntranslator_mobile.R
+import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import com.paoloesan.lntranslator_mobile.service.OverlayService
 import com.paoloesan.lntranslator_mobile.service.ScreenCaptureService
 import com.paoloesan.lntranslator_mobile.ui.novels.components.NovelRepository
 import com.paoloesan.lntranslator_mobile.ui.novels.components.SwipeDismissZoomImage
 import com.paoloesan.lntranslator_mobile.ui.prompts.PromptDialog
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -136,38 +139,16 @@ fun HomeScreen(
         }
     }
 
-    val prefs = context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
-    var savedNovelsString by remember { mutableStateOf(prefs.getString("saved_novels", "") ?: "") }
+    val savedNovelsString by DataStoreManager.getStringFlow(context, "saved_novels", "")
+        .collectAsState(initial = DataStoreManager.getString(context, "saved_novels", ""))
     val novelsList by remember {
         derivedStateOf {
-            savedNovelsString.split(",").filter { it.isNotBlank() }
+            savedNovelsString.orEmpty().split(",").filter { it.isNotBlank() }
         }
     }
     var textPrompt by rememberSaveable { mutableStateOf("") }
-    var selectedNovel by remember {
-        mutableStateOf(
-            prefs.getString(
-                "selected_novel",
-                null
-            )
-        )
-    }
-
-    androidx.compose.runtime.DisposableEffect(prefs) {
-        val listener =
-            android.content.SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
-                if (key == "saved_novels") {
-                    savedNovelsString = sharedPreferences.getString("saved_novels", "") ?: ""
-                }
-                if (key == "selected_novel") {
-                    selectedNovel = sharedPreferences.getString("selected_novel", null)
-                }
-            }
-        prefs.registerOnSharedPreferenceChangeListener(listener)
-        onDispose {
-            prefs.unregisterOnSharedPreferenceChangeListener(listener)
-        }
-    }
+    val selectedNovel by DataStoreManager.getStringFlow(context, "selected_novel")
+        .collectAsState(initial = DataStoreManager.getString(context, "selected_novel"))
     var showDialog by remember { mutableStateOf(false) }
     var expandedNovels by remember { mutableStateOf(false) }
     var showAddNovelDialog by remember { mutableStateOf(false) }
@@ -222,7 +203,7 @@ fun HomeScreen(
             navigatePressed -> highlightedButton = 0
             savePressed -> highlightedButton = 1
             highlightedButton != null -> {
-                delay(220)
+                delay(220.milliseconds)
                 highlightedButton = null
             }
         }
@@ -349,11 +330,9 @@ fun HomeScreen(
                         val trimmed = newNovelName.trim()
                         if (trimmed.isNotBlank() && !novelsList.contains(trimmed)) {
                             val updated =
-                                if (savedNovelsString.isEmpty()) trimmed else "$trimmed,$savedNovelsString"
-                            prefs.edit { putString("saved_novels", updated) }
-                            savedNovelsString = updated
-                            selectedNovel = trimmed
-                            prefs.edit { putString("selected_novel", trimmed) }
+                                if (savedNovelsString.isNullOrEmpty()) trimmed else "$trimmed,$savedNovelsString"
+                            DataStoreManager.putStringSync(context, "saved_novels", updated)
+                            DataStoreManager.putStringSync(context, "selected_novel", trimmed)
 
                             novelCoverUri?.let { uri ->
                                 NovelRepository.saveCoverImage(context, trimmed, uri)
@@ -412,7 +391,7 @@ fun HomeScreen(
                 )
             } else {
                 Image(
-                    painter = androidx.compose.ui.res.painterResource(id = com.paoloesan.lntranslator_mobile.R.drawable.ln_translator_logo),
+                    painter = painterResource(id = R.drawable.ln_translator_logo),
                     contentDescription = strings.cdLogo,
                     modifier = Modifier
                         .sizeIn(maxHeight = 200.dp, maxWidth = 200.dp)
@@ -519,8 +498,7 @@ fun HomeScreen(
                         selected = selectedNovel == null,
                         shapes = MenuDefaults.itemShape(0, novelsList.count() + 2),
                         onClick = {
-                            selectedNovel = null
-                            prefs.edit { remove("selected_novel") }
+                            DataStoreManager.removeSync(context, "selected_novel")
                             expandedNovels = false
                         },
                         selectedLeadingIcon = {
@@ -578,8 +556,11 @@ fun HomeScreen(
                                         }
                                     },
                                     onClick = {
-                                        selectedNovel = novel
-                                        prefs.edit { putString("selected_novel", novel) }
+                                        DataStoreManager.putStringSync(
+                                            context,
+                                            "selected_novel",
+                                            novel
+                                        )
                                         expandedNovels = false
                                     },
                                     selectedLeadingIcon = {
@@ -707,7 +688,7 @@ fun HomeScreen(
             shape = ButtonDefaults.shapesFor(ButtonDefaults.MediumContainerHeight).shape,
             contentPadding = ButtonDefaults.MediumContentPadding,
             onClick = {
-                prefs.edit { putString("prompt_app", textPrompt) }
+                DataStoreManager.putStringSync(context, "prompt_app", textPrompt)
                 if (!android.provider.Settings.canDrawOverlays(context)) {
                     val intent = android.content.Intent(
                         android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,

@@ -86,7 +86,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.content.edit
+import androidx.compose.runtime.collectAsState
+import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import coil3.compose.AsyncImage
 import com.paoloesan.lntranslator_mobile.LocalCurrentRoute
 import com.paoloesan.lntranslator_mobile.LocalStrings
@@ -107,7 +108,6 @@ fun NovelsScreen(
     onNavigateToDetails: (String) -> Unit
 ) {
     val context = LocalContext.current
-    val prefs = context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
     val strings = LocalStrings.current
 
     val topBarTitle = LocalTopAppBarTitle.current
@@ -117,16 +117,18 @@ fun NovelsScreen(
     val topBarVisible = LocalTopAppBarVisible.current
     val currentRoute = LocalCurrentRoute.current
 
-    var savedNovelsString by remember { mutableStateOf(prefs.getString("saved_novels", "") ?: "") }
+    val savedNovelsString by DataStoreManager.getStringFlow(context, "saved_novels", "")
+        .collectAsState(initial = DataStoreManager.getString(context, "saved_novels", ""))
     val novelsList =
-        remember(savedNovelsString) { savedNovelsString.split(",").filter { it.isNotBlank() } }
+        remember(savedNovelsString) { savedNovelsString.orEmpty().split(",").filter { it.isNotBlank() } }
 
     var showAddDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteConfirmationDialog by remember { mutableStateOf(false) }
     var newNovelName by remember { mutableStateOf("") }
 
-    var isGridView by remember { mutableStateOf(prefs.getBoolean("is_grid_view", true)) }
+    val isGridView by DataStoreManager.getBooleanFlow(context, "is_grid_view", true)
+        .collectAsState(initial = DataStoreManager.getBoolean(context, "is_grid_view", true))
     var selectedNovels by remember { mutableStateOf(setOf<String>()) }
     var coverUpdateTrigger by remember { mutableIntStateOf(0) }
 
@@ -141,13 +143,12 @@ fun NovelsScreen(
 
     fun saveNovelsList(newList: List<String>) {
         val updated = newList.joinToString(",")
-        prefs.edit { putString("saved_novels", updated) }
-        savedNovelsString = updated
+        DataStoreManager.putStringSync(context, "saved_novels", updated)
 
         // Check if selected_novel was deleted
-        val currentSelected = prefs.getString("selected_novel", null)
+        val currentSelected = DataStoreManager.getString(context, "selected_novel", null)
         if (currentSelected != null && !newList.contains(currentSelected)) {
-            prefs.edit { remove("selected_novel") }
+            DataStoreManager.removeSync(context, "selected_novel")
         }
     }
 
@@ -485,9 +486,9 @@ fun NovelsScreen(
                                     newList[index] = trimmed
                                     saveNovelsList(newList)
 
-                                    val currentActive = prefs.getString("selected_novel", null)
+                                    val currentActive = DataStoreManager.getString(context, "selected_novel", null)
                                     if (currentActive == oldName) {
-                                        prefs.edit { putString("selected_novel", trimmed) }
+                                        DataStoreManager.putStringSync(context, "selected_novel", trimmed)
                                     }
                                     NovelRepository.renameNovelData(context, oldName, trimmed)
                                 }
@@ -534,7 +535,7 @@ fun NovelsScreen(
                     onClick = {
                         selectedNovels.forEach { novel ->
                             NovelRepository.deleteNovelData(context, novel)
-                            prefs.edit { remove("last_page_$novel") }
+                            DataStoreManager.removeSync(context, "last_page_$novel")
                         }
                         val newList = novelsList.filterNot { selectedNovels.contains(it) }
                         saveNovelsList(newList)
@@ -615,8 +616,7 @@ fun NovelsScreen(
                         ToggleButton(
                             checked = !isGridView,
                             onCheckedChange = {
-                                isGridView = false
-                                prefs.edit { putBoolean("is_grid_view", false) }
+                                DataStoreManager.putBooleanSync(context, "is_grid_view", false)
                             },
                             shapes = ButtonGroupDefaults.connectedLeadingButtonShapes()
                         ) {
@@ -628,8 +628,7 @@ fun NovelsScreen(
                         ToggleButton(
                             checked = isGridView,
                             onCheckedChange = {
-                                isGridView = true
-                                prefs.edit { putBoolean("is_grid_view", true) }
+                                DataStoreManager.putBooleanSync(context, "is_grid_view", true)
                             },
                             shapes = ButtonGroupDefaults.connectedTrailingButtonShapes()
                         ) {
