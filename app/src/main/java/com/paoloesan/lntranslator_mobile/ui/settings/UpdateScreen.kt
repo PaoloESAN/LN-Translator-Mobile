@@ -120,6 +120,8 @@ fun UpdateScreen(
     LaunchedEffect(Unit) {
         if (!UpdateManager.consultaRealizada) {
             UpdateManager.buscarActualizaciones(context, strings)
+        } else {
+            UpdateManager.verificarArchivoDescargado(context)
         }
     }
 
@@ -294,9 +296,9 @@ fun UpdateScreen(
                 onClick = {
                     if (updateAvailable) {
                         if (!descargaCompletada) {
-                            UpdateManager.iniciarDescarga()
+                            UpdateManager.iniciarDescarga(context)
                         } else {
-                            UpdateManager.iniciarInstalacion()
+                            UpdateManager.iniciarInstalacion(context, strings)
                         }
                     } else {
                         scope.launch { UpdateManager.buscarActualizaciones(context, strings) }

@@ -62,6 +62,7 @@ interface UiStrings {
     val updateInstallingStatus: String
     val updateAutoCheckTitle: String
     val updateAutoCheckDescription: String
+    val updateApkNotFound: String
 
     val buttonClose: String
     val buttonSave: String

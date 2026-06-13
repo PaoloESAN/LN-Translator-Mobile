@@ -62,6 +62,7 @@ object EnglishUiStrings : UiStrings {
     override val updateInstallingStatus = "Starting installation..."
     override val updateAutoCheckTitle = "Check on startup"
     override val updateAutoCheckDescription = "Look for updates when opening the app"
+    override val updateApkNotFound = "APK not found. Please download it again."
 
     override val buttonClose = "Close"
     override val buttonSave = "Save"
