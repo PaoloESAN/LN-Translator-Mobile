@@ -1,6 +1,5 @@
 package com.paoloesan.lntranslator_mobile
 
-import android.content.Context
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -15,6 +14,8 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.Book
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeTopAppBar
@@ -28,20 +29,20 @@ import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.collectAsState
-import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import com.paoloesan.lntranslator_mobile.ui.navigation.AppNavHost
+import com.paoloesan.lntranslator_mobile.ui.settings.UpdateManager
 import com.paoloesan.lntranslator_mobile.ui.strings.SpanishUiStrings
 import com.paoloesan.lntranslator_mobile.ui.strings.StringsProvider
 import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
@@ -104,6 +105,16 @@ class MainActivity : AppCompatActivity() {
             ) {
                 LNTranslatormobileTheme {
                     val navController = rememberNavController()
+                    LaunchedEffect(Unit) {
+                        val checkUpdates = DataStoreManager.getBoolean(
+                            this@MainActivity,
+                            "check_updates_on_start",
+                            true
+                        )
+                        if (checkUpdates) {
+                            UpdateManager.comprobarActualizacionesSilenciosamente(this@MainActivity)
+                        }
+                    }
                     MainContent(navController, this@MainActivity)
                 }
             }
@@ -131,6 +142,12 @@ fun MainContent(navController: NavHostController, contexto: AppCompatActivity) {
     val rutaActual = navBackStackEntry?.destination?.route
     val rutasPrincipales = listOf("inicio", "novels", "ajustes")
     val mostrarBottombar = rutaActual in rutasPrincipales
+
+    val availableVersion by DataStoreManager.getStringFlow(contexto, "available_update_version")
+        .collectAsState(initial = DataStoreManager.getString(contexto, "available_update_version"))
+    val updateSeen by DataStoreManager.getBooleanFlow(contexto, "update_seen", true)
+        .collectAsState(initial = DataStoreManager.getBoolean(contexto, "update_seen", true))
+    val mostrarBadge = availableVersion != null && !updateSeen
 
     val topBarTitle = LocalTopAppBarTitle.current
     val topBarActions = LocalTopAppBarActions.current
@@ -224,14 +241,27 @@ fun MainContent(navController: NavHostController, contexto: AppCompatActivity) {
                             }
                         },
                         icon = {
-                            if (rutaActual == "ajustes") {
-                                Icon(
-                                    Icons.Rounded.Settings,
-                                    contentDescription = strings.navSettings
-                                )
+                            val settingsIcon = if (rutaActual == "ajustes") {
+                                Icons.Rounded.Settings
+                            } else {
+                                Icons.Outlined.Settings
+                            }
+                            if (mostrarBadge) {
+                                BadgedBox(
+                                    badge = {
+                                        Badge {
+                                            Text("!")
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        settingsIcon,
+                                        contentDescription = strings.navSettings
+                                    )
+                                }
                             } else {
                                 Icon(
-                                    Icons.Outlined.Settings,
+                                    settingsIcon,
                                     contentDescription = strings.navSettings
                                 )
                             }

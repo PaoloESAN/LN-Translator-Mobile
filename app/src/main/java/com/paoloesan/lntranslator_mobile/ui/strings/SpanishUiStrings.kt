@@ -55,6 +55,13 @@ object SpanishUiStrings : UiStrings {
     override val updateLatestChangesTitle = "Cambios de la última versión"
     override val updateLatestChangesLoading = "Cargando cambios..."
     override val updateLatestChangesEmpty = "Esta versión no incluye notas de cambios."
+    override val updateDownloadInstallButton = "Descargar e Instalar"
+    override val updateDownloadButton = "Descargar"
+    override val updateInstallButton = "Instalar"
+    override val updateDownloadingProgress: (Int) -> String = { pct -> "Descargando: $pct%" }
+    override val updateInstallingStatus = "Iniciando instalación..."
+    override val updateAutoCheckTitle = "Comprobar al entrar"
+    override val updateAutoCheckDescription = "Buscar actualizaciones al iniciar la aplicación"
 
     override val buttonClose = "Cerrar"
     override val buttonSave = "Guardar"
