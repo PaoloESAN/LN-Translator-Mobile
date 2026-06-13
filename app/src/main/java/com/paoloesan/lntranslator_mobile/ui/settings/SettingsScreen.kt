@@ -18,6 +18,8 @@ import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.BrightnessMedium
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Translate
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -30,6 +32,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -47,13 +50,15 @@ import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarNavigationIcon
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
+import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
-    onNavigateToTranslationConfig: () -> Unit
+    onNavigateToTranslationConfig: () -> Unit,
+    onNavigateToUpdates: () -> Unit
 ) {
     val context = LocalContext.current
     val strings: UiStrings = LocalStrings.current
@@ -75,6 +80,20 @@ fun SettingsScreen(
         }
     }
 
+    // Observe update info to show subtitle and badge dynamically
+    val availableVersion by DataStoreManager.getStringFlow(context, "available_update_version")
+        .collectAsState(initial = DataStoreManager.getString(context, "available_update_version"))
+    val updateSeen by DataStoreManager.getBooleanFlow(context, "update_seen", true)
+        .collectAsState(initial = DataStoreManager.getBoolean(context, "update_seen", true))
+
+    val updateSubtitle = if (availableVersion != null && !updateSeen) {
+        strings.updateNewVersionAvailable(availableVersion!!)
+    } else {
+        strings.settingsUpdateDescription
+    }
+
+    val mostrarUpdateBadge = availableVersion != null && !updateSeen
+
     val secciones = remember(context, strings) {
         listOf(
             SeccionTema(
@@ -87,12 +106,6 @@ fun SettingsScreen(
                 Icons.Outlined.Translate,
                 strings.settingsLanguageTitle,
                 strings.settingsLanguageDescription,
-                context
-            ),
-            SeccionActualizar(
-                Icons.Outlined.Download,
-                strings.settingsUpdateTitle,
-                strings.settingsUpdateDescription,
                 context
             )
         )
@@ -114,10 +127,20 @@ fun SettingsScreen(
 
         secciones.forEach { seccionData ->
             SeccionRow(
-                seccionData.icono,
-                seccionData.titulo,
-                seccionData.descripcion
+                icono = seccionData.icono,
+                titulo = seccionData.titulo,
+                descripcion = seccionData.descripcion
             ) { seccionSeleccionada = seccionData }
+        }
+
+        // Dedicated Updates Row
+        SeccionRow(
+            icono = Icons.Outlined.Download,
+            titulo = strings.settingsUpdateTitle,
+            descripcion = updateSubtitle,
+            mostrarBadge = mostrarUpdateBadge
+        ) {
+            onNavigateToUpdates()
         }
     }
 
@@ -161,9 +184,15 @@ fun SettingsScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun SeccionRow(icono: ImageVector, titulo: String, descripcion: String, onClick: () -> Unit) {
+fun SeccionRow(
+    icono: ImageVector,
+    titulo: String,
+    descripcion: String,
+    mostrarBadge: Boolean = false,
+    onClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -172,21 +201,48 @@ fun SeccionRow(icono: ImageVector, titulo: String, descripcion: String, onClick:
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = MaterialShapes.Cookie12Sided.toShape()
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icono,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
+        if (mostrarBadge) {
+            BadgedBox(
+                badge = {
+                    Badge {
+                        Text("!")
+                    }
+                }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = MaterialShapes.Cookie12Sided.toShape()
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icono,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                }
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = MaterialShapes.Cookie12Sided.toShape()
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icono,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            }
         }
+
         Column(
             horizontalAlignment = Alignment.Start
         ) {

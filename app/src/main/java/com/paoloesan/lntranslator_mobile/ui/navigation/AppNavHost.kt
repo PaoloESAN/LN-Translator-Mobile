@@ -25,6 +25,7 @@ import com.paoloesan.lntranslator_mobile.ui.home.HomeScreen
 import com.paoloesan.lntranslator_mobile.ui.prompts.PromptScreen
 import com.paoloesan.lntranslator_mobile.ui.settings.SettingsScreen
 import com.paoloesan.lntranslator_mobile.ui.settings.TranslationConfigScreen
+import com.paoloesan.lntranslator_mobile.ui.settings.UpdateScreen
 import com.paoloesan.lntranslator_mobile.ui.novels.NovelsScreen
 import com.paoloesan.lntranslator_mobile.ui.novels.NovelDetailsScreen
 import androidx.navigation.NavType
@@ -120,7 +121,15 @@ fun AppNavHost(
             SettingsScreen(
                 onNavigateToTranslationConfig = {
                     navController.navigate("config_traduccion")
+                },
+                onNavigateToUpdates = {
+                    navController.navigate("actualizar")
                 }
+            )
+        }
+        composable(route = "actualizar") {
+            UpdateScreen(
+                onBack = { navController.popBackStack() }
             )
         }
         composable(route = "config_traduccion") {

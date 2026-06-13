@@ -55,6 +55,14 @@ object EnglishUiStrings : UiStrings {
     override val updateLatestChangesTitle = "Latest release changes"
     override val updateLatestChangesLoading = "Loading changes..."
     override val updateLatestChangesEmpty = "This release does not include changelog notes."
+    override val updateDownloadInstallButton = "Download & Install"
+    override val updateDownloadButton = "Download"
+    override val updateInstallButton = "Install"
+    override val updateDownloadingProgress: (Int) -> String = { pct -> "Downloading: $pct%" }
+    override val updateInstallingStatus = "Starting installation..."
+    override val updateAutoCheckTitle = "Check on startup"
+    override val updateAutoCheckDescription = "Look for updates when opening the app"
+    override val updateApkNotFound = "APK not found. Please download it again."
 
     override val buttonClose = "Close"
     override val buttonSave = "Save"
