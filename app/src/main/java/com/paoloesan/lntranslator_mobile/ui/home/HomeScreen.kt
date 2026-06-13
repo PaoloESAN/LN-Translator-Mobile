@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -94,6 +95,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.paoloesan.lntranslator_mobile.LocalCurrentRoute
 import com.paoloesan.lntranslator_mobile.LocalStrings
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarActions
@@ -150,6 +153,7 @@ fun HomeScreen(
     val selectedNovel by DataStoreManager.getStringFlow(context, "selected_novel")
         .collectAsState(initial = DataStoreManager.getString(context, "selected_novel"))
     var showDialog by remember { mutableStateOf(false) }
+    var showApiKeyWarningDialog by remember { mutableStateOf(false) }
     var expandedNovels by remember { mutableStateOf(false) }
     var showAddNovelDialog by remember { mutableStateOf(false) }
     var newNovelName by remember { mutableStateOf("") }
@@ -221,6 +225,95 @@ fun HomeScreen(
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 OverlayService.start(context)
             }, 500)
+        }
+    }
+
+    val launchTranslation = {
+        DataStoreManager.putStringSync(context, "prompt_app", textPrompt)
+        if (!android.provider.Settings.canDrawOverlays(context)) {
+            val intent = android.content.Intent(
+                android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                "package:${context.packageName}".toUri()
+            )
+            context.startActivity(intent)
+        } else {
+            val captureIntent = mediaProjectionManager.createScreenCaptureIntent()
+            screenCaptureLauncher.launch(captureIntent)
+        }
+    }
+
+    if (showApiKeyWarningDialog) {
+        Dialog(
+            onDismissRequest = { showApiKeyWarningDialog = false }
+        ) {
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 6.dp,
+                modifier = Modifier
+                    .widthIn(max = 340.dp)
+                    .fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = strings.apiKeyWarningTitle,
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = strings.apiKeyWarningMessage,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        TextButton(
+                            onClick = {
+                                showApiKeyWarningDialog = false
+                                launchTranslation()
+                            }
+                        ) {
+                            Text(
+                                text = strings.apiKeyWarningContinueWithout,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(
+                            onClick = {
+                                showApiKeyWarningDialog = false
+                            }
+                        ) {
+                            Text(
+                                text = strings.apiKeyWarningCancel,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(
+                            onClick = {
+                                showApiKeyWarningDialog = false
+                                navController.navigate("config_traduccion")
+                            }
+                        ) {
+                            Text(
+                                text = strings.apiKeyWarningConfigure,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -688,16 +781,23 @@ fun HomeScreen(
             shape = ButtonDefaults.shapesFor(ButtonDefaults.MediumContainerHeight).shape,
             contentPadding = ButtonDefaults.MediumContentPadding,
             onClick = {
-                DataStoreManager.putStringSync(context, "prompt_app", textPrompt)
-                if (!android.provider.Settings.canDrawOverlays(context)) {
-                    val intent = android.content.Intent(
-                        android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        "package:${context.packageName}".toUri()
-                    )
-                    context.startActivity(intent)
+                val apiKeysJson = DataStoreManager.getString(context, "api_keys_list", null)
+                val hasApiKey = if (!apiKeysJson.isNullOrEmpty()) {
+                    try {
+                        val type = object : TypeToken<List<String>>() {}.type
+                        val keys: List<String> = Gson().fromJson(apiKeysJson, type)
+                        keys.any { it.isNotBlank() }
+                    } catch (_: Exception) {
+                        false
+                    }
                 } else {
-                    val captureIntent = mediaProjectionManager.createScreenCaptureIntent()
-                    screenCaptureLauncher.launch(captureIntent)
+                    false
+                }
+
+                if (hasApiKey) {
+                    launchTranslation()
+                } else {
+                    showApiKeyWarningDialog = true
                 }
             }) {
             Text(strings.homeStartButton)

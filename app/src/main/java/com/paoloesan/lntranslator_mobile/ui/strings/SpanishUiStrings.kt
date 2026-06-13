@@ -78,6 +78,13 @@ object SpanishUiStrings : UiStrings {
     override val homeStartButton = "Iniciar Traductor"
     override val homePermissionDenied = "Permiso de captura denegado"
 
+    // API Key Warning Dialog
+    override val apiKeyWarningTitle = "Falta API Key"
+    override val apiKeyWarningMessage = "No tienes una API key, debes tener una para empezar a traducir."
+    override val apiKeyWarningContinueWithout = "Continuar sin API key"
+    override val apiKeyWarningCancel = "Cancelar"
+    override val apiKeyWarningConfigure = "Configurar"
+
     // Novels
     override val homeNovelsSectionTitle = "Novela Actual"
     override val homeSelectNovel = "Seleccionar Novela"

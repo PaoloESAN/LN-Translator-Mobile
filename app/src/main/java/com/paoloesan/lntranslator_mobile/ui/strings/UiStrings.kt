@@ -76,6 +76,13 @@ interface UiStrings {
     val homeStartButton: String
     val homePermissionDenied: String
 
+    // API Key Warning Dialog
+    val apiKeyWarningTitle: String
+    val apiKeyWarningMessage: String
+    val apiKeyWarningContinueWithout: String
+    val apiKeyWarningCancel: String
+    val apiKeyWarningConfigure: String
+
     // Novels
     val homeNovelsSectionTitle: String
     val homeSelectNovel: String
