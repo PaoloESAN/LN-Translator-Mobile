@@ -1,6 +1,5 @@
 package com.paoloesan.lntranslator_mobile.ui.settings
 
-import android.content.Context
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -8,12 +7,15 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -27,6 +29,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuGroup
 import androidx.compose.material3.DropdownMenuItem
@@ -56,6 +59,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
@@ -66,16 +70,16 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
-import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.paoloesan.lntranslator_mobile.LocalStrings
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarActions
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarLarge
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarNavigationIcon
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
-import com.paoloesan.lntranslator_mobile.LocalTopAppBarLarge
+import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import com.paoloesan.lntranslator_mobile.translation.providers.ProviderFactory
 
 @Composable
@@ -178,12 +182,16 @@ fun TranslationConfigScreen(
     val providerFactory = remember { ProviderFactory(context) }
 
     val initialProviderId = remember {
-        DataStoreManager.getString(context, "active_translation_provider", "gemini_31_flash") ?: "gemini_31_flash"
+        DataStoreManager.getString(context, "active_translation_provider", "gemini_31_flash")
+            ?: "gemini_31_flash"
     }
     var useOcr by remember { mutableStateOf(initialProviderId.startsWith("ocr_")) }
     var selectedModelId by remember { mutableStateOf(initialProviderId.removePrefix("ocr_")) }
     var showModelMenu by remember { mutableStateOf(false) }
     var showPrices by remember { mutableStateOf(false) }
+    var showDescription by remember { mutableStateOf(false) }
+    var showAdvanced by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
 
     val apiKeys = remember { mutableStateListOf<String>() }
     val maxApiKeys = 5
@@ -245,6 +253,12 @@ fun TranslationConfigScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                focusManager.clearFocus()
+            }
             .verticalScroll(rememberScrollState())
             .padding(bottom = 64.dp),
     ) {
@@ -259,17 +273,17 @@ fun TranslationConfigScreen(
                 text = strings.settingsApikeyTitle,
                 modifier = Modifier.weight(1f),
             )
-            if (apiKeys.size < maxApiKeys) {
-                FilledTonalIconButton(
-                    onClick = { apiKeys.add(""); saveApiKeys() },
-                    modifier = Modifier.size(36.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = strings.keyAddButton,
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
+            FilledTonalIconButton(
+                onClick = { apiKeys.add(""); saveApiKeys() },
+                enabled = apiKeys.size < maxApiKeys,
+                modifier = Modifier
+                    .size(width = 50.dp, height = ButtonDefaults.ExtraSmallContainerHeight),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = strings.keyAddButton,
+                    modifier = Modifier.size(ButtonDefaults.SmallIconSize),
+                )
             }
         }
 
@@ -338,8 +352,8 @@ fun TranslationConfigScreen(
                             imageVector = Icons.Outlined.Info,
                             contentDescription = null,
                             modifier = Modifier
-                                    .size(16.dp)
-                                    .padding(top = 2.dp),
+                                .size(16.dp)
+                                .padding(top = 2.dp),
                             tint = MaterialTheme.colorScheme.primary,
                         )
                         val linkColor = MaterialTheme.colorScheme.primary
@@ -374,192 +388,281 @@ fun TranslationConfigScreen(
             }
         }
 
-        HorizontalDivider(
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-            color = MaterialTheme.colorScheme.outlineVariant,
-        )
-
-        CategoryLabel(
-            text = strings.configAiModelTitle,
-            modifier = Modifier.padding(horizontal = 24.dp),
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { showModelMenu = true }
-                    .padding(vertical = 14.dp),
-            ) {
-                Text(
-                    text = strings.configActiveModel,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = selectedModelName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-
-            DropdownMenuPopup(
-                expanded = showModelMenu,
-                onDismissRequest = { showModelMenu = false },
-            ) {
-                DropdownMenuGroup(
-                    shapes = MenuDefaults.groupShape(0, 1)
-                ) {
-                    val totalItems = models.size
-                    models.forEachIndexed { index, (modelId, displayName) ->
-                        val isSelected = modelId == selectedModelId
-                        DropdownMenuItem(
-                            selected = isSelected,
-                            onClick = {
-                                selectedModelId = modelId
-                                showModelMenu = false
-                            },
-                            text = { Text(displayName) },
-                            shapes = MenuDefaults.itemShape(index, totalItems),
-                            selectedLeadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
-                                )
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
-                                    tint = Color.Transparent,
-                                )
-                            },
-                        )
-                    }
-                }
-            }
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { showPrices = !showPrices }
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    imageVector = if (showPrices) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = if (showPrices) strings.configHidePrices else strings.configShowPrices,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
-                Text(
-                    text = if (showPrices) strings.configHidePrices else strings.configShowPrices,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            if (showPrices) {
-                ElevatedCard(
-                    shape = MaterialTheme.shapes.large,
-                    colors = CardDefaults.elevatedCardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                    ),
-                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 12.dp),
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Text(
-                            text = strings.configModelPricingTitle,
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                        
-                        ModelPricingRow(
-                            modelName = "Gemini 3 Flash",
-                            pricingInfo = strings.configGemini3FlashPricing
-                        )
-                        ModelPricingRow(
-                            modelName = "Gemini 3.1 Flash Lite",
-                            pricingInfo = strings.configGemini31FlashLitePricing
-                        )
-                        ModelPricingRow(
-                            modelName = "Gemini 3.5 Flash",
-                            pricingInfo = strings.configGemini35FlashPricing
-                        )
-                    }
-                }
-            }
-        }
-
-        HorizontalDivider(
-            modifier = Modifier.padding(horizontal = 24.dp),
-            color = MaterialTheme.colorScheme.outlineVariant,
-        )
-
-        CategoryLabel(
-            text = strings.configTextExtraction,
-            modifier = Modifier.padding(horizontal = 24.dp),
-        )
-
-        val visionWeight by animateFloatAsState(
-            targetValue = if (!useOcr) 1.25f else 1f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessMedium,
-            ),
-            label = "visionWeight",
-        )
-        val ocrWeight by animateFloatAsState(
-            targetValue = if (useOcr) 1.25f else 1f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessMedium,
-            ),
-            label = "ocrWeight",
-        )
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                .clickable { showAdvanced = !showAdvanced }
+                .padding(horizontal = 24.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            OcrModeCard(
-                selected = !useOcr,
-                title = strings.configVisionOnly,
-                subtitle = strings.configVisionSubtitle,
-                onClick = { useOcr = false },
-                modifier = Modifier.weight(visionWeight),
+            Icon(
+                imageVector = if (showAdvanced) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                contentDescription = if (showAdvanced) strings.configHideAdvanced else strings.configShowAdvanced,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp)
             )
-            OcrModeCard(
-                selected = useOcr,
-                title = strings.configLocalOcr,
-                subtitle = strings.configOcrSubtitle,
-                onClick = { useOcr = true },
-                modifier = Modifier.weight(ocrWeight),
+            Text(
+                text = strings.configAdvancedOptions,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
             )
+        }
+
+        if (showAdvanced) {
+            CategoryLabel(
+                text = strings.configAiModelTitle,
+                modifier = Modifier.padding(horizontal = 24.dp),
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showModelMenu = true }
+                        .padding(vertical = 14.dp),
+                ) {
+                    Text(
+                        text = strings.configActiveModel,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = selectedModelName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                DropdownMenuPopup(
+                    expanded = showModelMenu,
+                    onDismissRequest = { showModelMenu = false },
+                ) {
+                    DropdownMenuGroup(
+                        shapes = MenuDefaults.groupShape(0, 1)
+                    ) {
+                        val totalItems = models.size
+                        models.forEachIndexed { index, (modelId, displayName) ->
+                            val isSelected = modelId == selectedModelId
+                            DropdownMenuItem(
+                                selected = isSelected,
+                                onClick = {
+                                    selectedModelId = modelId
+                                    showModelMenu = false
+                                },
+                                text = { Text(displayName) },
+                                shapes = MenuDefaults.itemShape(index, totalItems),
+                                selectedLeadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                        tint = Color.Transparent,
+                                    )
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showPrices = !showPrices }
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = if (showPrices) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = if (showPrices) strings.configHidePrices else strings.configShowPrices,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = if (showPrices) strings.configHidePrices else strings.configShowPrices,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                if (showPrices) {
+                    ElevatedCard(
+                        shape = MaterialTheme.shapes.large,
+                        colors = CardDefaults.elevatedCardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        ),
+                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp),
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Text(
+                                text = strings.configModelPricingTitle,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                            ModelPricingRow(
+                                modelName = "Gemini 3 Flash",
+                                pricingInfo = strings.configGemini3FlashPricing
+                            )
+                            ModelPricingRow(
+                                modelName = "Gemini 3.1 Flash Lite",
+                                pricingInfo = strings.configGemini31FlashLitePricing
+                            )
+                            ModelPricingRow(
+                                modelName = "Gemini 3.5 Flash",
+                                pricingInfo = strings.configGemini35FlashPricing
+                            )
+                        }
+                    }
+                }
+            }
+
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 24.dp),
+                color = MaterialTheme.colorScheme.outlineVariant,
+            )
+
+            CategoryLabel(
+                text = strings.configTextExtraction,
+                modifier = Modifier.padding(horizontal = 24.dp),
+            )
+
+            val visionWeight by animateFloatAsState(
+                targetValue = if (!useOcr) 1.25f else 1f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMedium,
+                ),
+                label = "visionWeight",
+            )
+            val ocrWeight by animateFloatAsState(
+                targetValue = if (useOcr) 1.25f else 1f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMedium,
+                ),
+                label = "ocrWeight",
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                OcrModeCard(
+                    selected = !useOcr,
+                    title = strings.configImageOnly,
+                    subtitle = strings.configImageSubtitle,
+                    onClick = { useOcr = false },
+                    modifier = Modifier.weight(visionWeight),
+                )
+                OcrModeCard(
+                    selected = useOcr,
+                    title = strings.configLocalOcr,
+                    subtitle = strings.configOcrSubtitle,
+                    onClick = { useOcr = true },
+                    modifier = Modifier.weight(ocrWeight),
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showDescription = !showDescription }
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = if (showDescription) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = if (showDescription) strings.configHideDescription else strings.configShowDescription,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = if (showDescription) strings.configHideDescription else strings.configShowDescription,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                if (showDescription) {
+                    ElevatedCard(
+                        shape = MaterialTheme.shapes.large,
+                        colors = CardDefaults.elevatedCardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        ),
+                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp),
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Text(
+                                text = strings.configImageOnly + ":",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = strings.configImageOnlyDescription,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = strings.configLocalOcr + ":",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = strings.configLocalOcrDescription,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

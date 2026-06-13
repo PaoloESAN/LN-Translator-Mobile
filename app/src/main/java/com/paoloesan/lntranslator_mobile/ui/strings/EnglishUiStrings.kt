@@ -22,10 +22,14 @@ object EnglishUiStrings : UiStrings {
     override val configAiModelTitle = "AI Model"
     override val configActiveModel = "Active model"
     override val configTextExtraction = "Text Extraction"
-    override val configVisionOnly = "Vision Only"
-    override val configVisionSubtitle = "More tokens · better quality"
+    override val configImageOnly = "Image Only"
+    override val configImageSubtitle = "More tokens · better quality"
     override val configLocalOcr = "Local OCR"
     override val configOcrSubtitle = "Fewer tokens · lower quality"
+    override val configShowDescription = "Show description"
+    override val configHideDescription = "Hide description"
+    override val configImageOnlyDescription = "The screen capture will be sent directly to the model."
+    override val configLocalOcrDescription = "The text extracted using local OCR will be sent to the model, which can reduce both response time and token usage."
 
     override val configShowPrices = "Show API prices"
     override val configHidePrices = "Hide API prices"
@@ -62,9 +66,13 @@ object EnglishUiStrings : UiStrings {
     override val keyLabel: (Int) -> String = { index -> "API Key $index" }
     override val keyDeleteContentDescription = "Delete API Key"
     override val keyAddButton = "Add another API Key"
-    override val keyGetHere = "Get your key here: "
+    override val keyGetHere = "Get your key here (free with a Google account): "
     override val keyRotationInfo =
         "Keys will rotate automatically if one fails or reaches its limit."
+
+    override val configAdvancedOptions = "Advanced Options"
+    override val configShowAdvanced = "Show advanced options"
+    override val configHideAdvanced = "Hide advanced options"
 
     override val themeSystem = "System default"
     override val themeLight = "Light"

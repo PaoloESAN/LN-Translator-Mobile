@@ -22,10 +22,14 @@ object SpanishUiStrings : UiStrings {
     override val configAiModelTitle = "Modelo de IA"
     override val configActiveModel = "Modelo activo"
     override val configTextExtraction = "Extracción de Texto"
-    override val configVisionOnly = "Solo Visión"
-    override val configVisionSubtitle = "Más tokens · mejor calidad"
+    override val configImageOnly = "Solo Imagen"
+    override val configImageSubtitle = "Más tokens · mejor calidad"
     override val configLocalOcr = "OCR Local"
     override val configOcrSubtitle = "Menos tokens · menor calidad"
+    override val configShowDescription = "Mostrar descripción"
+    override val configHideDescription = "Ocultar descripción"
+    override val configImageOnlyDescription = "Se le enviará la captura de la pantalla al modelo."
+    override val configLocalOcrDescription = "Se le enviará el texto extraído con OCR local al modelo, lo que puede reducir el tiempo al igual que los tokens."
 
     override val configShowPrices = "Ver precios de API"
     override val configHidePrices = "Ocultar precios de API"
@@ -62,9 +66,13 @@ object SpanishUiStrings : UiStrings {
     override val keyLabel: (Int) -> String = { index -> "API Key $index" }
     override val keyDeleteContentDescription = "Eliminar API Key"
     override val keyAddButton = "Agregar otra API Key"
-    override val keyGetHere = "Consigue tu clave aquí: "
+    override val keyGetHere = "Consigue tu clave aquí (gratis con una cuenta de Google): "
     override val keyRotationInfo =
         "Las claves rotarán automáticamente si una falla o alcanza su límite."
+
+    override val configAdvancedOptions = "Opciones Avanzadas"
+    override val configShowAdvanced = "Mostrar opciones avanzadas"
+    override val configHideAdvanced = "Ocultar opciones avanzadas"
 
     override val themeSystem = "Predeterminado del sistema"
     override val themeLight = "Claro"

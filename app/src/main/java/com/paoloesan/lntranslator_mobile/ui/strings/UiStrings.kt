@@ -24,10 +24,14 @@ interface UiStrings {
     val configAiModelTitle: String
     val configActiveModel: String
     val configTextExtraction: String
-    val configVisionOnly: String
-    val configVisionSubtitle: String
+    val configImageOnly: String
+    val configImageSubtitle: String
     val configLocalOcr: String
     val configOcrSubtitle: String
+    val configShowDescription: String
+    val configHideDescription: String
+    val configImageOnlyDescription: String
+    val configLocalOcrDescription: String
 
     val configShowPrices: String
     val configHidePrices: String
@@ -63,6 +67,10 @@ interface UiStrings {
     val keyAddButton: String
     val keyGetHere: String
     val keyRotationInfo: String
+
+    val configAdvancedOptions: String
+    val configShowAdvanced: String
+    val configHideAdvanced: String
 
     val themeSystem: String
     val themeLight: String
