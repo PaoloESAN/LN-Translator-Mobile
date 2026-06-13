@@ -6,6 +6,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.core.content.res.ResourcesCompat
 import com.paoloesan.lntranslator_mobile.R
 
+import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
+
 enum class OverlayFontOption(val prefValue: String) {
     ROBOTO("roboto"),
     TIMES_NEW_ROMAN("times_new_roman"),
@@ -18,13 +20,14 @@ enum class OverlayFontOption(val prefValue: String) {
     }
 }
 
-fun OverlayFontOption.toLabel(): String {
+fun OverlayFontOption.toLabel(strings: UiStrings): String {
     return when (this) {
-        OverlayFontOption.ROBOTO -> "Roboto"
-        OverlayFontOption.TIMES_NEW_ROMAN -> "Times New Roman"
-        OverlayFontOption.MONOSPACE -> "Monospace"
+        OverlayFontOption.ROBOTO -> strings.configFontRoboto
+        OverlayFontOption.TIMES_NEW_ROMAN -> strings.configFontTimesNewRoman
+        OverlayFontOption.MONOSPACE -> strings.configFontMonospace
     }
 }
+
 
 fun OverlayFontOption.toComposeFontFamily(): FontFamily {
     return when (this) {

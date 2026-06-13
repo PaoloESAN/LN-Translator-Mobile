@@ -21,7 +21,7 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalIconButton
@@ -45,15 +45,45 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.paoloesan.lntranslator_mobile.LocalStrings
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarActions
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarNavigationIcon
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material3.IconButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @Composable
 fun PromptScreen(
     context: Context,
+    onBack: () -> Unit,
     onPromptSelected: (String) -> Unit
 ) {
     val strings = LocalStrings.current
+
+    val topBarTitle = LocalTopAppBarTitle.current
+    val topBarActions = LocalTopAppBarActions.current
+    val topBarNavIcon = LocalTopAppBarNavigationIcon.current
+    val topBarColors = LocalTopAppBarColors.current
+    val topBarVisible = LocalTopAppBarVisible.current
+
+    LaunchedEffect(Unit) {
+        topBarVisible.value = true
+        topBarTitle.value = { Text(strings.topbarPrompts) }
+        topBarNavIcon.value = {
+            IconButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                    contentDescription = strings.navBack
+                )
+            }
+        }
+        topBarActions.value = {}
+        topBarColors.value = null
+    }
+
     val promptsList = remember { mutableStateListOf<PromptData>() }
     var borrarDialog by remember { mutableStateOf(false) }
     var editarDialog by remember { mutableStateOf(false) }
@@ -258,16 +288,14 @@ fun PromptScreen(
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(3.dp)
+            verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             itemsIndexed(promptsList) { index, prompt ->
                 val shape = listItemShape(index, promptsList.size)
-                Card(
+                ElevatedCard(
                     onClick = { onPromptSelected(prompt.descripcion) },
                     shape = shape,
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer
-                    ),
+                    colors = CardDefaults.elevatedCardColors(),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(

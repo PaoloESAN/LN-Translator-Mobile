@@ -78,6 +78,80 @@ object SpanishUiStrings : UiStrings {
     override val homeStartButton = "Iniciar Traductor"
     override val homePermissionDenied = "Permiso de captura denegado"
 
+    // API Key Warning Dialog
+    override val apiKeyWarningTitle = "Falta API Key"
+    override val apiKeyWarningMessage = "No tienes una API key, debes tener una para empezar a traducir."
+    override val apiKeyWarningContinueWithout = "Continuar sin API key"
+    override val apiKeyWarningCancel = "Cancelar"
+    override val apiKeyWarningConfigure = "Configurar"
+
+    // Novels
+    override val homeNovelsSectionTitle = "Novela Actual"
+    override val homeSelectNovel = "Seleccionar Novela"
+    override val novelsTitle = "Mis Novelas"
+    override val novelsSelected: (Int) -> String = { count -> "$count seleccionada(s)" }
+    override val novelsEmptyTitle = "No hay novelas"
+    override val novelsEmptySubtitle = "Agrega una novela para guardar sus traducciones."
+    override val novelsAddTitle = "Agregar Novela"
+    override val novelsEditTitle = "Editar Novela"
+    override val novelsAddNameLabel = "Nombre de la novela"
+    override val novelsCoverOptional = "Portada (Opcional)"
+    override val novelsNone = "Ninguna"
+
+    override val novelDetailsEmptyTitle = "No hay traducciones todavía"
+    override val novelDetailsEmptySubtitle = "Abre el traductor sobre alguna aplicación y empieza a capturar para ver las traducciones aquí."
+    override val novelDetailsViewPages = "Ver todas las páginas"
+    override val novelDetailsGoToPage = "Editar páginas"
+    override val novelDetailsPageNumber = "Página"
+    override val novelDetailsPageOf = "de"
+    override val readerShowOriginalContent = "Ver contenido sin traducir"
+    override val readerReadingOrientation = "Orientación de lectura"
+    override val readerHorizontal = "Horizontal"
+    override val readerVertical = "Vertical"
+    override val readerTranslationHeader = "Traducción"
+    override val readerOriginalTextHeader = "Texto Original"
+    override val buttonGo = "Ir"
+
+    override val pageManagementTitle = "Páginas"
+    override val pageManagementFinishEdit = "Finalizar edición"
+    override val pageManagementEditPages = "Editar páginas"
+    override val pageManagementAddPage = "Añadir página"
+    override val pageManagementAddPageTitle = "Añadir página"
+    override val pageManagementEditPageTitle = "Editar página"
+    override val pageManagementInsertPageTitle = "Insertar página"
+    override val pageManagementJumpToPage = "Ir a la página"
+    override val pageManagementGo = "Ir"
+    override val pageManagementNoPages = "No hay páginas"
+    override val pageManagementPressEditToAdd = "Presiona Editar para añadir una"
+    override val pageManagementPageNumber: (Int) -> String = { number -> "Página $number" }
+    override val pageManagementImageOnlyPage = "Página solo de imagen"
+    override val pageManagementOptions = "Opciones"
+    override val pageManagementDragToReorder = "Arrastrar para reordenar"
+    override val pageManagementInsertAbove = "Insertar página arriba"
+    override val pageManagementInsertBelow = "Insertar página abajo"
+    override val pageManagementEditPage = "Editar página"
+    override val pageManagementDeletePage = "Eliminar página"
+    override val pageManagementTranslatedTextLabel = "Texto traducido"
+    override val pageManagementOriginalTextLabel = "Texto original (opcional)"
+    override val pageManagementPageImageLabel = "Imagen de la página"
+    override val pageManagementRemoveImage = "Quitar imagen"
+    override val pageManagementSelectImage = "Seleccionar imagen"
+    override val pageManagementOnlyImage = "Solo imagen"
+    override val pageManagementCoverPage = "Portada"
+    override val readerSearchPlaceholder = "Buscar en la novela..."
+    override val readerSearchNoResults = "No se encontraron resultados"
+    override val readerInvertNavigation = "Invertir navegación horizontal"
+
+    override val deleteNovelConfirmationTitle = "¿Eliminar novela?"
+    override val deleteNovelConfirmationMessage: (Int) -> String = { count ->
+        if (count == 1) "¿Estás seguro de que quieres eliminar la novela seleccionada y todos sus datos?"
+        else "¿Estás seguro de que quieres eliminar las $count novelas seleccionadas y todos sus datos?"
+    }
+    override val deletePageConfirmationTitle = "¿Eliminar página?"
+    override val deletePageConfirmationMessage = "¿Estás seguro de que quieres eliminar esta página?"
+
+
+
     // Prompts
     override val deletePromptTitle = "¿Estas seguro de borrar el prompt?"
     override val deletePromptContentDescription = "Eliminar Prompt"
@@ -123,10 +197,24 @@ object SpanishUiStrings : UiStrings {
     override val configSideTouchMarginLabel = "Espacio táctil lateral"
     override val configBack = "Volver"
     override val configClose = "Cerrar Overlay"
+    override val configSaveIllustration = "Guardar pantalla actual"
+    override val configIllustrationSavedSuccess = "Ilustración guardada correctamente"
+    override val configIllustrationSavedError = "Error: no hay novela seleccionada"
+    override val configSavedLabel = "Guardado"
 
     // Notifications
     override val notifTitle = "Traductor Activo"
     override val notifDesc = "El traductor está funcionando sobre otras apps"
+
+    // Content Descriptions
+    override val cdCancelSelection = "Cancelar selección"
+    override val cdEdit = "Editar"
+    override val cdDelete = "Borrar"
+    override val cdListView = "Vista de lista"
+    override val cdGridView = "Vista de cuadrilla"
+    override val cdChangeView = "Cambiar vista"
+    override val cdMenu = "Menú"
+    override val cdLogo = "Logo de LN Translator"
 
     // Errors
     override val errorNoProvider = "No hay proveedor de traducción configurado"
@@ -138,4 +226,22 @@ object SpanishUiStrings : UiStrings {
     override val errorInvalidApiKey = "API Key inválida"
     override val errorModelOverloaded = "Modelo sobrecargado. Intenta de nuevo."
     override val errorUnknown = "Error desconocido"
+
+    override val cdShare = "Compartir"
+    override val menuShare = "Compartir"
+    override val menuImport = "Importar Novela"
+    override val importSuccess: (String) -> String = { name -> "Novela importada exitosamente: $name" }
+    override val importError = "Error al importar la novela"
+    override val novelEmptyError = "La novela está vacía"
+    override val importInvalidZip = "Archivo ZIP inválido o corrupto"
+    override val cdMenuActions = "Acciones de novela"
+
+    override val shareDialogTitle = "Compartir Novela"
+    override val shareDialogMessage = "¿Cómo quieres guardar la novela para compartirla? (El formato .zip solo funciona para esta app)"
+    override val shareDialogDownload = "Guardar .zip"
+    override val shareDialogPdf = "Guardar .pdf"
+    override val shareDialogEpub = "Guardar .epub"
+    override val shareDialogShare = "Compartir con otras apps"
+    override val shareDialogSaveSuccess = "Archivo guardado exitosamente"
+    override val shareDialogSaveError = "Error al guardar el archivo"
 }

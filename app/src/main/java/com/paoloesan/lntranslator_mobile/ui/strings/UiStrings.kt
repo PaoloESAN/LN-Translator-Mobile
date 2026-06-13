@@ -76,6 +76,76 @@ interface UiStrings {
     val homeStartButton: String
     val homePermissionDenied: String
 
+    // API Key Warning Dialog
+    val apiKeyWarningTitle: String
+    val apiKeyWarningMessage: String
+    val apiKeyWarningContinueWithout: String
+    val apiKeyWarningCancel: String
+    val apiKeyWarningConfigure: String
+
+    // Novels
+    val homeNovelsSectionTitle: String
+    val homeSelectNovel: String
+    val novelsTitle: String
+    val novelsSelected: (Int) -> String
+    val novelsEmptyTitle: String
+    val novelsEmptySubtitle: String
+    val novelsAddTitle: String
+    val novelsEditTitle: String
+    val novelsAddNameLabel: String
+    val novelsCoverOptional: String
+    val novelsNone: String
+    val novelDetailsEmptyTitle: String
+    val novelDetailsEmptySubtitle: String
+    val novelDetailsViewPages: String
+    val novelDetailsGoToPage: String
+    val novelDetailsPageNumber: String
+    val novelDetailsPageOf: String
+    val readerShowOriginalContent: String
+    val readerReadingOrientation: String
+    val readerHorizontal: String
+    val readerVertical: String
+    val readerTranslationHeader: String
+    val readerOriginalTextHeader: String
+    val buttonGo: String
+
+    val pageManagementTitle: String
+    val pageManagementFinishEdit: String
+    val pageManagementEditPages: String
+    val pageManagementAddPage: String
+    val pageManagementAddPageTitle: String
+    val pageManagementEditPageTitle: String
+    val pageManagementInsertPageTitle: String
+    val pageManagementJumpToPage: String
+    val pageManagementGo: String
+    val pageManagementNoPages: String
+    val pageManagementPressEditToAdd: String
+    val pageManagementPageNumber: (Int) -> String
+    val pageManagementImageOnlyPage: String
+    val pageManagementOptions: String
+    val pageManagementDragToReorder: String
+    val pageManagementInsertAbove: String
+    val pageManagementInsertBelow: String
+    val pageManagementEditPage: String
+    val pageManagementDeletePage: String
+    val pageManagementTranslatedTextLabel: String
+    val pageManagementOriginalTextLabel: String
+    val pageManagementPageImageLabel: String
+    val pageManagementRemoveImage: String
+    val pageManagementSelectImage: String
+    val pageManagementOnlyImage: String
+    val pageManagementCoverPage: String
+    val readerSearchPlaceholder: String
+    val readerSearchNoResults: String
+    val readerInvertNavigation: String
+
+    val deleteNovelConfirmationTitle: String
+    val deleteNovelConfirmationMessage: (Int) -> String
+    val deletePageConfirmationTitle: String
+    val deletePageConfirmationMessage: String
+
+
+
     // Prompts
     val deletePromptTitle: String
     val deletePromptContentDescription: String
@@ -116,10 +186,24 @@ interface UiStrings {
     val configSideTouchMarginLabel: String
     val configBack: String
     val configClose: String
+    val configSaveIllustration: String
+    val configIllustrationSavedSuccess: String
+    val configIllustrationSavedError: String
+    val configSavedLabel: String
 
     // Notifications
     val notifTitle: String
     val notifDesc: String
+
+    // Content Descriptions
+    val cdCancelSelection: String
+    val cdEdit: String
+    val cdDelete: String
+    val cdListView: String
+    val cdGridView: String
+    val cdChangeView: String
+    val cdMenu: String
+    val cdLogo: String
 
     // Errors
     val errorNoProvider: String
@@ -130,6 +214,24 @@ interface UiStrings {
     val errorInvalidApiKey: String
     val errorModelOverloaded: String
     val errorUnknown: String
+
+    val cdShare: String
+    val menuShare: String
+    val menuImport: String
+    val importSuccess: (String) -> String
+    val importError: String
+    val novelEmptyError: String
+    val importInvalidZip: String
+    val cdMenuActions: String
+
+    val shareDialogTitle: String
+    val shareDialogMessage: String
+    val shareDialogDownload: String
+    val shareDialogPdf: String
+    val shareDialogEpub: String
+    val shareDialogShare: String
+    val shareDialogSaveSuccess: String
+    val shareDialogSaveError: String
 }
 
 object StringsProvider {

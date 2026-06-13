@@ -1,19 +1,18 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
 android {
     namespace = "com.paoloesan.lntranslator_mobile"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.paoloesan.lntranslator_mobile"
         minSdk = 29
-        targetSdk = 36
-        versionCode = 9
-        versionName = "1.4.2"
+        targetSdk = 37
+        versionCode = 10
+        versionName = "1.5.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -62,6 +61,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.service)
     implementation(libs.mlkit.text.recognition.japanese)
     implementation(libs.compose.markdown)
+    implementation(libs.coil.compose)
+    implementation(libs.telephoto.zoomable.image.coil3)
+    implementation(libs.androidx.datastore.preferences)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

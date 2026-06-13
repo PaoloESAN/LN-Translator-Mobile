@@ -4,7 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.util.Base64
 import android.util.Log
-import androidx.core.content.edit
+import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.paoloesan.lntranslator_mobile.translation.ModelClient
@@ -32,7 +32,6 @@ class GeminiClient(
     override val supportsVision: Boolean = true
 
     private val appContext = context.applicationContext
-    private val prefs = appContext.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
     private val apiService: GeminiApiService
 
     private val apiKeys: List<String>
@@ -44,11 +43,11 @@ class GeminiClient(
     }
 
     private val strings: UiStrings
-        get() = StringsProvider.getStrings(prefs.getString("idioma_app", null))
+        get() = StringsProvider.getStrings(DataStoreManager.getString(appContext, "idioma_app", null))
 
     init {
         apiKeys = loadApiKeys()
-        currentKeyIndex = prefs.getInt("api_key_index", 0)
+        currentKeyIndex = DataStoreManager.getInt(appContext, "api_key_index", 0)
             .coerceIn(0, (apiKeys.size - 1).coerceAtLeast(0))
 
         apiService = createApiService()
@@ -302,7 +301,7 @@ class GeminiClient(
     }
 
     private fun loadApiKeys(): List<String> {
-        val jsonString = prefs.getString("api_keys_list", null)
+        val jsonString = DataStoreManager.getString(appContext, "api_keys_list", null)
         if (!jsonString.isNullOrEmpty()) {
             try {
                 val type = object : TypeToken<List<String>>() {}.type
@@ -318,7 +317,7 @@ class GeminiClient(
     private fun getNextApiKey(): String {
         if (apiKeys.isEmpty()) return ""
         currentKeyIndex = (currentKeyIndex + 1) % apiKeys.size
-        prefs.edit { putInt("api_key_index", currentKeyIndex) }
+        DataStoreManager.putIntSync(appContext, "api_key_index", currentKeyIndex)
         return apiKeys[currentKeyIndex]
     }
 

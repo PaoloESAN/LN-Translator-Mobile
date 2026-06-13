@@ -20,7 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import androidx.core.content.edit
+import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import com.paoloesan.lntranslator_mobile.LocalStrings
 
 class SeccionTema(
@@ -30,10 +30,9 @@ class SeccionTema(
     override val contexto: Context
 ) : Seccion {
 
-    private val prefs = contexto.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
-
     private var seleccionActual by mutableStateOf(
-        prefs.getString(
+        DataStoreManager.getString(
+            contexto,
             "tema_app",
             "Predeterminado del sistema"
         ) ?: "Predeterminado del sistema"
@@ -51,7 +50,7 @@ class SeccionTema(
     private fun seleccionarTema(tema: String): Boolean {
         if (seleccionActual == tema) return false
         seleccionActual = tema
-        prefs.edit { putString("tema_app", tema) }
+        DataStoreManager.putStringSync(contexto, "tema_app", tema)
         aplicarTemaSeleccionado(tema)
         return true
     }
@@ -67,7 +66,7 @@ class SeccionTema(
         )
 
         androidx.compose.runtime.LaunchedEffect(Unit) {
-            seleccionActual = prefs.getString("tema_app", "Predeterminado del sistema")
+            seleccionActual = DataStoreManager.getString(contexto, "tema_app", "Predeterminado del sistema")
                 ?: "Predeterminado del sistema"
         }
 

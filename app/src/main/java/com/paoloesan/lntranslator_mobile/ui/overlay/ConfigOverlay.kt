@@ -11,15 +11,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -62,6 +67,10 @@ fun ConfigOverlayContent(
     onBottomPassThroughChange: (Boolean) -> Unit,
     onSideMarginDpChange: (Int) -> Unit,
     onFontFamilyChange: (OverlayFontOption) -> Unit,
+    hasActiveNovel: Boolean,
+    isSavingIllustration: Boolean,
+    showIllustrationSavedCheck: Boolean,
+    onSaveIllustration: () -> Unit,
     onClose: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -109,7 +118,7 @@ fun ConfigOverlayContent(
                 )
 
                 Text(
-                    text = currentFontFamily.toLabel(),
+                    text = currentFontFamily.toLabel(strings),
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
@@ -146,7 +155,7 @@ fun ConfigOverlayContent(
                             )
 
                             Text(
-                                text = option.toLabel(),
+                                text = option.toLabel(strings),
                                 color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(start = 8.dp)
                             )
@@ -408,6 +417,64 @@ fun ConfigOverlayContent(
                 },
                 modifier = Modifier.fillMaxWidth(),
             )
+        }
+
+        if (hasActiveNovel) {
+            Spacer(modifier = Modifier.height(24.dp))
+
+            OutlinedButton(
+                onClick = onSaveIllustration,
+                enabled = !isSavingIllustration && !showIllustrationSavedCheck,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp),
+                shape = MaterialTheme.shapes.extraLarge,
+                colors = if (showIllustrationSavedCheck) {
+                    ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
+                } else {
+                    ButtonDefaults.outlinedButtonColors()
+                }
+            ) {
+                when {
+                    isSavingIllustration -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp).padding(end = 8.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = strings.configSaveIllustration,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    showIllustrationSavedCheck -> {
+                        Icon(
+                            imageVector = Icons.Rounded.Check,
+                            contentDescription = null,
+                            modifier = Modifier.padding(end = 8.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = strings.configSavedLabel,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    else -> {
+                        Icon(
+                            imageVector = Icons.Rounded.Image,
+                            contentDescription = null,
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                        Text(
+                            text = strings.configSaveIllustration,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
         }
 
         Spacer(modifier = Modifier.weight(1f))
