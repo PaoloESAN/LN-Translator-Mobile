@@ -266,8 +266,8 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
         if (isManagingPages) {
             topBarVisible.value = true
         } else {
-            topBarVisible.value = showSystemBars
-            if (showSystemBars) {
+            topBarVisible.value = showSystemBars || pages.isEmpty()
+            if (showSystemBars || pages.isEmpty()) {
                 if (isSearchActive) {
                     topBarTitle.value = {
                         val focusRequester = remember { FocusRequester() }
@@ -600,7 +600,8 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                     .background(MaterialTheme.colorScheme.background)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = null
+                        indication = null,
+                        enabled = pages.isNotEmpty()
                     ) {
                         showSystemBars = !showSystemBars
                     }

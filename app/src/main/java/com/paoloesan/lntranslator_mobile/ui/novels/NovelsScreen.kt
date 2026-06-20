@@ -164,14 +164,27 @@ fun NovelsScreen(
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                if (available.y < -1) {
-                    isFabVisible = false
-                } else if (available.y > 1) {
+                if (available.y > 1) {
                     isFabVisible = true
                 }
                 return Offset.Zero
             }
+
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+                if (consumed.y < -1) {
+                    isFabVisible = false
+                }
+                return Offset.Zero
+            }
         }
+    }
+
+    LaunchedEffect(novelsList) {
+        isFabVisible = true
     }
 
     val importLauncher = rememberLauncherForActivityResult(
