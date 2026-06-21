@@ -4,7 +4,7 @@
 
 # LN Translator
 
-Translate Japanese Light Novels directly from official websites to your preferred language with ease. This tool is designed to provide a seamless reading experience for LN fans, removing the language barrier directly on your screen.
+LN Translator is a native Android application that allows you to translate Japanese Light Novels and text directly on your device's screen. Designed for a seamless and immersive reading experience, it removes language barriers by overlaying high-quality translations directly on top of your target reading application.
 
 <p align="center">
   <a href="https://github.com/PaoloESAN/LN-Translator-Mobile/releases/latest/download/LNTranslator.apk">
@@ -12,68 +12,91 @@ Translate Japanese Light Novels directly from official websites to your preferre
   </a>
 </p>
 
+> [!NOTE]
+> This project is not intended to replace Light Novel scanlations or official translations. Instead, it aims to provide a fast alternative so readers can enjoy newly released Japanese Light Novels immediately upon publication.
+
+---
+
 ## Demo
 
 https://github.com/user-attachments/assets/4e8be96e-56a1-4a91-9900-e745a05d8480
 
+---
+
+## Features
+
+- **On-Screen Overlay**: Translate text instantly without switching apps or leaving your reader.
+- **Saved Translations & History**:
+  - **Local Session Archive**: Keep a local database of all translated pages to revisit your reading history at any time.
+  - **Editing & Correction**: Manually modify, correct, or crop OCR text and translation results directly in the page editor.
+  - **Export & Sharing**: Export translated novel pages, extracted illustrations, or entire sessions to share with others.
+- **Smart API Key Rotation**: Configure up to 5 Gemini API keys. The app automatically cycles through them if rate limits are hit or failures occur.
+- **Work-Specific Context (Prompts)**: Define custom prompts containing specific terms, character names, and details about the novel to guide the translation context.
+- **Dual Translation Modes**:
+  - **Vision-based (Gemini Vision)**: Processes screen captures directly to preserve visual context and layout.
+  - **Text-based (OCR + Translation)**: Extracts text locally via OCR first, then sends the plain text to the LLM for precise translation.
+- **Multi-Language UI**: Full localization in English and Spanish, automatically adapting to the device system language.
+- **Session History Navigation**: Easily browse back and forth through your current translation history using the previous/next buttons.
+
+---
+
 ## Requirements
 
-- **Android Version**: Android 10 or higher
+- **Android Version**: Android 10 (API Level 29) or higher.
+- **Permissions Required**:
+  - **Display over other apps**: Required to display the floating window and translation overlay.
+  - **Screen Capture**: Required to read the Japanese text on your screen and send it to the AI model.
+  - **Internet Connection**: Required to send the translation requests to the AI model.
 
-## Get Started
+---
 
-1. **Get your API Key**: Obtain your free API keys from [Google AI Studio](https://aistudio.google.com/app/apikey).
-2. **API Setup**: Open the app, go to Settings, and add your Gemini API keys. **Privacy Note**: Your keys are stored locally and used *only* to communicate with Google's API. No third party or developer has access to your credentials.
-3. **Start Translator**: Tap the "Start Translator" button on the home screen. Ensure you allow the "Display over other apps" and "Screen recording" permissions when prompted.
-4. **Screen Capture**: When the Android permission dialog appears, we recommend choosing **"Share one app"** and then selecting your target reading app (e.g., BookWalker, Kindle, or Browser).
-5. **Context (Optional)**: Input your preferred context in the home screen (e.g., "maintaining a medieval fantasy tone") to guide the translation style.
-6. **Translate**: Tap the floating icon to start translating your current page!
+## Getting Started
 
-## Translation Providers
+1. **Get an API Key**: Obtain a free API key from the [Google AI Studio](https://aistudio.google.com/api-keys).
+2. **Setup the Keys**: Launch the application, navigate to the Settings panel, and input your Gemini API keys.
+3. **Apply Context (Optional)**: Type custom instructions on the home screen to steer the AI output.
+4. **Start the Service**: Tap the Start Translator button on the home screen and grant the requested overlay and screen recording permissions.
+5. **Set the Target Scope**: In the system permission prompt, we recommend selecting **Share one app** and choosing your target reader. This works seamlessly with web browsers and official Japanese e-book stores, such as [BookWalker Japan](https://bookwalker.jp/st1), [Rakuten Kobo Japan](https://books.rakuten.co.jp/book/lightnovel/), and Amazon Kindle Japan.
+6. **Translate**: Tap the floating overlay trigger button to translate the current screen!
 
-The app currently offers two main ways to translate your screen:
-- **Gemini 3/3.1 (Vision)**: Sends the captured image directly to the model for a highly contextual translation.
-- **Gemini 3/3.1 (OCR + Text)**: Extracts the Japanese text locally using OCR first, then sends the clean text to the model for translation.
-- **Coming Soon**: Integration with **ChatGPT (OpenAI)**, **Grok (xAI)**, and more.
+---
 
-## Important / Disclaimer
+## How It Works
 
-- **Not a SaaS**: This project is **NOT** a Software as a Service. You must provide your own **Gemini API Key** to make the application work. The app acts as a local client for your own API usage.
-- **Security & Privacy**: Your API Keys are used **exclusively** to communicate with Google's Gemini API via its official REST endpoint. They are never sent to any other server, third-party service, or stored anywhere other than your own device.
-- **Cost Transparency**: While the API usage is your responsibility, it is very affordable. As a reference, during our testing phase, a volume of **137 translation requests** (including images and retries) resulted in a total cost of only approximately **$0.18 USD**.
+### Privacy and Security
 
-## Key Features
+Your privacy is a priority. Your API keys and configuration data are stored securely on your local device using Android DataStore. They are never sent to external servers other than directly to the official Google Gemini API endpoint via secure HTTPS REST requests.
 
-- **On-Screen Overlay**: Translate text without leaving your browser or reader app.
-- **Smart API Key Rotation**: Add up to **5 Gemini API keys**. The app automatically rotates them if one hits a rate limit or fails, ensuring uninterrupted translation.
-- **Enhanced Context (Prompts)**: Save and select custom context prompts to help the AI understand specific terms or styles of the novel you are reading.
-- **Multi-Language UI**: Full support for English and Spanish, with the ability to detect and adapt to your system language automatically.
-- **Session History**: Navigate through recent translations easily using the integrated previous/next system.
+### Cost and API Usage
 
-## Technical Notes on API Usage
+This project is an open-source local client, not a Software as a Service (SaaS). You use your own Google Gemini API keys to handle the translation requests. The API usage is highly cost-effective; for instance, during development testing with the **Gemini 3 Flash** model, 137 full-page translation requests (including image inputs and retries) cost approximately $0.18 USD.
 
-- **Retry Logic**: To ensure successful translation even with unstable connections or model overloads, the app implements a retry logic.
-- **Multiple Calls**: A single translation request might trigger **up to 3 retries per API key** if an error occurs.
-- **Key Rotation**: If a key fails significantly (Rate Limit exceeded or Invalid key), the app will automatically switch to the next available key (until all configured keys are exhausted).
+### Robust Key Rotation and Retries
 
-## Roadmap / Future Improvements
+- **Automatic Retries**: If a request fails due to temporary network issues, the app automatically retries the call up to 3 times per key.
+- **Intelligent Failover**: If a key repeatedly fails (due to invalid credentials or quota limits), the app switches to the next configured key in the rotation sequence to prevent interruptions.
 
-We are constantly looking to improve LN Translator. Some of the features in our pipeline include:
-- **Local Translation**: Support for offline translation using on-device models.
-- **More AI Providers**: Integration with **ChatGPT (OpenAI)**, **Grok (xAI)**, and other LLMs.
-- **Advanced UI Customization**: Ability to **increase/decrease font size**, adjust overlay transparency, and pick custom themes.
-- **OCR Improvements**: Better detection for non-standard vertical text and complex layouts.
+---
+
+## Future Roadmap
+
+- **On-Device Offline Translation**: Support local translation models for reading without internet connectivity.
+- **Expanded LLM Providers**: Integration for OpenAI ChatGPT, xAI Grok, and Anthropic Claude APIs.
+- **Advanced Font Styling**: Ability to resize overlay text, adjust transparency levels, and select custom typeface fonts.
+- **OCR Quality Enhancements**: Improved parsing logic for vertical Japanese layout scripts and complex overlapping text.
+
+---
 
 ## Contributing
 
-This project thrives on community help! You can contribute in several ways:
+Contributions from the community are welcome. You can help by:
 
-- **Prompts**: Share and submit efficient prompts for specific novel genres or authors in their respective languages.
-- **Pull Requests**: Feel free to fork the repository and open **Pull Requests** for any item on the Roadmap or your own custom features and bug fixes.
-- **Translations**: Help us reach more people by translating the app UI into new languages.
-- **Feedback**: Report bugs or suggest new features to improve the translation accuracy and user experience.
+- **Prompt Optimization**: Share high-performance prompts and glossaries for specific novel genres or translation styles.
+- **Localization**: Help translate the application interface into other languages.
+- **Pull Requests**: Fork the repository and submit PRs for roadmap features, performance improvements, or bug fixes.
 
+---
 
 ## License
 
-This project is licensed under the **MIT License**. Feel free to use, modify, and distribute it.
+This project is licensed under the MIT License. You are free to copy, modify, and distribute it under the license terms.
