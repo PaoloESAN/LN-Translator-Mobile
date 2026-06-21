@@ -1,7 +1,6 @@
 package com.paoloesan.lntranslator_mobile.ui.novels
 
 import android.content.Context
-import android.graphics.BitmapFactory
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -16,7 +15,6 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -82,21 +80,23 @@ import androidx.compose.material3.ToggleButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.collectAsState
-import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -110,13 +110,14 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.zIndex
-import androidx.core.content.edit
+import coil3.compose.AsyncImage
 import com.paoloesan.lntranslator_mobile.LocalStrings
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarActions
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarNavigationIcon
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
+import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import com.paoloesan.lntranslator_mobile.ui.novels.components.ImageCropDialog
 import com.paoloesan.lntranslator_mobile.ui.novels.components.NovelPage
 import com.paoloesan.lntranslator_mobile.ui.novels.components.NovelRepository
@@ -158,17 +159,49 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
 
     // Configurable States
     val showOriginal by DataStoreManager.getBooleanFlow(context, "reader_show_original", false)
-        .collectAsState(initial = DataStoreManager.getBoolean(context, "reader_show_original", false))
-    val invertHorizontalNav by DataStoreManager.getBooleanFlow(context, "reader_invert_horizontal_nav", false)
-        .collectAsState(initial = DataStoreManager.getBoolean(context, "reader_invert_horizontal_nav", false))
+        .collectAsState(
+            initial = DataStoreManager.getBoolean(
+                context,
+                "reader_show_original",
+                false
+            )
+        )
+    val invertHorizontalNav by DataStoreManager.getBooleanFlow(
+        context,
+        "reader_invert_horizontal_nav",
+        false
+    )
+        .collectAsState(
+            initial = DataStoreManager.getBoolean(
+                context,
+                "reader_invert_horizontal_nav",
+                false
+            )
+        )
     val isVerticalMode by DataStoreManager.getBooleanFlow(context, "reader_vertical_mode", false)
-        .collectAsState(initial = DataStoreManager.getBoolean(context, "reader_vertical_mode", false))
+        .collectAsState(
+            initial = DataStoreManager.getBoolean(
+                context,
+                "reader_vertical_mode",
+                false
+            )
+        )
     val readerFontSize by DataStoreManager.getIntFlow(context, "reader_font_size", 18)
         .collectAsState(initial = DataStoreManager.getInt(context, "reader_font_size", 18))
     val readerLineSpacing by DataStoreManager.getIntFlow(context, "reader_line_spacing", 5)
         .collectAsState(initial = DataStoreManager.getInt(context, "reader_line_spacing", 5))
-    val readerFontFamilyPref by DataStoreManager.getStringFlow(context, "reader_font_family", OverlayFontOption.ROBOTO.prefValue)
-        .collectAsState(initial = DataStoreManager.getString(context, "reader_font_family", OverlayFontOption.ROBOTO.prefValue))
+    val readerFontFamilyPref by DataStoreManager.getStringFlow(
+        context,
+        "reader_font_family",
+        OverlayFontOption.ROBOTO.prefValue
+    )
+        .collectAsState(
+            initial = DataStoreManager.getString(
+                context,
+                "reader_font_family",
+                OverlayFontOption.ROBOTO.prefValue
+            )
+        )
     val readerFontFamily = remember(readerFontFamilyPref) {
         OverlayFontOption.fromPref(readerFontFamilyPref)
     }
@@ -207,7 +240,8 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
     }
 
     val savedLastPage = remember(novelName, pages) {
-        DataStoreManager.getInt(context, "last_page_$novelName", 0).coerceIn(0, (pages.size - 1).coerceAtLeast(0))
+        DataStoreManager.getInt(context, "last_page_$novelName", 0)
+            .coerceIn(0, (pages.size - 1).coerceAtLeast(0))
     }
 
     // Navigation and Page Synchronization
@@ -251,6 +285,31 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
 
 
     var showSystemBars by remember { mutableStateOf(true) }
+
+    val pagerScrollConnection = remember(pagerState, invertHorizontalNav, pages) {
+        object : NestedScrollConnection {
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+                if (pagerState != null && pages.isNotEmpty()) {
+                    val lastPageIndex = pages.size - 1
+                    if (pagerState.currentPage == lastPageIndex) {
+                        val isTryingToGoNext = if (!invertHorizontalNav) {
+                            available.x < 0f
+                        } else {
+                            available.x > 0f
+                        }
+                        if (isTryingToGoNext) {
+                            showSystemBars = true
+                        }
+                    }
+                }
+                return super.onPostScroll(consumed, available, source)
+            }
+        }
+    }
 
     LaunchedEffect(
         showSystemBars,
@@ -409,7 +468,11 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                                                     ToggleButton(
                                                         checked = !isVerticalMode,
                                                         onCheckedChange = {
-                                                            DataStoreManager.putBooleanSync(context, "reader_vertical_mode", false)
+                                                            DataStoreManager.putBooleanSync(
+                                                                context,
+                                                                "reader_vertical_mode",
+                                                                false
+                                                            )
                                                         },
                                                         shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
                                                         modifier = Modifier.weight(1f)
@@ -434,7 +497,11 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                                                     ToggleButton(
                                                         checked = isVerticalMode,
                                                         onCheckedChange = {
-                                                            DataStoreManager.putBooleanSync(context, "reader_vertical_mode", true)
+                                                            DataStoreManager.putBooleanSync(
+                                                                context,
+                                                                "reader_vertical_mode",
+                                                                true
+                                                            )
                                                         },
                                                         shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
                                                         modifier = Modifier.weight(1f)
@@ -641,7 +708,9 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                     } else if (pagerState != null) {
                         HorizontalPager(
                             state = pagerState,
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .nestedScroll(pagerScrollConnection),
                             beyondViewportPageCount = 1,
                             reverseLayout = invertHorizontalNav
                         ) { pageIndex ->
@@ -974,7 +1043,11 @@ fun NovelDetailsScreen(novelName: String, onBack: () -> Unit) {
                     DataStoreManager.putIntSync(context, "reader_line_spacing", newSpacing)
                 },
                 onFontFamilyChange = { newFontFamily ->
-                    DataStoreManager.putStringSync(context, "reader_font_family", newFontFamily.prefValue)
+                    DataStoreManager.putStringSync(
+                        context,
+                        "reader_font_family",
+                        newFontFamily.prefValue
+                    )
                 },
                 onShowOriginalChange = { value ->
                     DataStoreManager.putBooleanSync(context, "reader_show_original", value)
@@ -1175,63 +1248,60 @@ fun NovelPageItem(
                 Spacer(modifier = Modifier.height(72.dp))
             }
             if ((showOriginal || isOnlyImage) && page.imagePath != null) {
-                val bitmap = remember(page.imagePath) {
-                    try {
-                        BitmapFactory.decodeFile(page.imagePath)
-                    } catch (_: Exception) {
-                        null
-                    }
-                }
-                bitmap?.let {
-                    if (isOnlyImage) {
-                        BoxWithConstraints(
-                            modifier = if (isScrollEnabled) Modifier
-                                .fillMaxWidth()
-                                .weight(1f) else Modifier
-                                .fillMaxWidth()
-                                .height(500.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            val imageRatio = it.width.toFloat() / it.height.toFloat()
-                            val maxRatio = maxWidth / maxHeight
-                            val (imageWidth, imageHeight) = if (imageRatio > maxRatio) {
-                                Pair(maxWidth, maxWidth / imageRatio)
-                            } else {
-                                Pair(maxHeight * imageRatio, maxHeight)
-                            }
-                            Card(
-                                modifier = Modifier
-                                    .size(imageWidth, imageHeight)
-                                    .clickable { onImageClick() },
-                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-                            ) {
-                                Image(
-                                    bitmap = it.asImageBitmap(),
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Fit
-                                )
-                            }
+                if (isOnlyImage) {
+                    BoxWithConstraints(
+                        modifier = if (isScrollEnabled) Modifier
+                            .fillMaxWidth()
+                            .weight(1f) else Modifier
+                            .fillMaxWidth()
+                            .height(500.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        var imageRatio by remember(page.imagePath) { mutableFloatStateOf(1f) }
+                        val maxRatio = maxWidth / maxHeight
+                        val (imageWidth, imageHeight) = if (imageRatio > maxRatio) {
+                            Pair(maxWidth, maxWidth / imageRatio)
+                        } else {
+                            Pair(maxHeight * imageRatio, maxHeight)
                         }
-                    } else {
                         Card(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp)
+                                .size(imageWidth, imageHeight)
                                 .clickable { onImageClick() },
-                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.Transparent)
                         ) {
-                            Image(
-                                bitmap = it.asImageBitmap(),
+                            AsyncImage(
+                                model = page.imagePath,
                                 contentDescription = null,
                                 modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
+                                contentScale = ContentScale.Fit,
+                                onSuccess = { state ->
+                                    val size = state.painter.intrinsicSize
+                                    if (size.width > 0f && size.height > 0f && !size.width.isNaN() && !size.height.isNaN()) {
+                                        imageRatio = size.width / size.height
+                                    }
+                                }
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
+                } else {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .clickable { onImageClick() },
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        AsyncImage(
+                            model = page.imagePath,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
                 }
+                Spacer(modifier = Modifier.height(16.dp))
             }
             if (page.translatedText.isNotBlank()) {
                 if (showOriginal) {
