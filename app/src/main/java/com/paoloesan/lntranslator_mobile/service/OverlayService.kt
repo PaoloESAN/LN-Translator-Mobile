@@ -40,8 +40,8 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
 
     private lateinit var params: WindowManager.LayoutParams
     private var isExpanded = false
-    private var bottomPassThroughEnabled = false
-    private var sideMarginDp = 12
+    private var bottomPassThroughEnabled = true
+    private var sideMarginDp = 24
     private var compactX = 100
     private var compactY = 100
 
@@ -54,7 +54,7 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
         private const val CHANNEL_ID = "overlay_channel"
         private const val PREF_BOTTOM_PASS_THROUGH = "overlay_bottom_pass_through"
         private const val PREF_SIDE_MARGIN_DP = "overlay_side_margin_dp"
-        private const val DEFAULT_SIDE_MARGIN_DP = 12
+        private const val DEFAULT_SIDE_MARGIN_DP = 24
 
         fun start(context: Context) {
             val intent = Intent(context, OverlayService::class.java)
@@ -107,7 +107,7 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
         ) 
     }
     private fun showOverlay() {
-        bottomPassThroughEnabled = DataStoreManager.getBoolean(this, PREF_BOTTOM_PASS_THROUGH, false)
+        bottomPassThroughEnabled = DataStoreManager.getBoolean(this, PREF_BOTTOM_PASS_THROUGH, true)
         sideMarginDp = DataStoreManager.getInt(this, PREF_SIDE_MARGIN_DP, DEFAULT_SIDE_MARGIN_DP).coerceIn(0, 32)
         Log.d(
             TAG,

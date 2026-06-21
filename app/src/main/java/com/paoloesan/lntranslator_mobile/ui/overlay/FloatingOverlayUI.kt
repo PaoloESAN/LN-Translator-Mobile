@@ -7,16 +7,21 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
@@ -44,6 +49,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -87,12 +95,28 @@ fun FloatingOverlayUI(
     var configOpen by remember { mutableStateOf(false) }
     val invertGestures by DataStoreManager.getBooleanFlow(context, "overlay_invert_gestures", false)
         .collectAsState(initial = DataStoreManager.getBoolean(context, "overlay_invert_gestures", false))
-    val bottomPassThroughEnabled by DataStoreManager.getBooleanFlow(context, "overlay_bottom_pass_through", false)
-        .collectAsState(initial = DataStoreManager.getBoolean(context, "overlay_bottom_pass_through", false))
-    val currentSideMarginDp by DataStoreManager.getIntFlow(context, "overlay_side_margin_dp", 12)
-        .collectAsState(initial = DataStoreManager.getInt(context, "overlay_side_margin_dp", 12))
+    val bottomPassThroughEnabled by DataStoreManager.getBooleanFlow(context, "overlay_bottom_pass_through", true)
+        .collectAsState(initial = DataStoreManager.getBoolean(context, "overlay_bottom_pass_through", true))
+    val currentSideMarginDp by DataStoreManager.getIntFlow(context, "overlay_side_margin_dp", 24)
+        .collectAsState(initial = DataStoreManager.getInt(context, "overlay_side_margin_dp", 24))
     var showErrorDetails by remember { mutableStateOf(false) }
     val scrollState = key(uiState.indiceActual) { rememberScrollState() }
+
+    var loadingDots by remember { mutableStateOf(".") }
+    LaunchedEffect(uiState.isLoading) {
+        if (uiState.isLoading) {
+            while (true) {
+                kotlinx.coroutines.delay(500)
+                loadingDots = when (loadingDots) {
+                    "." -> ".."
+                    ".." -> "..."
+                    else -> "."
+                }
+            }
+        } else {
+            loadingDots = "."
+        }
+    }
 
     LaunchedEffect(uiState.error, uiState.isLoading) {
         if (uiState.error == null || uiState.isLoading) {
@@ -158,13 +182,28 @@ fun FloatingOverlayUI(
                     val rightEnabled = if (invertGestures) uiState.puedeIrAnterior else uiState.puedeIrSiguiente
                     val rightDescription = if (invertGestures) strings.overlayPrevious else strings.overlayNext
 
+                    val headerText = when {
+                        uiState.error != null -> buildAnnotatedString { append(strings.overlayErrorTitle) }
+                        uiState.total > 0 -> {
+                            buildAnnotatedString {
+                                append("${uiState.indiceActual + 1}/${uiState.total} ")
+                                if (uiState.isLoading) {
+                                    append(loadingDots)
+                                    withStyle(style = SpanStyle(color = Color.Transparent)) {
+                                        append(".".repeat(3 - loadingDots.length))
+                                    }
+                                } else {
+                                    withStyle(style = SpanStyle(color = Color.Transparent)) {
+                                        append("...")
+                                    }
+                                }
+                            }
+                        }
+                        else -> buildAnnotatedString { append(strings.overlayTitle) }
+                    }
+
                     Text(
-                        text = when {
-                            uiState.error != null -> strings.overlayErrorTitle
-                            uiState.isLoading && uiState.total > 0 -> "${uiState.indiceActual + 1}/${uiState.total} ..."
-                            uiState.total > 0 -> "${uiState.indiceActual + 1}/${uiState.total}"
-                            else -> strings.overlayTitle
-                        },
+                        text = headerText,
                         color = when {
                             uiState.error != null -> MaterialTheme.colorScheme.error
                             uiState.isLoading -> MaterialTheme.colorScheme.primary
@@ -287,89 +326,124 @@ fun FloatingOverlayUI(
                     var swipeAccumulator by remember { mutableFloatStateOf(0f) }
                     val swipeThreshold = 100f
 
-                    Column(
+                    val showGradient by remember(scrollState) {
+                        derivedStateOf {
+                            scrollState.maxValue > 0 && scrollState.value < scrollState.maxValue
+                        }
+                    }
+
+                    Box(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
-                            .verticalScroll(scrollState)
-                            .pointerInput(uiState.puedeIrAnterior, uiState.puedeIrSiguiente) {
-                                detectHorizontalDragGestures(
-                                    onDragStart = { swipeAccumulator = 0f },
-                                    onDragEnd = {
-                                        when {
-                                            swipeAccumulator < -swipeThreshold -> {
-                                                val action = if (invertGestures) onAnterior else onSiguiente
-                                                val canDo = if (invertGestures) uiState.puedeIrAnterior else uiState.puedeIrSiguiente
-                                                if (canDo) action()
-                                            }
-                                            swipeAccumulator > swipeThreshold -> {
-                                                val action = if (invertGestures) onSiguiente else onAnterior
-                                                val canDo = if (invertGestures) uiState.puedeIrSiguiente else uiState.puedeIrAnterior
-                                                if (canDo) action()
-                                            }
-                                        }
-                                        swipeAccumulator = 0f
-                                    },
-                                    onDragCancel = { swipeAccumulator = 0f },
-                                    onHorizontalDrag = { _, dragAmount ->
-                                        swipeAccumulator += dragAmount
-                                    }
-                                )
-                            }
-                            .padding(12.dp)
                     ) {
-                        when {
-                            uiState.isLoading && uiState.total == 0 -> {
-                                Text(
-                                    text = strings.overlayLoading,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontSize = currentFontSize.sp,
-                                    lineHeight = (currentFontSize + currentLineSpacing).sp,
-                                    fontFamily = currentFontFamily.toComposeFontFamily()
-                                )
-                            }
-
-                            uiState.error != null && showErrorDetails -> {
-                                Text(
-                                    text = uiState.error,
-                                    color = MaterialTheme.colorScheme.error,
-                                    fontSize = currentFontSize.sp,
-                                    lineHeight = (currentFontSize + currentLineSpacing).sp,
-                                    fontFamily = currentFontFamily.toComposeFontFamily()
-                                )
-                            }
-
-                            uiState.textoActual != null -> {
-                                MarkdownText(
-                                    markdown = escapeAngleBrackets(uiState.textoActual!!),
-                                    fontResource = R.font.roboto_regular,
-                                    afterSetMarkdown = { textView ->
-                                        textView.typeface = currentFontFamily.toAndroidTypeface(context)
-                                        if (currentFontFamily == OverlayFontOption.ROBOTO) {
-                                            applyExtraBoldToMarkdown(
-                                                textView,
-                                                context
-                                            )
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(scrollState)
+                                .pointerInput(uiState.puedeIrAnterior, uiState.puedeIrSiguiente) {
+                                    detectHorizontalDragGestures(
+                                        onDragStart = { swipeAccumulator = 0f },
+                                        onDragEnd = {
+                                            when {
+                                                swipeAccumulator < -swipeThreshold -> {
+                                                    val action = if (invertGestures) onAnterior else onSiguiente
+                                                    val canDo = if (invertGestures) uiState.puedeIrAnterior else uiState.puedeIrSiguiente
+                                                    if (canDo) action()
+                                                }
+                                                swipeAccumulator > swipeThreshold -> {
+                                                    val action = if (invertGestures) onSiguiente else onAnterior
+                                                    val canDo = if (invertGestures) uiState.puedeIrSiguiente else uiState.puedeIrAnterior
+                                                    if (canDo) action()
+                                                }
+                                            }
+                                            swipeAccumulator = 0f
+                                        },
+                                        onDragCancel = { swipeAccumulator = 0f },
+                                        onHorizontalDrag = { _, dragAmount ->
+                                            swipeAccumulator += dragAmount
                                         }
-                                    },
-                                    style = TextStyle(
+                                    )
+                                }
+                                .padding(12.dp)
+                        ) {
+                            when {
+                                uiState.isLoading && uiState.total == 0 -> {
+                                    Text(
+                                        text = if (strings.overlayLoading.endsWith("...")) {
+                                            strings.overlayLoading.removeSuffix("...") + loadingDots
+                                        } else {
+                                            strings.overlayLoading + loadingDots
+                                        },
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontSize = currentFontSize.sp,
+                                        lineHeight = (currentFontSize + currentLineSpacing).sp,
+                                        fontFamily = currentFontFamily.toComposeFontFamily()
+                                    )
+                                }
+
+                                uiState.error != null && showErrorDetails -> {
+                                    Text(
+                                        text = uiState.error,
+                                        color = MaterialTheme.colorScheme.error,
+                                        fontSize = currentFontSize.sp,
+                                        lineHeight = (currentFontSize + currentLineSpacing).sp,
+                                        fontFamily = currentFontFamily.toComposeFontFamily()
+                                    )
+                                }
+
+                                uiState.textoActual != null -> {
+                                    MarkdownText(
+                                        markdown = escapeAngleBrackets(uiState.textoActual!!),
+                                        fontResource = R.font.roboto_regular,
+                                        afterSetMarkdown = { textView ->
+                                            textView.typeface = currentFontFamily.toAndroidTypeface(context)
+                                            if (currentFontFamily == OverlayFontOption.ROBOTO) {
+                                                applyExtraBoldToMarkdown(
+                                                    textView,
+                                                    context
+                                                )
+                                            }
+                                        },
+                                        style = TextStyle(
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            fontSize = currentFontSize.sp,
+                                            lineHeight = (currentFontSize + currentLineSpacing).sp,
+                                            fontFamily = currentFontFamily.toComposeFontFamily()
+                                        )
+                                    )
+                                }
+
+                                else -> {
+                                    Text(
+                                        text = strings.overlayHelp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontSize = currentFontSize.sp,
                                         lineHeight = (currentFontSize + currentLineSpacing).sp,
                                         fontFamily = currentFontFamily.toComposeFontFamily()
                                     )
-                                )
+                                }
                             }
+                            if (scrollState.maxValue > 0) {
+                                Spacer(modifier = Modifier.height(40.dp))
+                            }
+                        }
 
-                            else -> {
-                                Text(
-                                    text = strings.overlayHelp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = currentFontSize.sp,
-                                    lineHeight = (currentFontSize + currentLineSpacing).sp,
-                                    fontFamily = currentFontFamily.toComposeFontFamily()
-                                )
-                            }
+                        if (showGradient) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                                    .align(Alignment.BottomCenter)
+                                    .background(
+                                        brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                                            colors = listOf(
+                                                Color.Transparent,
+                                                MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+                                            )
+                                        )
+                                    )
+                            )
                         }
                     }
                 }
