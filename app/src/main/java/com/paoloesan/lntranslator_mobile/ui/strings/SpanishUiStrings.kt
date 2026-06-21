@@ -111,6 +111,7 @@ object SpanishUiStrings : UiStrings {
     override val novelsAddTitle = "Agregar Novela"
     override val novelsEditTitle = "Editar Novela"
     override val novelsAddNameLabel = "Nombre de la novela"
+    override val novelsPromptLabel = "Prompt Asociado (Opcional)"
     override val novelsCoverOptional = "Portada (Opcional)"
     override val novelsNone = "Ninguna"
 

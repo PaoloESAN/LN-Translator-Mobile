@@ -52,6 +52,7 @@ import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.IconButton
+import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -123,8 +124,30 @@ fun PromptScreen(
                     Button(
                         onClick = {
                             if (indexSeleccionado in promptsList.indices) {
+                                val promptToDelete = promptsList[indexSeleccionado]
+                                val titleToDelete = promptToDelete.titulo
+
                                 Prompt.eliminarPrompt(indexSeleccionado, context)
                                 promptsList.removeAt(indexSeleccionado)
+
+                                // Clean up novel associations
+                                val novelsStr = DataStoreManager.getString(context, "saved_novels", "") ?: ""
+                                val novels = if (novelsStr.isEmpty()) emptyList() else novelsStr.split(",")
+                                novels.forEach { novel ->
+                                    val savedTitle = DataStoreManager.getString(context, "novel_prompt_title_$novel", "") ?: ""
+                                    if (savedTitle == titleToDelete) {
+                                        DataStoreManager.removeSync(context, "novel_prompt_title_$novel")
+                                    }
+                                }
+
+                                // Clear prompt_app if it was the selected novel's prompt
+                                val selectedNovel = DataStoreManager.getString(context, "selected_novel", null)
+                                if (selectedNovel != null) {
+                                    val selectedNovelPromptTitle = DataStoreManager.getString(context, "novel_prompt_title_$selectedNovel", "") ?: ""
+                                    if (selectedNovelPromptTitle.isEmpty()) {
+                                        DataStoreManager.putStringSync(context, "prompt_app", "")
+                                    }
+                                }
                             }
                             borrarDialog = false
                         },
@@ -185,12 +208,34 @@ fun PromptScreen(
                     Button(
                         onClick = {
                             if (puedeGuardar && indexEditando in promptsList.indices) {
+                                val oldPrompt = promptsList[indexEditando]
+                                val oldTitle = oldPrompt.titulo
                                 val actualizado = PromptData(
                                     tituloNormalizado,
                                     descripcionNormalizada
                                 )
                                 Prompt.actualizarPrompt(indexEditando, actualizado, context)
                                 promptsList[indexEditando] = actualizado
+
+                                // Update novel associations
+                                val novelsStr = DataStoreManager.getString(context, "saved_novels", "") ?: ""
+                                val novels = if (novelsStr.isEmpty()) emptyList() else novelsStr.split(",")
+                                novels.forEach { novel ->
+                                    val savedTitle = DataStoreManager.getString(context, "novel_prompt_title_$novel", "") ?: ""
+                                    if (savedTitle == oldTitle) {
+                                        DataStoreManager.putStringSync(context, "novel_prompt_title_$novel", tituloNormalizado)
+                                    }
+                                }
+
+                                // Update prompt_app if it was the selected novel's prompt
+                                val selectedNovel = DataStoreManager.getString(context, "selected_novel", null)
+                                if (selectedNovel != null) {
+                                    val selectedNovelPromptTitle = DataStoreManager.getString(context, "novel_prompt_title_$selectedNovel", "") ?: ""
+                                    if (selectedNovelPromptTitle == tituloNormalizado) {
+                                        DataStoreManager.putStringSync(context, "prompt_app", descripcionNormalizada)
+                                    }
+                                }
+
                                 editarDialog = false
                             }
                         },
@@ -223,7 +268,8 @@ fun PromptScreen(
                                 Text(strings.promptTitleRequired)
                             }
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.large
                     )
                     OutlinedTextField(
                         label = { Text(strings.promptDescriptionLabel) },
@@ -236,7 +282,8 @@ fun PromptScreen(
                             }
                         },
                         minLines = 3,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.large
                     )
                 }
             }

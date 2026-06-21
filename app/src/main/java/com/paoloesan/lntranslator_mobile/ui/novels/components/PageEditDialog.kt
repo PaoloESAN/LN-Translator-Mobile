@@ -172,14 +172,16 @@ fun PageEditDialog(
                         onValueChange = { dialogTranslatedText = it },
                         label = { Text(strings.pageManagementTranslatedTextLabel) },
                         modifier = Modifier.fillMaxWidth(),
-                        minLines = 3
+                        minLines = 3,
+                        shape = MaterialTheme.shapes.large
                     )
                     OutlinedTextField(
                         value = dialogOriginalText,
                         onValueChange = { dialogOriginalText = it },
                         label = { Text(strings.pageManagementOriginalTextLabel) },
                         modifier = Modifier.fillMaxWidth(),
-                        minLines = 2
+                        minLines = 2,
+                        shape = MaterialTheme.shapes.large
                     )
                 }
 

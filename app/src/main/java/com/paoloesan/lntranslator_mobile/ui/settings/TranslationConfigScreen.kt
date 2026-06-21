@@ -307,7 +307,7 @@ fun TranslationConfigScreen(
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         singleLine = true,
-                        shape = MaterialTheme.shapes.extraLarge,
+                        shape = MaterialTheme.shapes.large,
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                             focusedBorderColor = MaterialTheme.colorScheme.primary,

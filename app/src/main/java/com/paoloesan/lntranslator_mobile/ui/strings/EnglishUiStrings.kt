@@ -111,6 +111,7 @@ object EnglishUiStrings : UiStrings {
     override val novelsAddTitle = "Add Novel"
     override val novelsEditTitle = "Edit Novel"
     override val novelsAddNameLabel = "Novel name"
+    override val novelsPromptLabel = "Associated Prompt (Optional)"
     override val novelsCoverOptional = "Cover (Optional)"
     override val novelsNone = "None"
 

@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -32,12 +33,16 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.FormatListBulleted
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DriveFolderUpload
@@ -49,15 +54,21 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuGroup
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButtonMenu
 import androidx.compose.material3.FloatingActionButtonMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ToggleButton
@@ -66,6 +77,8 @@ import androidx.compose.material3.ToggleFloatingActionButtonDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -76,6 +89,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush.Companion.verticalGradient
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -86,8 +100,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.runtime.collectAsState
-import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import coil3.compose.AsyncImage
 import com.paoloesan.lntranslator_mobile.LocalCurrentRoute
 import com.paoloesan.lntranslator_mobile.LocalStrings
@@ -96,8 +108,10 @@ import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarNavigationIcon
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
+import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import com.paoloesan.lntranslator_mobile.ui.novels.components.NovelRepository
 import com.paoloesan.lntranslator_mobile.ui.novels.components.ShareNovelDialog
+import com.paoloesan.lntranslator_mobile.ui.prompts.Prompt
 import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
 import kotlinx.coroutines.launch
 
@@ -120,12 +134,15 @@ fun NovelsScreen(
     val savedNovelsString by DataStoreManager.getStringFlow(context, "saved_novels", "")
         .collectAsState(initial = DataStoreManager.getString(context, "saved_novels", ""))
     val novelsList =
-        remember(savedNovelsString) { savedNovelsString.orEmpty().split(",").filter { it.isNotBlank() } }
+        remember(savedNovelsString) {
+            savedNovelsString.orEmpty().split(",").filter { it.isNotBlank() }
+        }
 
     var showAddDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteConfirmationDialog by remember { mutableStateOf(false) }
     var newNovelName by remember { mutableStateOf("") }
+    var newNovelPromptTitle by remember { mutableStateOf("") }
 
     val isGridView by DataStoreManager.getBooleanFlow(context, "is_grid_view", true)
         .collectAsState(initial = DataStoreManager.getBoolean(context, "is_grid_view", true))
@@ -261,6 +278,7 @@ fun NovelsScreen(
             onDismissRequest = {
                 showAddDialog = false
                 novelCoverUri = null
+                newNovelPromptTitle = ""
             },
             title = { Text(strings.novelsAddTitle) },
             text = {
@@ -270,8 +288,137 @@ fun NovelsScreen(
                         onValueChange = { newNovelName = it },
                         label = { Text(strings.novelsAddNameLabel) },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.large
                     )
+
+                    var promptDropdownExpanded by remember { mutableStateOf(false) }
+                    val savedPromptsList = remember { Prompt.obtenerPrompts(context) }
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = newNovelPromptTitle.ifEmpty { strings.novelsNone },
+                            onValueChange = {},
+                            enabled = false,
+                            label = { Text(strings.novelsPromptLabel) },
+                            trailingIcon = {
+                                Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                                disabledBorderColor = MaterialTheme.colorScheme.outline,
+                                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                disabledContainerColor = Color.Transparent
+                            ),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.large
+                        )
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .clickable { promptDropdownExpanded = true }
+                        )
+                        DropdownMenuPopup(
+                            expanded = promptDropdownExpanded,
+                            onDismissRequest = { promptDropdownExpanded = false }
+                        ) {
+                            DropdownMenuGroup(
+                                shapes = MenuDefaults.groupShape(0, 1)
+                            ) {
+                                DropdownMenuItem(
+                                    shapes = MenuDefaults.itemShape(0, savedPromptsList.size + 1),
+                                    selected = newNovelPromptTitle == "",
+                                    text = { Text(strings.novelsNone) },
+                                    onClick = {
+                                        newNovelPromptTitle = ""
+                                        promptDropdownExpanded = false
+                                    },
+                                    selectedLeadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                            tint = Color.Transparent,
+                                        )
+                                    }
+                                )
+
+                                val dropdownScrollState = rememberScrollState()
+                                val showDropdownGradient by remember(dropdownScrollState) {
+                                    derivedStateOf {
+                                        dropdownScrollState.maxValue > 0 && dropdownScrollState.value < dropdownScrollState.maxValue
+                                    }
+                                }
+                                if (savedPromptsList.isNotEmpty()) {
+                                    HorizontalDivider(modifier = Modifier.padding(MenuDefaults.HorizontalDividerPadding))
+                                }
+                                Box(modifier = Modifier.fillMaxWidth()) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .heightIn(max = 170.dp)
+                                            .verticalScroll(dropdownScrollState)
+                                    ) {
+                                        savedPromptsList.forEachIndexed { index, prompt ->
+                                            DropdownMenuItem(
+                                                shapes = MenuDefaults.itemShape(
+                                                    index + 1,
+                                                    savedPromptsList.size + 1
+                                                ),
+                                                selected = newNovelPromptTitle == prompt.titulo,
+                                                text = { Text(prompt.titulo) },
+                                                onClick = {
+                                                    newNovelPromptTitle = prompt.titulo
+                                                    promptDropdownExpanded = false
+                                                },
+                                                selectedLeadingIcon = {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Check,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(18.dp),
+                                                    )
+                                                },
+                                                leadingIcon = {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Check,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(18.dp),
+                                                        tint = Color.Transparent,
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    }
+
+                                    if (showDropdownGradient) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(24.dp)
+                                                .align(Alignment.BottomCenter)
+                                                .background(
+                                                    brush = verticalGradient(
+                                                        colors = listOf(
+                                                            Color.Transparent,
+                                                            MaterialTheme.colorScheme.surfaceContainer.copy(
+                                                                alpha = 0.95f
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -343,6 +490,11 @@ fun NovelsScreen(
                         val trimmed = newNovelName.trim()
                         if (trimmed.isNotBlank() && !novelsList.contains(trimmed)) {
                             saveNovelsList(listOf(trimmed) + novelsList)
+                            DataStoreManager.putStringSync(
+                                context,
+                                "novel_prompt_title_$trimmed",
+                                newNovelPromptTitle
+                            )
                             novelCoverUri?.let { uri ->
                                 NovelRepository.saveCoverImage(context, trimmed, uri)
                             }
@@ -350,6 +502,7 @@ fun NovelsScreen(
                         showAddDialog = false
                         newNovelName = ""
                         novelCoverUri = null
+                        newNovelPromptTitle = ""
                     }
                 ) {
                     Text(strings.buttonSave)
@@ -359,6 +512,7 @@ fun NovelsScreen(
                 TextButton(onClick = {
                     showAddDialog = false
                     novelCoverUri = null
+                    newNovelPromptTitle = ""
                 }) {
                     Text(strings.buttonCancel)
                 }
@@ -368,8 +522,14 @@ fun NovelsScreen(
 
     if (showEditDialog && selectedNovels.size == 1) {
         val oldName = selectedNovels.first()
-        var editName by remember { mutableStateOf(oldName) }
-        var isCoverDeleted by remember { mutableStateOf(false) }
+        var editName by remember(oldName, showEditDialog) { mutableStateOf(oldName) }
+        var editPromptTitle by remember(oldName, showEditDialog) {
+            val savedTitle =
+                DataStoreManager.getString(context, "novel_prompt_title_$oldName", "") ?: ""
+            val exists = Prompt.obtenerPrompts(context).any { it.titulo == savedTitle }
+            mutableStateOf(if (exists) savedTitle else "")
+        }
+        var isCoverDeleted by remember(showEditDialog) { mutableStateOf(false) }
         AlertDialog(
             onDismissRequest = {
                 showEditDialog = false
@@ -383,8 +543,137 @@ fun NovelsScreen(
                         onValueChange = { editName = it },
                         label = { Text(strings.novelsAddNameLabel) },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.large
                     )
+
+                    var promptDropdownExpanded by remember { mutableStateOf(false) }
+                    val savedPromptsList = remember { Prompt.obtenerPrompts(context) }
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = editPromptTitle.ifEmpty { strings.novelsNone },
+                            onValueChange = {},
+                            enabled = false,
+                            label = { Text(strings.novelsPromptLabel) },
+                            trailingIcon = {
+                                Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                                disabledBorderColor = MaterialTheme.colorScheme.outline,
+                                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                disabledContainerColor = Color.Transparent
+                            ),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.large
+                        )
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .clickable { promptDropdownExpanded = true }
+                        )
+                        DropdownMenuPopup(
+                            expanded = promptDropdownExpanded,
+                            onDismissRequest = { promptDropdownExpanded = false }
+                        ) {
+                            DropdownMenuGroup(
+                                shapes = MenuDefaults.groupShape(0, 1)
+                            ) {
+                                DropdownMenuItem(
+                                    shapes = MenuDefaults.itemShape(0, savedPromptsList.size + 1),
+                                    selected = editPromptTitle == "",
+                                    text = { Text(strings.novelsNone) },
+                                    onClick = {
+                                        editPromptTitle = ""
+                                        promptDropdownExpanded = false
+                                    },
+                                    selectedLeadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                            tint = Color.Transparent,
+                                        )
+                                    }
+                                )
+
+                                val dropdownScrollState = rememberScrollState()
+                                val showDropdownGradient by remember(dropdownScrollState) {
+                                    derivedStateOf {
+                                        dropdownScrollState.maxValue > 0 && dropdownScrollState.value < dropdownScrollState.maxValue
+                                    }
+                                }
+                                if (savedPromptsList.isNotEmpty()) {
+                                    HorizontalDivider(modifier = Modifier.padding(MenuDefaults.HorizontalDividerPadding))
+                                }
+                                Box(modifier = Modifier.fillMaxWidth()) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .heightIn(max = 170.dp)
+                                            .verticalScroll(dropdownScrollState)
+                                    ) {
+                                        savedPromptsList.forEachIndexed { index, prompt ->
+                                            DropdownMenuItem(
+                                                shapes = MenuDefaults.itemShape(
+                                                    index + 1,
+                                                    savedPromptsList.size + 1
+                                                ),
+                                                selected = editPromptTitle == prompt.titulo,
+                                                text = { Text(prompt.titulo) },
+                                                onClick = {
+                                                    editPromptTitle = prompt.titulo
+                                                    promptDropdownExpanded = false
+                                                },
+                                                selectedLeadingIcon = {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Check,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(18.dp),
+                                                    )
+                                                },
+                                                leadingIcon = {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Check,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(18.dp),
+                                                        tint = Color.Transparent,
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    }
+
+                                    if (showDropdownGradient) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(24.dp)
+                                                .align(Alignment.BottomCenter)
+                                                .background(
+                                                    brush = verticalGradient(
+                                                        colors = listOf(
+                                                            Color.Transparent,
+                                                            MaterialTheme.colorScheme.surfaceContainer.copy(
+                                                                alpha = 0.95f
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -499,15 +788,50 @@ fun NovelsScreen(
                                     newList[index] = trimmed
                                     saveNovelsList(newList)
 
-                                    val currentActive = DataStoreManager.getString(context, "selected_novel", null)
+                                    val currentActive =
+                                        DataStoreManager.getString(context, "selected_novel", null)
                                     if (currentActive == oldName) {
-                                        DataStoreManager.putStringSync(context, "selected_novel", trimmed)
+                                        DataStoreManager.putStringSync(
+                                            context,
+                                            "selected_novel",
+                                            trimmed
+                                        )
                                     }
                                     NovelRepository.renameNovelData(context, oldName, trimmed)
+
+                                    // Save prompt under new name and remove from old name
+                                    DataStoreManager.putStringSync(
+                                        context,
+                                        "novel_prompt_title_$trimmed",
+                                        editPromptTitle
+                                    )
+                                    DataStoreManager.removeSync(
+                                        context,
+                                        "novel_prompt_title_$oldName"
+                                    )
                                 }
                                 trimmed
                             } else {
+                                DataStoreManager.putStringSync(
+                                    context,
+                                    "novel_prompt_title_$oldName",
+                                    editPromptTitle
+                                )
                                 oldName
+                            }
+
+                            val currentActive =
+                                DataStoreManager.getString(context, "selected_novel", null)
+                            if (currentActive == finalName) {
+                                val associatedPrompt = if (editPromptTitle.isNotEmpty()) {
+                                    Prompt.obtenerPrompts(context)
+                                        .find { it.titulo == editPromptTitle }?.descripcion ?: ""
+                                } else ""
+                                DataStoreManager.putStringSync(
+                                    context,
+                                    "prompt_app",
+                                    associatedPrompt
+                                )
                             }
 
                             if (novelCoverUri != null) {
@@ -549,6 +873,7 @@ fun NovelsScreen(
                         selectedNovels.forEach { novel ->
                             NovelRepository.deleteNovelData(context, novel)
                             DataStoreManager.removeSync(context, "last_page_$novel")
+                            DataStoreManager.removeSync(context, "novel_prompt_title_$novel")
                         }
                         val newList = novelsList.filterNot { selectedNovels.contains(it) }
                         saveNovelsList(newList)

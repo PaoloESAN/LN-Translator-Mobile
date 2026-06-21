@@ -96,13 +96,8 @@ fun PromptDialog(
                         label = { Text(strings.promptTitleLabel) },
                         value = tituloPrompt,
                         onValueChange = { tituloPrompt = it },
-                        isError = !tituloValido,
-                        supportingText = {
-                            if (!tituloValido) {
-                                Text(strings.promptTitleRequired)
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.large
                     )
                     if (!descripcionValida) {
                         Text(
