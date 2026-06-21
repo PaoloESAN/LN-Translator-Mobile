@@ -1087,7 +1087,7 @@ fun NovelsScreen(
                                                 modifier = Modifier
                                                     .fillMaxSize()
                                                     .background(
-                                                        androidx.compose.ui.graphics.Brush.verticalGradient(
+                                                        verticalGradient(
                                                             colors = listOf(
                                                                 Color.Transparent,
                                                                 Color.Black.copy(alpha = 0.7f)
@@ -1309,7 +1309,7 @@ fun NovelsScreen(
 
 private fun saveToUri(
     context: Context,
-    uri: android.net.Uri,
+    uri: Uri,
     file: java.io.File?,
     scope: kotlinx.coroutines.CoroutineScope,
     strings: UiStrings

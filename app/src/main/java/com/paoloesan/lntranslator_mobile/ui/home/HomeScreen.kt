@@ -7,10 +7,13 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -38,15 +41,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuGroup
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DropdownMenuPopup
@@ -63,6 +71,7 @@ import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -90,6 +99,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -164,6 +174,7 @@ fun HomeScreen(
     var newNovelPromptTitle by remember { mutableStateOf("") }
     var isLaunchingPicker by remember { mutableStateOf(false) }
     var showFullImage by remember { mutableStateOf(false) }
+    var isPromptExpanded by rememberSaveable { mutableStateOf(false) }
 
     val coverPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -179,18 +190,26 @@ fun HomeScreen(
     var highlightedButton by remember { mutableStateOf<Int?>(null) }
     var isNavigatingToPrompts by remember { mutableStateOf(false) }
 
+    var lastLoadedNovel by rememberSaveable { mutableStateOf<String?>(null) }
+    var hasLoadedInitial by rememberSaveable { mutableStateOf(false) }
+
     LaunchedEffect(selectedNovel) {
-        if (selectedNovel != null) {
-            val promptTitle =
-                DataStoreManager.getString(context, "novel_prompt_title_$selectedNovel", "") ?: ""
-            val novelPrompt = if (promptTitle.isNotEmpty()) {
-                Prompt.obtenerPrompts(context).find { it.titulo == promptTitle }?.descripcion ?: ""
-            } else ""
-            textPrompt = novelPrompt
-            DataStoreManager.putString(context, "prompt_app", novelPrompt)
-        } else {
-            textPrompt = ""
-            DataStoreManager.putString(context, "prompt_app", "")
+        val shouldLoad = !hasLoadedInitial || selectedNovel != lastLoadedNovel
+        if (shouldLoad) {
+            if (selectedNovel != null) {
+                val promptTitle =
+                    DataStoreManager.getString(context, "novel_prompt_title_$selectedNovel", "") ?: ""
+                val novelPrompt = if (promptTitle.isNotEmpty()) {
+                    Prompt.obtenerPrompts(context).find { it.titulo == promptTitle }?.descripcion ?: ""
+                } else ""
+                textPrompt = novelPrompt
+                DataStoreManager.putString(context, "prompt_app", novelPrompt)
+            } else {
+                textPrompt = ""
+                DataStoreManager.putString(context, "prompt_app", "")
+            }
+            lastLoadedNovel = selectedNovel
+            hasLoadedInitial = true
         }
     }
 
@@ -894,52 +913,124 @@ fun HomeScreen(
             }
         }
 
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        OutlinedCard(
+            shape = MaterialTheme.shapes.large,
+            colors = CardDefaults.outlinedCardColors(
+                containerColor = Color.Transparent
+            ),
+            border = CardDefaults.outlinedCardBorder(enabled = true),
+            modifier = Modifier
+                .fillMaxWidth()
+                .animateContentSize(animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec())
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            Column(
+                modifier = Modifier.padding(16.dp)
             ) {
-                OutlinedButton(
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
-                        .weight(navigateWeight)
-                        .heightIn(min = 56.dp),
-                    interactionSource = navigateInteraction,
-                    shape = MaterialTheme.shapes.large,
-                    enabled = !isNavigatingToPrompts,
-                    onClick = {
-                        if (!isNavigatingToPrompts) {
-                            isNavigatingToPrompts = true
-                            onNavigateToPrompts()
+                        .fillMaxWidth()
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) {
+                            isPromptExpanded = !isPromptExpanded
                         }
-                    },
                 ) {
-                    Text(strings.homeViewPrompts)
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = strings.homePromptLabel,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        if (!isPromptExpanded) {
+                            Text(
+                                text = if (textPrompt.isBlank()) strings.novelsNone else textPrompt.replace(
+                                    '\n',
+                                    ' '
+                                ),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                    IconButton(onClick = { isPromptExpanded = !isPromptExpanded }) {
+                        Icon(
+                            imageVector = if (isPromptExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                            contentDescription = if (isPromptExpanded) "Colapsar" else "Expandir"
+                        )
+                    }
                 }
-                FilledTonalButton(
-                    modifier = Modifier
-                        .weight(saveWeight)
-                        .heightIn(min = 56.dp),
-                    interactionSource = saveInteraction,
-                    shape = MaterialTheme.shapes.large,
-                    enabled = puedeGuardarPrompt,
-                    onClick = { showDialog = true },
+
+                AnimatedVisibility(
+                    visible = isPromptExpanded,
+                    enter = fadeIn(animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()) +
+                            expandVertically(animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec()),
+                    exit = fadeOut(animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()) +
+                            shrinkVertically(animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec())
                 ) {
-                    Text(strings.homeSavePrompt)
+                    Column(
+                        modifier = Modifier.padding(top = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = textPrompt,
+                            onValueChange = { textPrompt = it },
+                            minLines = 3,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.large
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                modifier = Modifier
+                                    .weight(navigateWeight)
+                                    .heightIn(min = 48.dp),
+                                interactionSource = navigateInteraction,
+                                shape = MaterialTheme.shapes.large,
+                                enabled = !isNavigatingToPrompts,
+                                onClick = {
+                                    if (!isNavigatingToPrompts) {
+                                        isNavigatingToPrompts = true
+                                        onNavigateToPrompts()
+                                    }
+                                },
+                            ) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.List,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(strings.homeViewPrompts)
+                            }
+
+                            FilledTonalButton(
+                                modifier = Modifier
+                                    .weight(saveWeight)
+                                    .heightIn(min = 48.dp),
+                                interactionSource = saveInteraction,
+                                shape = MaterialTheme.shapes.large,
+                                enabled = puedeGuardarPrompt,
+                                onClick = { showDialog = true },
+                            ) {
+                                Icon(
+                                    Icons.Default.Save,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(strings.homeSavePrompt)
+                            }
+                        }
+                    }
                 }
             }
-
-            OutlinedTextField(
-                label = { Text(text = strings.homePromptLabel) },
-                value = textPrompt,
-                onValueChange = { textPrompt = it },
-                minLines = 3,
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.large
-            )
         }
 
         Button(
