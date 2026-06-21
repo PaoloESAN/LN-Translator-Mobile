@@ -26,6 +26,8 @@ https://github.com/user-attachments/assets/4e8be96e-56a1-4a91-9900-e745a05d8480
 ## Features
 
 - **On-Screen Overlay**: Translate text instantly without switching apps or leaving your reader.
+  - **Customizable Styling**: Dynamically adjust font size, line spacing, and typeface options.
+  - **History Navigation**: Move back and forth through your current translation session using the previous/next control buttons.
 - **Saved Translations & History**:
   - **Local Session Archive**: Keep a local database of all translated pages to revisit your reading history at any time.
   - **Editing & Correction**: Manually modify, correct, or crop OCR text and translation results directly in the page editor.
@@ -36,7 +38,6 @@ https://github.com/user-attachments/assets/4e8be96e-56a1-4a91-9900-e745a05d8480
   - **Vision-based (Gemini Vision)**: Processes screen captures directly to preserve visual context and layout.
   - **Text-based (OCR + Translation)**: Extracts text locally via OCR first, then sends the plain text to the LLM for precise translation.
 - **Multi-Language UI**: Full localization in English and Spanish, automatically adapting to the device system language.
-- **Session History Navigation**: Easily browse back and forth through your current translation history using the previous/next buttons.
 
 ---
 
@@ -82,7 +83,6 @@ This project is an open-source local client, not a Software as a Service (SaaS).
 
 - **On-Device Offline Translation**: Support local translation models for reading without internet connectivity.
 - **Expanded LLM Providers**: Integration for OpenAI ChatGPT, xAI Grok, and Anthropic Claude APIs.
-- **Advanced Font Styling**: Ability to resize overlay text, adjust transparency levels, and select custom typeface fonts.
 - **OCR Quality Enhancements**: Improved parsing logic for vertical Japanese layout scripts and complex overlapping text.
 
 ---
