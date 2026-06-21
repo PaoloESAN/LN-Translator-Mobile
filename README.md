@@ -14,7 +14,7 @@ Translate Japanese Light Novels directly from official websites to your preferre
 
 ## Demo
 
-https://github.com/user-attachments/assets/8ef0d227-eac6-4fd6-b907-974a7469fa7d
+https://github.com/user-attachments/assets/4e8be96e-56a1-4a91-9900-e745a05d8480
 
 ## Requirements
 
