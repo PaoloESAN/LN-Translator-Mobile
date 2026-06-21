@@ -1,6 +1,5 @@
 package com.paoloesan.lntranslator_mobile.ui.novels
 
-import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -75,7 +74,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -93,7 +91,7 @@ import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
 import com.paoloesan.lntranslator_mobile.ui.novels.components.NovelPage
 import com.paoloesan.lntranslator_mobile.ui.novels.components.PageEditDialog
-import android.graphics.Bitmap
+import coil3.compose.AsyncImage
 import com.paoloesan.lntranslator_mobile.ui.novels.components.NovelRepository
 import java.io.File
 import java.io.FileOutputStream
@@ -399,25 +397,16 @@ fun PageManagementScreen(
 
                                 // Image Preview if any
                                 if (page.imagePath != null) {
-                                    val bitmap = remember(page.imagePath) {
-                                        try {
-                                            BitmapFactory.decodeFile(page.imagePath)
-                                        } catch (_: Exception) {
-                                            null
-                                        }
-                                    }
-                                    bitmap?.let {
-                                        Image(
-                                            bitmap = it.asImageBitmap(),
-                                            contentDescription = null,
-                                            modifier = Modifier
-                                                .size(50.dp)
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(Color.LightGray),
-                                            contentScale = ContentScale.Crop
-                                        )
-                                        Spacer(modifier = Modifier.width(12.dp))
-                                    }
+                                    AsyncImage(
+                                        model = page.imagePath,
+                                        contentDescription = null,
+                                        modifier = Modifier
+                                            .size(50.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(Color.LightGray),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
                                 }
 
                                 // Text Preview
