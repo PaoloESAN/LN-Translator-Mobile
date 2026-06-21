@@ -1,7 +1,6 @@
 package com.paoloesan.lntranslator_mobile.ui.novels.components
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
+import coil3.compose.AsyncImage
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,6 +17,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,7 +37,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.Crop
+import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.rounded.Crop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -65,7 +65,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -142,12 +141,19 @@ fun PageEditDialog(
         onDismissRequest = onDismiss,
         title = { Text(dialogTitle) },
         text = {
+            val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
+                    .pointerInput(Unit) {
+                        detectTapGestures(onTap = {
+                            focusManager.clearFocus()
+                        })
+                    }
             ) {
+                // 1. Switch "Only Image"
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -166,6 +172,98 @@ fun PageEditDialog(
                     )
                 }
 
+                // 2. Imagen
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                ) {
+                    Text(
+                        text = strings.pageManagementPageImageLabel,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    if (dialogImagePath != null) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(150.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color.LightGray)
+                        ) {
+                            AsyncImage(
+                                model = dialogImagePath,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clickable { showFullImage = true },
+                                contentScale = ContentScale.Crop
+                            )
+                            // Crop button (arriba a la izquierda)
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopStart)
+                                    .padding(8.dp)
+                                    .size(28.dp)
+                                    .background(
+                                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                                        shape = CircleShape
+                                    )
+                                    .clip(CircleShape)
+                                    .clickable {
+                                        showCropDialog = true
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Crop,
+                                    contentDescription = "Recortar imagen",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            // Remove button (arriba a la derecha)
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(8.dp)
+                                    .size(28.dp)
+                                    .background(
+                                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                                        shape = CircleShape
+                                    )
+                                    .clip(CircleShape)
+                                    .clickable { dialogImagePath = null },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = strings.pageManagementRemoveImage,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    } else {
+                        OutlinedButton(
+                            onClick = {
+                                if (!isLaunchingPicker) {
+                                    isLaunchingPicker = true
+                                    pickImageLauncher.launch("image/*")
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Outlined.Image, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(strings.pageManagementSelectImage)
+                        }
+                    }
+                }
+
+                // 3. Text fields
                 if (!dialogOnlyImage) {
                     OutlinedTextField(
                         value = dialogTranslatedText,
@@ -183,105 +281,6 @@ fun PageEditDialog(
                         minLines = 2,
                         shape = MaterialTheme.shapes.large
                     )
-                }
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
-                ) {
-                    Text(
-                        text = strings.pageManagementPageImageLabel,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    if (dialogImagePath != null) {
-                        val bitmap = remember(dialogImagePath) {
-                            try {
-                                BitmapFactory.decodeFile(dialogImagePath)
-                            } catch (_: Exception) {
-                                null
-                            }
-                        }
-                        bitmap?.let {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(150.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color.LightGray)
-                            ) {
-                                Image(
-                                    bitmap = it.asImageBitmap(),
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .clickable { showFullImage = true },
-                                    contentScale = ContentScale.Crop
-                                )
-                                // Crop button (arriba a la izquierda)
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.TopStart)
-                                        .padding(8.dp)
-                                        .size(28.dp)
-                                        .background(
-                                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                                            shape = CircleShape
-                                        )
-                                        .clip(CircleShape)
-                                        .clickable {
-                                            showCropDialog = true
-                                        },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Crop,
-                                        contentDescription = "Recortar imagen",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                                // Remove button (arriba a la derecha)
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .padding(8.dp)
-                                        .size(28.dp)
-                                        .background(
-                                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                                            shape = CircleShape
-                                        )
-                                        .clip(CircleShape)
-                                        .clickable { dialogImagePath = null },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = strings.pageManagementRemoveImage,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            }
-                        }
-                    } else {
-                        OutlinedButton(
-                            onClick = {
-                                if (!isLaunchingPicker) {
-                                    isLaunchingPicker = true
-                                    pickImageLauncher.launch("image/*")
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Outlined.Crop, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(strings.pageManagementSelectImage)
-                        }
-                    }
                 }
             }
         },
