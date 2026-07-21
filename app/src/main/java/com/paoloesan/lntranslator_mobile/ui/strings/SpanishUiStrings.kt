@@ -34,9 +34,13 @@ object SpanishUiStrings : UiStrings {
     override val configShowPrices = "Ver precios de API"
     override val configHidePrices = "Ocultar precios de API"
     override val configModelPricingTitle = "Referencia de Precios de API"
-    override val configGemini3FlashPricing = "Gratis: 20 peticiones/día · Pago: ~$1.00 / 1M tokens"
-    override val configGemini31FlashLitePricing = "Gratis: 500 peticiones/día · Pago: ~$0.50 / 1M tokens"
-    override val configGemini35FlashPricing = "Gratis: 20 peticiones/día · Pago: ~$3.00 / 1M tokens"
+    override val configGemini3FlashPricing = ""
+    override val configGemini31FlashLitePricing = "Gratis: 500 pet/día · Pago: $0.25 ent / $0.50 sal (1M tokens)"
+    override val configGemini35FlashLitePricing = "Gratis: 500 pet/día · Pago: $0.30 ent / $2.50 sal (1M tokens)"
+    override val configGemini36FlashPricing = "Gratis: 20 pet/día · Pago: $1.50 ent / $7.50 sal (1M tokens)"
+    override val configGemini31FlashLiteDesc = "Ultrarrápido y económico"
+    override val configGemini35FlashLiteDesc = "Velocidad y calidad equilibradas"
+    override val configGemini36FlashDesc = "Máxima inteligencia y contexto"
     override val updateCurrentVersion: (String) -> String =
         { version -> "Version actual: $version" }
     override val updateUnknownVersion = "desconocida"
@@ -79,6 +83,7 @@ object SpanishUiStrings : UiStrings {
         "Las claves rotarán automáticamente si una falla o alcanza su límite."
 
     override val configAdvancedOptions = "Opciones Avanzadas"
+    override val configAdvancedSubtitle = "Modelo de IA y extracción de texto"
     override val configShowAdvanced = "Mostrar opciones avanzadas"
     override val configHideAdvanced = "Ocultar opciones avanzadas"
 

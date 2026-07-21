@@ -34,9 +34,13 @@ object EnglishUiStrings : UiStrings {
     override val configShowPrices = "Show API prices"
     override val configHidePrices = "Hide API prices"
     override val configModelPricingTitle = "API Pricing Reference"
-    override val configGemini3FlashPricing = "Free: 20 requests/day · Paid: ~$1.00 / 1M tokens"
-    override val configGemini31FlashLitePricing = "Free: 500 requests/day · Paid: ~$0.50 / 1M tokens"
-    override val configGemini35FlashPricing = "Free: 20 requests/day · Paid: ~$3.00 / 1M tokens"
+    override val configGemini3FlashPricing = ""
+    override val configGemini31FlashLitePricing = "Free: 500 req/day · Paid: $0.25 in / $0.50 out (1M tokens)"
+    override val configGemini35FlashLitePricing = "Free: 500 req/day · Paid: $0.30 in / $2.50 out (1M tokens)"
+    override val configGemini36FlashPricing = "Free: 20 req/day · Paid: $1.50 in / $7.50 out (1M tokens)"
+    override val configGemini31FlashLiteDesc = "Ultra Fast & Lowest Cost"
+    override val configGemini35FlashLiteDesc = "Balanced Speed & Quality"
+    override val configGemini36FlashDesc = "Highest Intelligence & Context"
     override val updateCurrentVersion: (String) -> String =
         { version -> "Current version: $version" }
     override val updateUnknownVersion = "unknown"
@@ -79,6 +83,7 @@ object EnglishUiStrings : UiStrings {
         "Keys will rotate automatically if one fails or reaches its limit."
 
     override val configAdvancedOptions = "Advanced Options"
+    override val configAdvancedSubtitle = "AI model & text extraction settings"
     override val configShowAdvanced = "Show advanced options"
     override val configHideAdvanced = "Hide advanced options"
 
