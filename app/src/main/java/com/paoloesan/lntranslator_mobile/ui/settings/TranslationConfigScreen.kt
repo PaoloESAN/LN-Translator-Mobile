@@ -760,11 +760,7 @@ fun TranslationConfigScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 24.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                )
+                Spacer(modifier = Modifier.height(4.dp))
 
                 CategoryLabel(
                     text = strings.configTextExtraction,
