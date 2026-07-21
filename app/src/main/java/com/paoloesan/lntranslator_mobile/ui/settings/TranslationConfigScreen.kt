@@ -1,10 +1,15 @@
 package com.paoloesan.lntranslator_mobile.ui.settings
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -19,21 +24,26 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.FlashOn
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.LocalOffer
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenuGroup
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -43,7 +53,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -57,7 +66,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.LinkAnnotation
@@ -80,16 +90,25 @@ import com.paoloesan.lntranslator_mobile.LocalTopAppBarNavigationIcon
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
 import com.paoloesan.lntranslator_mobile.data.DataStoreManager
-import com.paoloesan.lntranslator_mobile.translation.providers.ProviderFactory
+
+private data class ModelInfo(
+    val id: String,
+    val name: String,
+    val version: String,
+    val description: String,
+    val pricing: String,
+    val icon: ImageVector,
+    val tag: String,
+)
 
 @Composable
 private fun CategoryLabel(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text,
-        style = MaterialTheme.typography.labelLarge,
+        style = MaterialTheme.typography.titleLargeEmphasized,
         color = MaterialTheme.colorScheme.primary,
-        fontWeight = FontWeight.Medium,
-        modifier = modifier.padding(top = 8.dp, bottom = 4.dp),
+        fontWeight = FontWeight.ExtraBold,
+        modifier = modifier.padding(top = 10.dp, bottom = 6.dp),
     )
 }
 
@@ -98,65 +117,131 @@ private fun OcrModeCard(
     selected: Boolean,
     title: String,
     subtitle: String,
+    description: String,
+    icon: ImageVector,
     onClick: () -> Unit,
+    index: Int,
+    totalCount: Int,
     modifier: Modifier = Modifier,
 ) {
     val containerColor by animateColorAsState(
         targetValue = if (selected)
             MaterialTheme.colorScheme.primaryContainer
         else
-            MaterialTheme.colorScheme.surfaceContainerLow,
+            MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f),
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
         label = "ocrCardColor",
     )
-    val cornerRadius by animateDpAsState(
-        targetValue = if (selected) 28.dp else 16.dp,
+
+    val defaultTopStart = if (index == 0) 20.dp else 4.dp
+    val defaultTopEnd = if (index == 0) 20.dp else 4.dp
+    val defaultBottomStart = if (index == totalCount - 1) 20.dp else 4.dp
+    val defaultBottomEnd = if (index == totalCount - 1) 20.dp else 4.dp
+
+    val topStart by animateDpAsState(
+        targetValue = if (selected) 20.dp else defaultTopStart,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium,
+            stiffness = Spring.StiffnessMedium
         ),
-        label = "ocrCardCorner",
+        label = "ocrTopStart",
+    )
+    val topEnd by animateDpAsState(
+        targetValue = if (selected) 20.dp else defaultTopEnd,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "ocrTopEnd",
+    )
+    val bottomStart by animateDpAsState(
+        targetValue = if (selected) 20.dp else defaultBottomStart,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "ocrBottomStart",
+    )
+    val bottomEnd by animateDpAsState(
+        targetValue = if (selected) 20.dp else defaultBottomEnd,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "ocrBottomEnd",
     )
 
     Surface(
         onClick = onClick,
         modifier = modifier,
         color = containerColor,
-        shape = MaterialTheme.shapes.extraLarge.copy(
-            topStart = androidx.compose.foundation.shape.CornerSize(cornerRadius),
-            topEnd = androidx.compose.foundation.shape.CornerSize(cornerRadius),
-            bottomStart = androidx.compose.foundation.shape.CornerSize(cornerRadius),
-            bottomEnd = androidx.compose.foundation.shape.CornerSize(cornerRadius),
+        shape = RoundedCornerShape(
+            topStart = topStart,
+            topEnd = topEnd,
+            bottomStart = bottomStart,
+            bottomEnd = bottomEnd,
         ),
-        border = if (selected) null else BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outlineVariant,
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
         ),
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                    color = if (selected)
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    else
-                        MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f),
-                )
+                Surface(
+                    shape = CircleShape,
+                    color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier.size(32.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
+                        color = if (selected)
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        else
+                            MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium,
+                        color = if (selected)
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (selected) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
             }
             Text(
-                text = subtitle,
+                text = description,
                 style = MaterialTheme.typography.bodySmall,
                 color = if (selected)
-                    MaterialTheme.colorScheme.onPrimaryContainer
+                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                 else
                     MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -179,32 +264,59 @@ fun TranslationConfigScreen(
     val topBarVisible = LocalTopAppBarVisible.current
     val topBarLarge = LocalTopAppBarLarge.current
 
-    val providerFactory = remember { ProviderFactory(context) }
-
     val initialProviderId = remember {
-        DataStoreManager.getString(context, "active_translation_provider", "gemini_31_flash")
-            ?: "gemini_31_flash"
+        DataStoreManager.getString(context, "active_translation_provider", "gemini_35_flash_lite")
+            ?: "gemini_35_flash_lite"
     }
     var useOcr by remember { mutableStateOf(initialProviderId.startsWith("ocr_")) }
-    var selectedModelId by remember { mutableStateOf(initialProviderId.removePrefix("ocr_")) }
-    var showModelMenu by remember { mutableStateOf(false) }
-    var showPrices by remember { mutableStateOf(false) }
-    var showDescription by remember { mutableStateOf(false) }
+    var selectedModelId by remember {
+        val rawId = initialProviderId.removePrefix("ocr_")
+        val validIds = listOf("gemini_31_flash", "gemini_35_flash_lite", "gemini_36_flash")
+        mutableStateOf(if (rawId in validIds) rawId else "gemini_35_flash_lite")
+    }
+
     var showAdvanced by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
 
     val apiKeys = remember { mutableStateListOf<String>() }
     val maxApiKeys = 5
 
-    val models = remember {
-        providerFactory.getAllProviders()
-            .filter { !it.providerId.startsWith("ocr_") }
-            .map { it.providerId to it.displayName }
+    val availableModels = remember(strings) {
+        listOf(
+            ModelInfo(
+                id = "gemini_36_flash",
+                name = "Gemini 3.6 Flash",
+                version = "gemini-3.6-flash",
+                description = strings.configGemini36FlashDesc,
+                pricing = strings.configGemini36FlashPricing,
+                icon = Icons.Default.AutoAwesome,
+                tag = "3.6 Flash",
+            ),
+            ModelInfo(
+                id = "gemini_35_flash_lite",
+                name = "Gemini 3.5 Flash Lite",
+                version = "gemini-3.5-flash-lite",
+                description = strings.configGemini35FlashLiteDesc,
+                pricing = strings.configGemini35FlashLitePricing,
+                icon = Icons.Default.Speed,
+                tag = "3.5 Flash Lite",
+            ),
+            ModelInfo(
+                id = "gemini_31_flash",
+                name = "Gemini 3.1 Flash Lite",
+                version = "gemini-3.1-flash-lite",
+                description = strings.configGemini31FlashLiteDesc,
+                pricing = strings.configGemini31FlashLitePricing,
+                icon = Icons.Default.FlashOn,
+                tag = "3.1 Flash Lite",
+            ),
+        )
     }
 
-    val selectedModelName = remember(selectedModelId, models) {
-        models.firstOrNull { it.first == selectedModelId }?.second ?: selectedModelId
+    val currentIndex = remember(selectedModelId) {
+        availableModels.indexOfFirst { it.id == selectedModelId }.coerceAtLeast(0)
     }
+    val currentModel = availableModels[currentIndex]
 
     LaunchedEffect(Unit) {
         topBarVisible.value = true
@@ -388,303 +500,304 @@ fun TranslationConfigScreen(
             }
         }
 
-        Row(
+        val arrowRotation by animateFloatAsState(
+            targetValue = if (showAdvanced) 180f else 0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMediumLow,
+            ),
+            label = "arrowRotation",
+        )
+
+        val headerBottomCorner by animateDpAsState(
+            targetValue = if (showAdvanced) 4.dp else 20.dp,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioLowBouncy,
+                stiffness = Spring.StiffnessMediumLow,
+            ),
+            label = "headerBottomCorner",
+        )
+
+        val headerContainerColor by animateColorAsState(
+            targetValue = if (showAdvanced)
+                MaterialTheme.colorScheme.surfaceContainerLow
+            else
+                androidx.compose.ui.graphics.Color.Transparent,
+            animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+            label = "headerContainerColor",
+        )
+
+        Surface(
+            onClick = { showAdvanced = !showAdvanced },
+            shape = RoundedCornerShape(
+                topStart = 20.dp,
+                topEnd = 20.dp,
+                bottomStart = headerBottomCorner,
+                bottomEnd = headerBottomCorner,
+            ),
+            color = headerContainerColor,
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { showAdvanced = !showAdvanced }
-                .padding(horizontal = 24.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(horizontal = 24.dp)
+                .padding(top = 8.dp, bottom = if (showAdvanced) 2.dp else 8.dp),
         ) {
-            Icon(
-                imageVector = if (showAdvanced) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                contentDescription = if (showAdvanced) strings.configHideAdvanced else strings.configShowAdvanced,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(20.dp)
-            )
-            Text(
-                text = strings.configAdvancedOptions,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Tune,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = strings.configAdvancedOptions,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = strings.configAdvancedSubtitle,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.8f),
+                    modifier = Modifier.size(32.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.ExpandMore,
+                            contentDescription = if (showAdvanced) strings.configHideAdvanced else strings.configShowAdvanced,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .size(18.dp)
+                                .graphicsLayer(rotationZ = arrowRotation),
+                        )
+                    }
+                }
+            }
         }
 
-        if (showAdvanced) {
-            CategoryLabel(
-                text = strings.configAiModelTitle,
-                modifier = Modifier.padding(horizontal = 24.dp),
-            )
+        AnimatedVisibility(
+            visible = showAdvanced,
+            enter = expandVertically(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioLowBouncy,
+                    stiffness = Spring.StiffnessMediumLow,
+                )
+            ) + fadeIn(
+                animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+            ),
+            exit = shrinkVertically(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMediumLow,
+                )
+            ) + fadeOut(
+                animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+            ),
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                CategoryLabel(
+                    text = strings.configAiModelTitle,
+                    modifier = Modifier
+                        .padding(horizontal = 24.dp)
+                        .padding(top = 2.dp),
+                )
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
-            ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { showModelMenu = true }
-                        .padding(vertical = 14.dp),
+                        .padding(horizontal = 24.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(3.dp),
                 ) {
-                    Text(
-                        text = strings.configActiveModel,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Text(
-                        text = selectedModelName,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                    availableModels.forEachIndexed { index, model ->
+                        val isSelected = index == currentIndex
 
-                DropdownMenuPopup(
-                    expanded = showModelMenu,
-                    onDismissRequest = { showModelMenu = false },
-                ) {
-                    DropdownMenuGroup(
-                        shapes = MenuDefaults.groupShape(0, 1)
-                    ) {
-                        val totalItems = models.size
-                        models.forEachIndexed { index, (modelId, displayName) ->
-                            val isSelected = modelId == selectedModelId
-                            DropdownMenuItem(
-                                selected = isSelected,
-                                onClick = {
-                                    selectedModelId = modelId
-                                    showModelMenu = false
-                                },
-                                text = { Text(displayName) },
-                                shapes = MenuDefaults.itemShape(index, totalItems),
-                                selectedLeadingIcon = {
+                        val containerColor by animateColorAsState(
+                            targetValue = if (isSelected)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
+                                MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f),
+                            animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                            label = "modelItemColor",
+                        )
+
+                        val defaultTopStart = if (index == 0) 20.dp else 4.dp
+                        val defaultTopEnd = if (index == 0) 20.dp else 4.dp
+                        val defaultBottomStart =
+                            if (index == availableModels.size - 1) 20.dp else 4.dp
+                        val defaultBottomEnd =
+                            if (index == availableModels.size - 1) 20.dp else 4.dp
+
+                        val topStart by animateDpAsState(
+                            targetValue = if (isSelected) 20.dp else defaultTopStart,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            ),
+                            label = "modelTopStart",
+                        )
+                        val topEnd by animateDpAsState(
+                            targetValue = if (isSelected) 20.dp else defaultTopEnd,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            ),
+                            label = "modelTopEnd",
+                        )
+                        val bottomStart by animateDpAsState(
+                            targetValue = if (isSelected) 20.dp else defaultBottomStart,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            ),
+                            label = "modelBottomStart",
+                        )
+                        val bottomEnd by animateDpAsState(
+                            targetValue = if (isSelected) 20.dp else defaultBottomEnd,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            ),
+                            label = "modelBottomEnd",
+                        )
+
+                        Surface(
+                            onClick = { selectedModelId = model.id },
+                            shape = RoundedCornerShape(
+                                topStart = topStart,
+                                topEnd = topEnd,
+                                bottomStart = bottomStart,
+                                bottomEnd = bottomEnd,
+                            ),
+                            color = containerColor,
+                            border = BorderStroke(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                            ),
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(
+                                    horizontal = 14.dp,
+                                    vertical = 12.dp
+                                ),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                Icon(
+                                    imageVector = model.icon,
+                                    contentDescription = null,
+                                    tint = if (isSelected)
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = model.name,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
+                                        color = if (isSelected)
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        else
+                                            MaterialTheme.colorScheme.onSurface,
+                                    )
+                                    Text(
+                                        text = model.description,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = if (isSelected)
+                                            MaterialTheme.colorScheme.primary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                                if (isSelected) {
                                     Icon(
                                         imageVector = Icons.Default.Check,
                                         contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(18.dp),
                                     )
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp),
-                                        tint = Color.Transparent,
-                                    )
-                                },
-                            )
+                                }
+                            }
                         }
                     }
                 }
-            }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-            ) {
-                Row(
+                Surface(
+                    shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { showPrices = !showPrices }
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(horizontal = 24.dp, vertical = 6.dp),
                 ) {
-                    Icon(
-                        imageVector = if (showPrices) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = if (showPrices) strings.configHidePrices else strings.configShowPrices,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(
-                        text = if (showPrices) strings.configHidePrices else strings.configShowPrices,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                if (showPrices) {
-                    ElevatedCard(
-                        shape = MaterialTheme.shapes.large,
-                        colors = CardDefaults.elevatedCardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                        ),
-                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 12.dp),
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            Text(
-                                text = strings.configModelPricingTitle,
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-                            ModelPricingRow(
-                                modelName = "Gemini 3 Flash",
-                                pricingInfo = strings.configGemini3FlashPricing
-                            )
-                            ModelPricingRow(
-                                modelName = "Gemini 3.1 Flash Lite",
-                                pricingInfo = strings.configGemini31FlashLitePricing
-                            )
-                            ModelPricingRow(
-                                modelName = "Gemini 3.5 Flash",
-                                pricingInfo = strings.configGemini35FlashPricing
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.LocalOffer,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = currentModel.pricing,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 }
-            }
 
-            HorizontalDivider(
-                modifier = Modifier.padding(horizontal = 24.dp),
-                color = MaterialTheme.colorScheme.outlineVariant,
-            )
+                Spacer(modifier = Modifier.height(4.dp))
 
-            CategoryLabel(
-                text = strings.configTextExtraction,
-                modifier = Modifier.padding(horizontal = 24.dp),
-            )
-
-            val visionWeight by animateFloatAsState(
-                targetValue = if (!useOcr) 1.25f else 1f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessMedium,
-                ),
-                label = "visionWeight",
-            )
-            val ocrWeight by animateFloatAsState(
-                targetValue = if (useOcr) 1.25f else 1f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessMedium,
-                ),
-                label = "ocrWeight",
-            )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                OcrModeCard(
-                    selected = !useOcr,
-                    title = strings.configImageOnly,
-                    subtitle = strings.configImageSubtitle,
-                    onClick = { useOcr = false },
-                    modifier = Modifier.weight(visionWeight),
+                CategoryLabel(
+                    text = strings.configTextExtraction,
+                    modifier = Modifier.padding(horizontal = 24.dp),
                 )
-                OcrModeCard(
-                    selected = useOcr,
-                    title = strings.configLocalOcr,
-                    subtitle = strings.configOcrSubtitle,
-                    onClick = { useOcr = true },
-                    modifier = Modifier.weight(ocrWeight),
-                )
-            }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-            ) {
-                Row(
+                // Text Extraction Cards (Expressive, integrated descriptions without clumsy toggle)
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { showDescription = !showDescription }
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(horizontal = 24.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(3.dp),
                 ) {
-                    Icon(
-                        imageVector = if (showDescription) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = if (showDescription) strings.configHideDescription else strings.configShowDescription,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
+                    OcrModeCard(
+                        selected = !useOcr,
+                        title = strings.configImageOnly,
+                        subtitle = strings.configImageSubtitle,
+                        description = strings.configImageOnlyDescription,
+                        icon = Icons.Default.Image,
+                        onClick = { useOcr = false },
+                        index = 0,
+                        totalCount = 2,
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    Text(
-                        text = if (showDescription) strings.configHideDescription else strings.configShowDescription,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Medium
+                    OcrModeCard(
+                        selected = useOcr,
+                        title = strings.configLocalOcr,
+                        subtitle = strings.configOcrSubtitle,
+                        description = strings.configLocalOcrDescription,
+                        icon = Icons.Default.TextFields,
+                        onClick = { useOcr = true },
+                        index = 1,
+                        totalCount = 2,
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                }
-
-                if (showDescription) {
-                    ElevatedCard(
-                        shape = MaterialTheme.shapes.large,
-                        colors = CardDefaults.elevatedCardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                        ),
-                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 12.dp),
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            Text(
-                                text = strings.configImageOnly + ":",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = strings.configImageOnlyDescription,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = strings.configLocalOcr + ":",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = strings.configLocalOcrDescription,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun ModelPricingRow(
-    modelName: String,
-    pricingInfo: String,
-) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        Text(
-            text = modelName,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Text(
-            text = pricingInfo,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
     }
 }

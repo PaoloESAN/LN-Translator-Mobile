@@ -38,7 +38,11 @@ interface UiStrings {
     val configModelPricingTitle: String
     val configGemini3FlashPricing: String
     val configGemini31FlashLitePricing: String
-    val configGemini35FlashPricing: String
+    val configGemini35FlashLitePricing: String
+    val configGemini36FlashPricing: String
+    val configGemini31FlashLiteDesc: String
+    val configGemini35FlashLiteDesc: String
+    val configGemini36FlashDesc: String
 
     val updateCurrentVersion: (String) -> String
     val updateUnknownVersion: String
@@ -77,6 +81,7 @@ interface UiStrings {
     val keyRotationInfo: String
 
     val configAdvancedOptions: String
+    val configAdvancedSubtitle: String
     val configShowAdvanced: String
     val configHideAdvanced: String
 

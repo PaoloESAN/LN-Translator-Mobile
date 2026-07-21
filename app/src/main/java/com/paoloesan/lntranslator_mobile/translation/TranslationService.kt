@@ -15,15 +15,26 @@ class TranslationService(private val context: Context) {
     companion object {
         private const val TAG = "TranslationService"
         private const val PREF_ACTIVE_PROVIDER = "active_translation_provider"
-        private const val DEFAULT_PROVIDER = "gemini_31_flash"
+        private const val DEFAULT_PROVIDER = "gemini_35_flash_lite"
     }
 
     private val strings: UiStrings
         get() = StringsProvider.getStrings(DataStoreManager.getString(context, "idioma_app", null))
 
     fun getActiveProvider(): TranslationProvider? {
-        val providerId = DataStoreManager.getString(context, PREF_ACTIVE_PROVIDER, DEFAULT_PROVIDER) ?: DEFAULT_PROVIDER
-        return providerFactory.getProvider(providerId)
+        val savedId = DataStoreManager.getString(context, PREF_ACTIVE_PROVIDER, DEFAULT_PROVIDER) ?: DEFAULT_PROVIDER
+        val provider = providerFactory.getProvider(savedId)
+        if (provider != null) return provider
+
+        // Fallback if previously selected model is no longer available
+        val isOcr = savedId.startsWith("ocr_")
+        val fallbackId = if (isOcr) "ocr_$DEFAULT_PROVIDER" else DEFAULT_PROVIDER
+        val fallbackProvider = providerFactory.getProvider(fallbackId)
+        if (fallbackProvider != null) {
+            DataStoreManager.putStringSync(context, PREF_ACTIVE_PROVIDER, fallbackId)
+            Log.w(TAG, "Saved provider '$savedId' is obsolete. Resetting to fallback '$fallbackId'.")
+        }
+        return fallbackProvider
     }
 
     fun setActiveProvider(providerId: String): Boolean {
