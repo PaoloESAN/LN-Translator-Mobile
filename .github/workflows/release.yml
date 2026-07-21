@@ -26,19 +26,17 @@ jobs:
       - name: Build Release APK
         run: ./gradlew assembleRelease
 
-      - name: Sign APK
-        id: sign_app
-        uses: riddler/android-sign-action@v1
-        with:
-          releaseDirectory: app/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.KEYSTORE_BASE64 }}
-          alias: ${{ secrets.KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
-
-      - name: Rename Signed APK
+      - name: Sign & Align APK
         run: |
-          mv ${{ steps.sign_app.outputs.signedFile }} app/build/outputs/apk/release/LNTranslator.apk
+          BUILD_TOOLS_DIR=$(ls -d $ANDROID_HOME/build-tools/* | tail -n 1)
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > release.jks
+          
+          UNSIGNED_APK=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          
+          $BUILD_TOOLS_DIR/zipalign -v -p 4 "$UNSIGNED_APK" app/build/outputs/apk/release/LNTranslator.apk
+          $BUILD_TOOLS_DIR/apksigner sign --ks release.jks --ks-pass pass:"${{ secrets.KEYSTORE_PASSWORD }}" --ks-key-alias "${{ secrets.KEY_ALIAS }}" --key-pass pass:"${{ secrets.KEY_PASSWORD }}" app/build/outputs/apk/release/LNTranslator.apk
+          
+          rm release.jks
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
