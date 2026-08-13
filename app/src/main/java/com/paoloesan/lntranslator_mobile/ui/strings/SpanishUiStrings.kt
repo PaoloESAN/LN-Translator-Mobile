@@ -37,10 +37,10 @@ object SpanishUiStrings : UiStrings {
     override val configGemini3FlashPricing = ""
     override val configGemini31FlashLitePricing = "Gratis: 500 req/día · Pago: ~$0.25 / 1M tokens"
     override val configGemini35FlashLitePricing = "Gratis: 500 req/día · Pago: ~$0.30 / 1M tokens"
-    override val configGemini36FlashPricing = "Gratis: 20 req/día · Pago: ~$1.50 / 1M tokens"
+    override val configGemini37FlashPricing = "Gratis: 20 req/día · Pago: ~$1.50 / 1M tokens"
     override val configGemini31FlashLiteDesc = "Ultrarrápido y económico"
     override val configGemini35FlashLiteDesc = "Velocidad y calidad equilibradas"
-    override val configGemini36FlashDesc = "Máxima inteligencia y contexto"
+    override val configGemini37FlashDesc = "Máxima inteligencia y contexto"
     override val updateCurrentVersion: (String) -> String =
         { version -> "Version actual: $version" }
     override val updateUnknownVersion = "desconocida"

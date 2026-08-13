@@ -270,8 +270,10 @@ fun TranslationConfigScreen(
     }
     var useOcr by remember { mutableStateOf(initialProviderId.startsWith("ocr_")) }
     var selectedModelId by remember {
-        val rawId = initialProviderId.removePrefix("ocr_")
-        val validIds = listOf("gemini_31_flash", "gemini_35_flash_lite", "gemini_36_flash")
+        val rawId = initialProviderId.removePrefix("ocr_").let {
+            if (it == "gemini_36_flash") "gemini_37_flash" else it
+        }
+        val validIds = listOf("gemini_31_flash", "gemini_35_flash_lite", "gemini_37_flash")
         mutableStateOf(if (rawId in validIds) rawId else "gemini_35_flash_lite")
     }
 
@@ -284,13 +286,13 @@ fun TranslationConfigScreen(
     val availableModels = remember(strings) {
         listOf(
             ModelInfo(
-                id = "gemini_36_flash",
-                name = "Gemini 3.6 Flash",
-                version = "gemini-3.6-flash",
-                description = strings.configGemini36FlashDesc,
-                pricing = strings.configGemini36FlashPricing,
+                id = "gemini_37_flash",
+                name = "Gemini 3.7 Flash",
+                version = "gemini-3.7-flash",
+                description = strings.configGemini37FlashDesc,
+                pricing = strings.configGemini37FlashPricing,
                 icon = Icons.Default.AutoAwesome,
-                tag = "3.6 Flash",
+                tag = "3.7 Flash",
             ),
             ModelInfo(
                 id = "gemini_35_flash_lite",

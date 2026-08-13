@@ -39,10 +39,10 @@ interface UiStrings {
     val configGemini3FlashPricing: String
     val configGemini31FlashLitePricing: String
     val configGemini35FlashLitePricing: String
-    val configGemini36FlashPricing: String
+    val configGemini37FlashPricing: String
     val configGemini31FlashLiteDesc: String
     val configGemini35FlashLiteDesc: String
-    val configGemini36FlashDesc: String
+    val configGemini37FlashDesc: String
 
     val updateCurrentVersion: (String) -> String
     val updateUnknownVersion: String

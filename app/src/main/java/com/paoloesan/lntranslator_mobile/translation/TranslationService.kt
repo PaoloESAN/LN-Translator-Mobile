@@ -22,7 +22,15 @@ class TranslationService(private val context: Context) {
         get() = StringsProvider.getStrings(DataStoreManager.getString(context, "idioma_app", null))
 
     fun getActiveProvider(): TranslationProvider? {
-        val savedId = DataStoreManager.getString(context, PREF_ACTIVE_PROVIDER, DEFAULT_PROVIDER) ?: DEFAULT_PROVIDER
+        var savedId = DataStoreManager.getString(context, PREF_ACTIVE_PROVIDER, DEFAULT_PROVIDER) ?: DEFAULT_PROVIDER
+
+        // Migrate legacy 3.6 flash to 3.7 flash
+        if (savedId == "gemini_36_flash" || savedId == "ocr_gemini_36_flash") {
+            savedId = savedId.replace("gemini_36_flash", "gemini_37_flash")
+            DataStoreManager.putStringSync(context, PREF_ACTIVE_PROVIDER, savedId)
+            Log.i(TAG, "Migrated active provider to $savedId")
+        }
+
         val provider = providerFactory.getProvider(savedId)
         if (provider != null) return provider
 
