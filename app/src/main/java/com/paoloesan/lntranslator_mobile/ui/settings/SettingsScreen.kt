@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.BrightnessMedium
 import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material3.Badge
@@ -71,7 +72,8 @@ fun SettingsScreen(
     onNavigateToTranslationConfig: () -> Unit,
     onNavigateToThemeColors: () -> Unit,
     onNavigateToLanguage: () -> Unit,
-    onNavigateToUpdates: () -> Unit
+    onNavigateToUpdates: () -> Unit,
+    onNavigateToAbout: () -> Unit
 ) {
     val context = LocalContext.current
     val strings: UiStrings = LocalStrings.current
@@ -190,13 +192,25 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp),
             ) {
-                SeccionRow(
-                    icono = Icons.Outlined.Download,
-                    titulo = strings.settingsUpdateTitle,
-                    descripcion = updateSubtitle,
-                    mostrarBadge = mostrarUpdateBadge,
-                    onClick = { onNavigateToUpdates() }
-                )
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    SeccionRow(
+                        icono = Icons.Outlined.Download,
+                        titulo = strings.settingsUpdateTitle,
+                        descripcion = updateSubtitle,
+                        mostrarBadge = mostrarUpdateBadge,
+                        onClick = { onNavigateToUpdates() }
+                    )
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
+                        modifier = Modifier.padding(start = 76.dp, end = 16.dp),
+                    )
+                    SeccionRow(
+                        icono = Icons.Outlined.Info,
+                        titulo = strings.settingsAboutTitle,
+                        descripcion = strings.settingsAboutDescription,
+                        onClick = { onNavigateToAbout() }
+                    )
+                }
             }
         }
     }

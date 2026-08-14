@@ -23,6 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.paoloesan.lntranslator_mobile.ui.home.HomeScreen
 import com.paoloesan.lntranslator_mobile.ui.prompts.PromptScreen
+import com.paoloesan.lntranslator_mobile.ui.settings.AboutScreen
 import com.paoloesan.lntranslator_mobile.ui.settings.LanguageScreen
 import com.paoloesan.lntranslator_mobile.ui.settings.SettingsScreen
 import com.paoloesan.lntranslator_mobile.ui.settings.ThemeColorsScreen
@@ -132,6 +133,9 @@ fun AppNavHost(
                 },
                 onNavigateToUpdates = {
                     navController.navigate("actualizar")
+                },
+                onNavigateToAbout = {
+                    navController.navigate("about")
                 }
             )
         }
@@ -147,6 +151,11 @@ fun AppNavHost(
         }
         composable(route = "actualizar") {
             UpdateScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(route = "about") {
+            AboutScreen(
                 onBack = { navController.popBackStack() }
             )
         }

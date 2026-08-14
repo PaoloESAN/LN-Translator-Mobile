@@ -29,6 +29,15 @@ interface UiStrings {
     val languageFollowSystemDesc: String
     val settingsUpdateTitle: String
     val settingsUpdateDescription: String
+    val settingsAboutTitle: String
+    val settingsAboutDescription: String
+    val aboutDeveloper: String
+    val aboutConnect: String
+    val aboutVisitGithub: String
+    val aboutGithubSubtitle: String
+    val aboutReportBug: String
+    val aboutReportBugSubtitle: String
+    val aboutVersion: (String) -> String
     val settingsCategoryServices: String
     val settingsCategoryPreferences: String
     val settingsCategorySystem: String
