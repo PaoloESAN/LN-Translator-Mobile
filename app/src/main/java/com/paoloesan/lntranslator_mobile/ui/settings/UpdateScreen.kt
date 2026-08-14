@@ -36,13 +36,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.paoloesan.lntranslator_mobile.LocalStrings
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
+import com.paoloesan.lntranslator_mobile.R
 import com.paoloesan.lntranslator_mobile.data.DataStoreManager
 import com.paoloesan.lntranslator_mobile.ui.components.CollapsingHeaderScaffold
+import com.paoloesan.lntranslator_mobile.ui.utils.applyExtraBoldToMarkdown
+import com.paoloesan.lntranslator_mobile.ui.utils.escapeAngleBrackets
+import dev.jeziellago.compose.markdowntext.MarkdownText
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -309,7 +312,18 @@ fun UpdateScreen(
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     when {
                         cargando -> Text(strings.updateLatestChangesLoading)
-                        contenidoCambios != null -> Text(contenidoCambios)
+                        contenidoCambios != null -> {
+                            MarkdownText(
+                                markdown = escapeAngleBrackets(contenidoCambios),
+                                fontResource = R.font.roboto_regular,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = MaterialTheme.colorScheme.onSurface
+                                ),
+                                afterSetMarkdown = { textView ->
+                                    applyExtraBoldToMarkdown(textView, context)
+                                }
+                            )
+                        }
                         else -> Text(strings.updateLatestChangesEmpty)
                     }
                 }
