@@ -6,9 +6,14 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -52,6 +57,7 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuGroup
@@ -951,35 +957,13 @@ fun NovelsScreen(
                 }
                 topBarNavIcon.value = {}
                 topBarActions.value = {
-                    Row(
-                        Modifier.padding(horizontal = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
-                    ) {
-                        ToggleButton(
-                            checked = !isGridView,
-                            onCheckedChange = {
-                                DataStoreManager.putBooleanSync(context, "is_grid_view", false)
-                            },
-                            shapes = ButtonGroupDefaults.connectedLeadingButtonShapes()
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Outlined.FormatListBulleted,
-                                contentDescription = strings.cdListView
-                            )
-                        }
-                        ToggleButton(
-                            checked = isGridView,
-                            onCheckedChange = {
-                                DataStoreManager.putBooleanSync(context, "is_grid_view", true)
-                            },
-                            shapes = ButtonGroupDefaults.connectedTrailingButtonShapes()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.GridView,
-                                contentDescription = strings.cdGridView
-                            )
-                        }
-                    }
+                    NovelsViewModeToggle(
+                        isGridView = isGridView,
+                        onToggle = { newIsGrid ->
+                            DataStoreManager.putBooleanSync(context, "is_grid_view", newIsGrid)
+                        },
+                        strings = strings
+                    )
                 }
                 topBarColors.value = null
             }
@@ -1024,7 +1008,15 @@ fun NovelsScreen(
                         )
                     }
                 } else {
-                    if (isGridView) {
+                    AnimatedContent(
+                        targetState = isGridView,
+                        transitionSpec = {
+                            fadeIn(animationSpec = tween(220)) togetherWith
+                                fadeOut(animationSpec = tween(150))
+                        },
+                        label = "grid_list_content_transition"
+                    ) { gridMode ->
+                        if (gridMode) {
                         LazyVerticalGrid(
                             columns = GridCells.Fixed(2),
                             modifier = Modifier.fillMaxSize(),
@@ -1238,6 +1230,7 @@ fun NovelsScreen(
                 }
             }
         }
+        }
 
         if (fabMenuExpanded) {
             Box(
@@ -1362,5 +1355,80 @@ private fun listItemShape(index: Int, total: Int): Shape {
         )
 
         else -> RoundedCornerShape(noRadius)
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
+@Composable
+private fun NovelsViewModeToggle(
+    isGridView: Boolean,
+    onToggle: (Boolean) -> Unit,
+    strings: UiStrings,
+    modifier: Modifier = Modifier
+) {
+    val interactionSources = remember { List(2) { MutableInteractionSource() } }
+
+    ButtonGroup(
+        modifier = modifier.padding(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+        overflowIndicator = { menuState ->
+            ButtonGroupDefaults.OverflowIndicator(menuState = menuState)
+        },
+    ) {
+        customItem(
+            buttonGroupContent = {
+                ToggleButton(
+                    checked = !isGridView,
+                    onCheckedChange = { checked ->
+                        if (checked) onToggle(false)
+                    },
+                    shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
+                    interactionSource = interactionSources[0],
+                    modifier = Modifier.animateWidth(
+                        interactionSource = interactionSources[0],
+                    ),
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.FormatListBulleted,
+                        contentDescription = strings.cdListView
+                    )
+                }
+            },
+            menuContent = {
+                DropdownMenuItem(
+                    text = { Text(strings.cdListView) },
+                    onClick = { onToggle(false) },
+                    interactionSource = interactionSources[0],
+                )
+            }
+        )
+
+        customItem(
+            buttonGroupContent = {
+                ToggleButton(
+                    checked = isGridView,
+                    onCheckedChange = { checked ->
+                        if (checked) onToggle(true)
+                    },
+                    shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
+                    interactionSource = interactionSources[1],
+                    modifier = Modifier.animateWidth(
+                        interactionSource = interactionSources[1],
+                    ),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.GridView,
+                        contentDescription = strings.cdGridView
+                    )
+                }
+            },
+            menuContent = {
+                DropdownMenuItem(
+                    text = { Text(strings.cdGridView) },
+                    onClick = { onToggle(true) },
+                    interactionSource = interactionSources[1],
+                )
+            }
+        )
     }
 }
