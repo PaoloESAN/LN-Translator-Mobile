@@ -27,16 +27,19 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -46,6 +49,7 @@ import com.paoloesan.lntranslator_mobile.ui.settings.UpdateManager
 import com.paoloesan.lntranslator_mobile.ui.strings.SpanishUiStrings
 import com.paoloesan.lntranslator_mobile.ui.strings.StringsProvider
 import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
+import com.paoloesan.lntranslator_mobile.ui.theme.AppThemeMode
 import com.paoloesan.lntranslator_mobile.ui.theme.LNTranslatormobileTheme
 
 // CompositionLocal para acceder a los strings en cualquier parte de la app
@@ -73,6 +77,7 @@ val LocalTopAppBarVisible = staticCompositionLocalOf<MutableState<Boolean>> {
 val LocalTopAppBarLarge = staticCompositionLocalOf<MutableState<Boolean>> {
     error("No TopAppBarLarge provider")
 }
+val LocalTopAppBarScrollBehavior = staticCompositionLocalOf<TopAppBarScrollBehavior?> { null }
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -94,6 +99,12 @@ class MainActivity : AppCompatActivity() {
             val topBarVisible = remember { mutableStateOf(true) }
             val topBarLarge = remember { mutableStateOf(false) }
 
+            val dynamicColor by DataStoreManager.getBooleanFlow(this, "dynamic_color", true)
+                .collectAsState(initial = DataStoreManager.getBoolean(this, "dynamic_color", true))
+
+            val selectedColorId by DataStoreManager.getStringFlow(this, "app_color_seed", "blue")
+                .collectAsState(initial = DataStoreManager.getString(this, "app_color_seed", "blue") ?: "blue")
+
             CompositionLocalProvider(
                 LocalStrings provides strings,
                 LocalTopAppBarTitle provides topBarTitle,
@@ -103,7 +114,10 @@ class MainActivity : AppCompatActivity() {
                 LocalTopAppBarVisible provides topBarVisible,
                 LocalTopAppBarLarge provides topBarLarge
             ) {
-                LNTranslatormobileTheme {
+                LNTranslatormobileTheme(
+                    dynamicColor = dynamicColor,
+                    selectedColorId = selectedColorId ?: "blue",
+                ) {
                     val navController = rememberNavController()
                     LaunchedEffect(Unit) {
                         val checkUpdates = DataStoreManager.getBoolean(
@@ -122,14 +136,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun configurarTema() {
-        val tema = DataStoreManager.getString(this, "tema_app", "Predeterminado del sistema")
-
-        val modo = when (tema) {
-            "Claro" -> AppCompatDelegate.MODE_NIGHT_NO
-            "Oscuro" -> AppCompatDelegate.MODE_NIGHT_YES
-            else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
-        }
-        AppCompatDelegate.setDefaultNightMode(modo)
+        val temaKey = DataStoreManager.getString(this, "tema_app", AppThemeMode.SYSTEM.key)
+        val mode = AppThemeMode.fromKey(temaKey)
+        AppCompatDelegate.setDefaultNightMode(mode.nightMode)
     }
 }
 
@@ -156,24 +165,24 @@ fun MainContent(navController: NavHostController, contexto: AppCompatActivity) {
     val topBarVisible = LocalTopAppBarVisible.current
     val topBarLarge = LocalTopAppBarLarge.current
 
+    val scrollBehavior = key(rutaActual, topBarLarge.value) {
+        if (topBarLarge.value) {
+            TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+        } else {
+            TopAppBarDefaults.pinnedScrollBehavior()
+        }
+    }
+
     Scaffold(
+        modifier = Modifier.fillMaxSize(),
         topBar = {
             if (topBarVisible.value) {
-                if (topBarLarge.value) {
-                    LargeTopAppBar(
-                        title = topBarTitle.value,
-                        navigationIcon = topBarNavIcon.value,
-                        actions = topBarActions.value,
-                        colors = topBarColors.value ?: TopAppBarDefaults.topAppBarColors()
-                    )
-                } else {
-                    TopAppBar(
-                        title = topBarTitle.value,
-                        navigationIcon = topBarNavIcon.value,
-                        actions = topBarActions.value,
-                        colors = topBarColors.value ?: TopAppBarDefaults.topAppBarColors()
-                    )
-                }
+                TopAppBar(
+                    title = topBarTitle.value,
+                    navigationIcon = topBarNavIcon.value,
+                    actions = topBarActions.value,
+                    colors = topBarColors.value ?: TopAppBarDefaults.topAppBarColors()
+                )
             }
         },
         bottomBar = {
@@ -272,11 +281,11 @@ fun MainContent(navController: NavHostController, contexto: AppCompatActivity) {
                     )
                 }
             }
-        },
-        modifier = Modifier.fillMaxSize()
+        }
     ) { innerPadding ->
         CompositionLocalProvider(
-            LocalCurrentRoute provides rutaActual
+            LocalCurrentRoute provides rutaActual,
+            LocalTopAppBarScrollBehavior provides scrollBehavior
         ) {
             AppNavHost(navController, contexto, innerPadding)
         }

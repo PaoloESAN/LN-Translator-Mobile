@@ -148,7 +148,13 @@ fun HomeScreen(
     LaunchedEffect(currentRoute) {
         if (currentRoute == "inicio") {
             topBarVisible.value = true
-            topBarTitle.value = { Text(strings.appName) }
+            topBarTitle.value = {
+                Text(
+                    text = strings.appName,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontStyle = FontStyle.Italic,
+                )
+            }
             topBarActions.value = {}
             topBarNavIcon.value = {}
             topBarColors.value = null

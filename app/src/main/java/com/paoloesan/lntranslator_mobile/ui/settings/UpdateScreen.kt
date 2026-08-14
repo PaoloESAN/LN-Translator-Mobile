@@ -36,16 +36,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.paoloesan.lntranslator_mobile.LocalStrings
-import com.paoloesan.lntranslator_mobile.LocalTopAppBarActions
-import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
-import com.paoloesan.lntranslator_mobile.LocalTopAppBarLarge
-import com.paoloesan.lntranslator_mobile.LocalTopAppBarNavigationIcon
-import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
 import com.paoloesan.lntranslator_mobile.data.DataStoreManager
+import com.paoloesan.lntranslator_mobile.ui.components.CollapsingHeaderScaffold
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -57,37 +54,18 @@ fun UpdateScreen(
     val context = LocalContext.current
     val strings = LocalStrings.current
     val scope = rememberCoroutineScope()
-
-    val topBarTitle = LocalTopAppBarTitle.current
-    val topBarActions = LocalTopAppBarActions.current
-    val topBarNavIcon = LocalTopAppBarNavigationIcon.current
-    val topBarColors = LocalTopAppBarColors.current
     val topBarVisible = LocalTopAppBarVisible.current
-    val topBarLarge = LocalTopAppBarLarge.current
-
-    LaunchedEffect(Unit) {
-        topBarVisible.value = true
-        topBarLarge.value = false
-        topBarTitle.value = { Text(strings.settingsUpdateTitle) }
-        topBarNavIcon.value = {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = strings.navBack
-                )
-            }
-        }
-        topBarActions.value = {}
-        topBarColors.value = null
-
-        // Mark update as seen when user enters the screen
-        DataStoreManager.putBoolean(context, "update_seen", true)
-    }
 
     DisposableEffect(Unit) {
+        topBarVisible.value = false
         onDispose {
-            topBarLarge.value = false
+            topBarVisible.value = true
         }
+    }
+
+    LaunchedEffect(Unit) {
+        // Mark update as seen when user enters the screen
+        DataStoreManager.putBoolean(context, "update_seen", true)
     }
 
     // Auto-check updates setting
@@ -125,13 +103,17 @@ fun UpdateScreen(
         }
     }
 
-    Column(
+    CollapsingHeaderScaffold(
+        title = strings.settingsUpdateTitle,
+        onBack = onBack,
         modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        horizontalAlignment = Alignment.Start
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.Start
+        ) {
         // Auto check switch row
         Row(
             modifier = Modifier
@@ -338,5 +320,6 @@ fun UpdateScreen(
                 }
             }
         )
+    }
     }
 }

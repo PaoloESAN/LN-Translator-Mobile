@@ -97,6 +97,12 @@ Contributions from the community are welcome. You can help by:
 
 ---
 
+## Acknowledgements
+
+Special thanks to the developer of [Pixel Habit Tracker](https://play.google.com/store/apps/details?id=com.pixel.al.pixelhabittracker). Some parts of this app's design and UI concepts were inspired by its clean, expressive Material Design interface. Thank you!
+
+---
+
 ## License
 
 This project is licensed under the MIT License. You are free to copy, modify, and distribute it under the license terms.

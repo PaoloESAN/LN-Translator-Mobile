@@ -39,16 +39,10 @@ object TranslationPrompts {
     }
 
     private fun getLanguagePrompt(context: Context): LanguagePrompt {
-        val selectedLanguage = getSelectedLanguage(context)
-        return availableLanguages[selectedLanguage] ?: SpanishPrompt
-    }
-
-    private fun getSelectedLanguage(context: Context): String {
-        val saved = DataStoreManager.getString(context, PREF_LANGUAGE, null)
-
-        if (saved != null) return saved
-
-        val systemLang = Locale.getDefault().language
-        return if (systemLang.startsWith("es", ignoreCase = true)) "Español" else "English"
+        val selected = DataStoreManager.getString(context, PREF_LANGUAGE, null)
+        return when (com.paoloesan.lntranslator_mobile.ui.strings.AppLanguages.resolveLanguageCode(selected)) {
+            com.paoloesan.lntranslator_mobile.ui.strings.AppLanguages.ENGLISH -> EnglishPrompt
+            else -> SpanishPrompt
+        }
     }
 }

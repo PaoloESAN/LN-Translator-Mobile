@@ -23,7 +23,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.paoloesan.lntranslator_mobile.ui.home.HomeScreen
 import com.paoloesan.lntranslator_mobile.ui.prompts.PromptScreen
+import com.paoloesan.lntranslator_mobile.ui.settings.LanguageScreen
 import com.paoloesan.lntranslator_mobile.ui.settings.SettingsScreen
+import com.paoloesan.lntranslator_mobile.ui.settings.ThemeColorsScreen
 import com.paoloesan.lntranslator_mobile.ui.settings.TranslationConfigScreen
 import com.paoloesan.lntranslator_mobile.ui.settings.UpdateScreen
 import com.paoloesan.lntranslator_mobile.ui.novels.NovelsScreen
@@ -97,7 +99,7 @@ fun AppNavHost(
 
             if (fromMain && toMain) {
                 fadeOut(animationSpec = tabFadeSpec)
-            } else if (fromMain) {
+            } else if (toMain) {
                 // Popping out of a main route (unlikely with tab navigation)
                 fadeOut(animationSpec = tabFadeSpec)
             } else {
@@ -122,9 +124,25 @@ fun AppNavHost(
                 onNavigateToTranslationConfig = {
                     navController.navigate("config_traduccion")
                 },
+                onNavigateToThemeColors = {
+                    navController.navigate("theme_colors")
+                },
+                onNavigateToLanguage = {
+                    navController.navigate("language")
+                },
                 onNavigateToUpdates = {
                     navController.navigate("actualizar")
                 }
+            )
+        }
+        composable(route = "theme_colors") {
+            ThemeColorsScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(route = "language") {
+            LanguageScreen(
+                onBack = { navController.popBackStack() }
             )
         }
         composable(route = "actualizar") {

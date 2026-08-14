@@ -16,11 +16,28 @@ interface UiStrings {
     val settingsApikeyDescription: String
     val settingsThemeTitle: String
     val settingsThemeDescription: String
+    val themeModeTitle: String
+    val themeModeSubtitle: String
+    val dynamicColorsTitle: String
+    val dynamicColorsSubtitle: String
+    val appColorTitle: String
+    val appColorSubtitle: String
     val settingsLanguageTitle: String
     val settingsLanguageDescription: String
+    val languageNotice: String
+    val languageFollowSystem: String
+    val languageFollowSystemDesc: String
     val settingsUpdateTitle: String
     val settingsUpdateDescription: String
+    val settingsCategoryServices: String
+    val settingsCategoryPreferences: String
+    val settingsCategorySystem: String
 
+    val configSectionApiKeysSubtitle: String
+    val configSectionModelSubtitle: String
+    val configSectionOcrSubtitle: String
+
+    val configAdvancedTitle: String
     val configAiModelTitle: String
     val configActiveModel: String
     val configTextExtraction: String
@@ -258,14 +275,8 @@ interface UiStrings {
 
 object StringsProvider {
     fun getStrings(languageId: String?): UiStrings {
-        val id = languageId ?: Locale.getDefault().language
-
-        return when {
-            id.startsWith("es", ignoreCase = true) || id.equals(
-                "Español",
-                ignoreCase = true
-            ) -> SpanishUiStrings
-
+        return when (AppLanguages.resolveLanguageCode(languageId)) {
+            AppLanguages.SPANISH -> SpanishUiStrings
             else -> EnglishUiStrings
         }
     }

@@ -4,16 +4,24 @@ import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.paoloesan.lntranslator_mobile.R
 
 val Roboto = FontFamily(
     Font(R.font.roboto_regular, FontWeight.Normal),
+    Font(R.font.roboto_italic, FontWeight.Normal, FontStyle.Italic),
     Font(R.font.roboto_medium, FontWeight.Medium),
+    Font(R.font.roboto_mediumitalic, FontWeight.Medium, FontStyle.Italic),
     Font(R.font.roboto_semibold, FontWeight.SemiBold),
-    Font(R.font.roboto_bold, FontWeight.Bold)
+    Font(R.font.roboto_semibolditalic, FontWeight.SemiBold, FontStyle.Italic),
+    Font(R.font.roboto_bold, FontWeight.Bold),
+    Font(R.font.roboto_bolditalic, FontWeight.Bold, FontStyle.Italic),
+    Font(R.font.roboto_extrabold, FontWeight.ExtraBold),
+    Font(R.font.roboto_extrabolditalic, FontWeight.ExtraBold, FontStyle.Italic)
 )
+
 val Typography = Typography(
     titleLarge = TextStyle(
         fontFamily = Roboto,
@@ -45,7 +53,7 @@ val Typography = Typography(
     ),
     labelLarge = TextStyle(
         fontFamily = Roboto,
-        fontWeight = FontWeight.Medium,
+        fontWeight = FontWeight.SemiBold,
         fontSize = 14.sp,
         lineHeight = 20.sp,
         letterSpacing = 0.1.sp

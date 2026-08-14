@@ -38,16 +38,18 @@ fun LNTranslatormobileTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
+    selectedColorId: String = "blue",
     content: @Composable () -> Unit
 ) {
+    val themeColor = AppThemeColorList.firstOrNull { it.id == selectedColorId } ?: BlueThemeColor
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        darkTheme -> themeColor.darkColorScheme
+        else -> themeColor.lightColorScheme
     }
 
     MaterialExpressiveTheme(

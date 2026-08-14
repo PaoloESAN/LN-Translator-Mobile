@@ -140,10 +140,10 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
                     .collectAsState(initial = DataStoreManager.getString(this@OverlayService, "tema_app", "Predeterminado del sistema"))
 
                 val strings = StringsProvider.getStrings(idiomaActual)
-                val isDarkTheme = when (temaActual) {
-                    "Oscuro" -> true
-                    "Claro" -> false
-                    else -> androidx.compose.foundation.isSystemInDarkTheme()
+                val isDarkTheme = when (com.paoloesan.lntranslator_mobile.ui.theme.AppThemeMode.fromKey(temaActual)) {
+                    com.paoloesan.lntranslator_mobile.ui.theme.AppThemeMode.DARK -> true
+                    com.paoloesan.lntranslator_mobile.ui.theme.AppThemeMode.LIGHT -> false
+                    com.paoloesan.lntranslator_mobile.ui.theme.AppThemeMode.SYSTEM -> androidx.compose.foundation.isSystemInDarkTheme()
                 }
 
                 val uiState by controller.uiState.collectAsState()

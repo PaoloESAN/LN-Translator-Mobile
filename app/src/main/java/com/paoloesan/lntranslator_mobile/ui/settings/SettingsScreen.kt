@@ -13,16 +13,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.BrightnessMedium
 import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -42,11 +49,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.paoloesan.lntranslator_mobile.LocalCurrentRoute
 import com.paoloesan.lntranslator_mobile.LocalStrings
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarActions
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarColors
+import com.paoloesan.lntranslator_mobile.LocalTopAppBarLarge
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarNavigationIcon
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarTitle
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
@@ -58,6 +69,8 @@ import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
 fun SettingsScreen(
     modifier: Modifier = Modifier,
     onNavigateToTranslationConfig: () -> Unit,
+    onNavigateToThemeColors: () -> Unit,
+    onNavigateToLanguage: () -> Unit,
     onNavigateToUpdates: () -> Unit
 ) {
     val context = LocalContext.current
@@ -68,15 +81,30 @@ fun SettingsScreen(
     val topBarNavIcon = LocalTopAppBarNavigationIcon.current
     val topBarColors = LocalTopAppBarColors.current
     val topBarVisible = LocalTopAppBarVisible.current
+    val topBarLarge = LocalTopAppBarLarge.current
+
     val currentRoute = LocalCurrentRoute.current
 
     LaunchedEffect(currentRoute) {
         if (currentRoute == "ajustes") {
             topBarVisible.value = true
-            topBarTitle.value = { Text(strings.navSettings) }
+            topBarLarge.value = false
+            topBarTitle.value = {
+                Text(
+                    text = strings.navSettings,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontStyle = FontStyle.Italic,
+                )
+            }
             topBarActions.value = {}
             topBarNavIcon.value = {}
             topBarColors.value = null
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            topBarLarge.value = false
         }
     }
 
@@ -94,94 +122,98 @@ fun SettingsScreen(
 
     val mostrarUpdateBadge = availableVersion != null && !updateSeen
 
-    val secciones = remember(context, strings) {
-        listOf(
-            SeccionTema(
-                Icons.Outlined.BrightnessMedium,
-                strings.settingsThemeTitle,
-                strings.settingsThemeDescription,
-                context
-            ),
-            SeccionIdioma(
-                Icons.Outlined.Translate,
-                strings.settingsLanguageTitle,
-                strings.settingsLanguageDescription,
-                context
-            )
-        )
-    }
-
-    var seccionSeleccionada by remember { mutableStateOf<Seccion?>(null) }
     Column(
         modifier = modifier
-            .fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(vertical = 12.dp)
+            .padding(bottom = 64.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        SeccionRow(
-            Icons.Outlined.AutoAwesome,
-            strings.settingsProviderTitle,
-            strings.settingsProviderDescription
-        ) {
-            onNavigateToTranslationConfig()
-        }
-
-        secciones.forEach { seccionData ->
-            SeccionRow(
-                icono = seccionData.icono,
-                titulo = seccionData.titulo,
-                descripcion = seccionData.descripcion
-            ) { seccionSeleccionada = seccionData }
-        }
-
-        // Dedicated Updates Row
-        SeccionRow(
-            icono = Icons.Outlined.Download,
-            titulo = strings.settingsUpdateTitle,
-            descripcion = updateSubtitle,
-            mostrarBadge = mostrarUpdateBadge
-        ) {
-            onNavigateToUpdates()
-        }
-    }
-
-    if (seccionSeleccionada != null) {
-        key(seccionSeleccionada) {
-            val cerrarModal: () -> Unit = {
-                seccionSeleccionada = null
-            }
-
-            BasicAlertDialog(
-                onDismissRequest = cerrarModal
+        // Section: Traducción e IA
+        Column(modifier = Modifier.fillMaxWidth()) {
+            SettingsCategoryLabel(text = strings.settingsCategoryServices)
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
             ) {
-                Surface(
-                    shape = MaterialTheme.shapes.extraLarge,
-                    color = MaterialTheme.colorScheme.surface
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 16.dp)
-                    ) {
-                        Text(
-                            text = seccionSeleccionada!!.titulo,
-                            style = MaterialTheme.typography.headlineMedium,
-                            modifier = Modifier.padding(start = 12.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        seccionSeleccionada?.ContenidoModal(cerrarModal)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End
-                        ) {
-                            TextButton(onClick = cerrarModal) {
-                                Text(text = strings.buttonClose)
-                            }
-                        }
-                    }
+                SeccionRow(
+                    icono = Icons.Outlined.AutoAwesome,
+                    titulo = strings.settingsProviderTitle,
+                    descripcion = strings.settingsProviderDescription,
+                    onClick = { onNavigateToTranslationConfig() }
+                )
+            }
+        }
+
+        // Section: Personalización
+        Column(modifier = Modifier.fillMaxWidth()) {
+            SettingsCategoryLabel(text = strings.settingsCategoryPreferences)
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    SeccionRow(
+                        icono = Icons.Outlined.Palette,
+                        titulo = strings.settingsThemeTitle,
+                        descripcion = strings.settingsThemeDescription,
+                        onClick = { onNavigateToThemeColors() }
+                    )
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
+                        modifier = Modifier.padding(start = 76.dp, end = 16.dp),
+                    )
+                    SeccionRow(
+                        icono = Icons.Outlined.Translate,
+                        titulo = strings.settingsLanguageTitle,
+                        descripcion = strings.settingsLanguageDescription,
+                        onClick = { onNavigateToLanguage() }
+                    )
                 }
             }
         }
+
+        // Section: Sistema
+        Column(modifier = Modifier.fillMaxWidth()) {
+            SettingsCategoryLabel(text = strings.settingsCategorySystem)
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+            ) {
+                SeccionRow(
+                    icono = Icons.Outlined.Download,
+                    titulo = strings.settingsUpdateTitle,
+                    descripcion = updateSubtitle,
+                    mostrarBadge = mostrarUpdateBadge,
+                    onClick = { onNavigateToUpdates() }
+                )
+            }
+        }
     }
+}
+
+@Composable
+private fun SettingsCategoryLabel(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleSmall,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 28.dp)
+            .padding(top = 4.dp, bottom = 8.dp),
+    )
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
@@ -197,7 +229,7 @@ fun SeccionRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .padding(12.dp),
+            .padding(horizontal = 16.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -211,10 +243,10 @@ fun SeccionRow(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
+                        .size(44.dp)
                         .background(
                             color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = MaterialShapes.Cookie12Sided.toShape()
+                            shape = CircleShape
                         ),
                     contentAlignment = Alignment.Center
                 ) {
@@ -228,10 +260,10 @@ fun SeccionRow(
         } else {
             Box(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(44.dp)
                     .background(
                         color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = MaterialShapes.Cookie12Sided.toShape()
+                        shape = CircleShape
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -244,13 +276,20 @@ fun SeccionRow(
         }
 
         Column(
-            horizontalAlignment = Alignment.Start
+            modifier = Modifier.weight(1f),
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            Text(titulo, style = MaterialTheme.typography.bodyLarge)
             Text(
-                descripcion,
+                text = titulo,
+                style = MaterialTheme.typography.titleMedium.copy(fontSize = 17.sp),
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = descripcion,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodySmall
             )
         }
     }
