@@ -14,7 +14,6 @@ import com.paoloesan.lntranslator_mobile.ui.strings.StringsProvider
 import com.paoloesan.lntranslator_mobile.ui.strings.UiStrings
 import kotlinx.coroutines.delay
 import okhttp3.ConnectionPool
-import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.HttpException
 import retrofit2.Retrofit
@@ -24,9 +23,10 @@ import java.util.concurrent.TimeUnit
 
 class GeminiClient(
     context: Context,
-    private val modelVersion: String = "gemini-3-flash-preview",
+    private val modelVersion: String = "gemini-4-hydrogen",
     override val modelId: String = "gemini",
-    override val displayName: String = "Gemini"
+    override val displayName: String = "Gemini",
+    private val thinkingLevel: String? = null
 ) : ModelClient {
 
     override val supportsVision: Boolean = true
@@ -54,19 +54,12 @@ class GeminiClient(
     }
 
     private fun createApiService(): GeminiApiService {
-        val responseLoggingInterceptor = Interceptor { chain ->
-            val request = chain.request()
-            val response = chain.proceed(request)
-            response
-        }
-
         val okHttpClient = OkHttpClient.Builder()
             .connectTimeout(60, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(60, TimeUnit.SECONDS)
-            .connectionPool(ConnectionPool(0, 1, TimeUnit.MILLISECONDS))
+            .connectionPool(ConnectionPool(5, 5, TimeUnit.MINUTES))
             .retryOnConnectionFailure(true)
-            .addInterceptor(responseLoggingInterceptor)
             .build()
 
         val retrofit = Retrofit.Builder()
@@ -108,7 +101,8 @@ class GeminiClient(
                         Part(text = fullPrompt)
                     )
                 )
-            )
+            ),
+            generationConfig = buildGenerationConfig()
         )
 
         return executeWithRetryAndRotation(request)
@@ -131,10 +125,21 @@ class GeminiClient(
                         Part(text = fullPrompt)
                     )
                 )
-            )
+            ),
+            generationConfig = buildGenerationConfig()
         )
 
         return executeWithRetryAndRotation(request)
+    }
+
+    private fun buildGenerationConfig(): GenerationConfig? {
+        val level = thinkingLevel ?: return null
+        return GenerationConfig(
+            thinkingConfig = ThinkingConfig(
+                thinkingLevel = level,
+                includeThoughts = false
+            )
+        )
     }
 
     private suspend fun executeWithRetryAndRotation(request: GeminiRequest): TranslationResult {

@@ -63,10 +63,15 @@ object EnglishUiStrings : UiStrings {
     override val configGemini3FlashPricing = ""
     override val configGemini31FlashLitePricing = "Free: 500 req/day · Paid: ~$0.25 / 1M tokens"
     override val configGemini35FlashLitePricing = "Free: 500 req/day · Paid: ~$0.30 / 1M tokens"
-    override val configGemini37FlashPricing = "Free: 20 req/day · Paid: ~$1.50 / 1M tokens"
+    override val configGemini4HydrogenPricing = "Free: Available · Paid: $1.50 in / $7.50 out per 1M"
     override val configGemini31FlashLiteDesc = "Ultra Fast & Lowest Cost"
     override val configGemini35FlashLiteDesc = "Balanced Speed & Quality"
-    override val configGemini37FlashDesc = "Highest Intelligence & Context"
+    override val configGemini4HydrogenDesc = "Highest Intelligence & Context"
+    override val configCustomModelTitle = "Custom Model"
+    override val configCustomModelDesc = "Enter the exact Gemini model ID"
+    override val configCustomModelPricing = "Pricing depends on the model ID you enter"
+    override val configCustomModelLabel = "Exact model ID"
+    override val configCustomModelPlaceholder = "e.g. gemini-4-hydrogen"
     override val updateCurrentVersion: (String) -> String =
         { version -> "Current version: $version" }
     override val updateUnknownVersion = "unknown"

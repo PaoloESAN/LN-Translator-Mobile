@@ -65,10 +65,15 @@ interface UiStrings {
     val configGemini3FlashPricing: String
     val configGemini31FlashLitePricing: String
     val configGemini35FlashLitePricing: String
-    val configGemini37FlashPricing: String
+    val configGemini4HydrogenPricing: String
     val configGemini31FlashLiteDesc: String
     val configGemini35FlashLiteDesc: String
-    val configGemini37FlashDesc: String
+    val configGemini4HydrogenDesc: String
+    val configCustomModelTitle: String
+    val configCustomModelDesc: String
+    val configCustomModelPricing: String
+    val configCustomModelLabel: String
+    val configCustomModelPlaceholder: String
 
     val updateCurrentVersion: (String) -> String
     val updateUnknownVersion: String

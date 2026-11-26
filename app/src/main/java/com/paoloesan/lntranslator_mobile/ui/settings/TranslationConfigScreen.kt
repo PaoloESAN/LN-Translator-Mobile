@@ -72,6 +72,7 @@ import com.google.gson.reflect.TypeToken
 import com.paoloesan.lntranslator_mobile.LocalStrings
 import com.paoloesan.lntranslator_mobile.LocalTopAppBarVisible
 import com.paoloesan.lntranslator_mobile.data.DataStoreManager
+import com.paoloesan.lntranslator_mobile.translation.providers.ProviderFactory
 import com.paoloesan.lntranslator_mobile.ui.components.CollapsingHeaderScaffold
 
 private data class ModelInfo(
@@ -183,10 +184,20 @@ fun TranslationConfigScreen(
     var useOcr by remember { mutableStateOf(initialProviderId.startsWith("ocr_")) }
     var selectedModelId by remember {
         val rawId = initialProviderId.removePrefix("ocr_").let {
-            if (it == "gemini_36_flash") "gemini_37_flash" else it
+            if (it == "gemini_36_flash" || it == "gemini_37_flash") "gemini_4_hydrogen" else it
         }
-        val validIds = listOf("gemini_31_flash", "gemini_35_flash_lite", "gemini_37_flash")
+        val validIds = listOf(
+            "gemini_31_flash",
+            "gemini_35_flash_lite",
+            "gemini_4_hydrogen",
+            ProviderFactory.CUSTOM_MODEL_ID,
+        )
         mutableStateOf(if (rawId in validIds) rawId else "gemini_35_flash_lite")
+    }
+    var customModelId by remember {
+        mutableStateOf(
+            DataStoreManager.getString(context, ProviderFactory.PREF_CUSTOM_MODEL_ID, "") ?: ""
+        )
     }
 
     val focusManager = LocalFocusManager.current
@@ -194,15 +205,15 @@ fun TranslationConfigScreen(
     val apiKeys = remember { mutableStateListOf<String>() }
     val maxApiKeys = 5
 
-    val availableModels = remember(strings) {
+    val availableModels = remember(strings, customModelId) {
         listOf(
             ModelInfo(
-                id = "gemini_37_flash",
-                name = "Gemini 3.7 Flash",
-                version = "gemini-3.7-flash",
-                description = strings.configGemini37FlashDesc,
-                pricing = strings.configGemini37FlashPricing,
-                tag = "3.7 Flash",
+                id = "gemini_4_hydrogen",
+                name = "Gemini 4 Hydrogen",
+                version = "gemini-4-hydrogen",
+                description = strings.configGemini4HydrogenDesc,
+                pricing = strings.configGemini4HydrogenPricing,
+                tag = "4 Hydrogen",
             ),
             ModelInfo(
                 id = "gemini_35_flash_lite",
@@ -219,6 +230,14 @@ fun TranslationConfigScreen(
                 description = strings.configGemini31FlashLiteDesc,
                 pricing = strings.configGemini31FlashLitePricing,
                 tag = "3.1 Flash Lite",
+            ),
+            ModelInfo(
+                id = ProviderFactory.CUSTOM_MODEL_ID,
+                name = strings.configCustomModelTitle,
+                version = customModelId.trim(),
+                description = strings.configCustomModelDesc,
+                pricing = strings.configCustomModelPricing,
+                tag = "Custom",
             ),
         )
     }
@@ -512,6 +531,31 @@ fun TranslationConfigScreen(
                                                 else
                                                     MaterialTheme.colorScheme.onSurfaceVariant,
                                             )
+                                            if (model.id == ProviderFactory.CUSTOM_MODEL_ID && isSelected) {
+                                                Spacer(modifier = Modifier.height(10.dp))
+                                                OutlinedTextField(
+                                                    value = customModelId,
+                                                    onValueChange = {
+                                                        customModelId = it
+                                                        DataStoreManager.putStringSync(
+                                                            context,
+                                                            ProviderFactory.PREF_CUSTOM_MODEL_ID,
+                                                            it.trim(),
+                                                        )
+                                                    },
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    label = { Text(strings.configCustomModelLabel) },
+                                                    placeholder = { Text(strings.configCustomModelPlaceholder) },
+                                                    singleLine = true,
+                                                    shape = RoundedCornerShape(16.dp),
+                                                    colors = OutlinedTextFieldDefaults.colors(
+                                                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                                                    ),
+                                                )
+                                            }
                                         }
                                     }
                                 }
